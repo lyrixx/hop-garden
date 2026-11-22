@@ -105,6 +105,9 @@
     .public-nav-link { font-size: .92rem; }
     /* The hero calls to join, right below */
     .public-nav-join { display: none !important; }
+    /* The garden of a member on one line: their language is in the footer and in their account */
+    .public-nav-garden { white-space: nowrap; }
+    .public-nav:has(.public-nav-garden) .locale-switch { display: none; }
     .home-hero { padding-top: .5rem; }
     .home-hero h1 { font-size: 2.35rem; }
     .home-lede { font-size: 1.08rem; }

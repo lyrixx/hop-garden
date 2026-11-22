@@ -14,7 +14,7 @@
             <twig:LocaleSwitch :short="true"/>
             {% if is_granted('ROLE_USER') %}
                 {# Their garden, on a phone too: a legal page has no hero #}
-                <twig:Public:JoinButton class="button-light"/>
+                <twig:Public:JoinButton class="button-light public-nav-garden"/>
             {% else %}
                 <a class="public-nav-link" href="{{ path('login') }}">{{ 'public.log_in'|trans }}</a>
                 <twig:Public:JoinButton class="button-light public-nav-join"/>
