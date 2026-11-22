@@ -162,8 +162,9 @@ em { font-family: var(--serif); }
 .locale-banner p { margin: 0; font-family: var(--serif); font-size: 1.05rem; font-weight: 700; }
 .locale-banner form { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin: 0; }
 .locale-banner .button { padding: .45rem 1.1rem; }
-.locale-banner-stay { background: transparent; color: var(--forest-deep); box-shadow: inset 0 0 0 1.5px rgb(7 61 39 / 45%); }
-.locale-banner-stay:hover { background: rgb(255 255 255 / 35%); }
+/* Staying is the quiet choice: an outline, not the aubergine of the action */
+.locale-banner .locale-banner-stay { background: transparent; color: var(--forest-deep); box-shadow: inset 0 0 0 1.5px rgb(7 61 39 / 45%); }
+.locale-banner .locale-banner-stay:hover { background: rgb(255 255 255 / 35%); }
 /* The language in the footer: discreet, each one in its own name, the current one pressed */
 .locale-switch { display: inline-flex; align-items: center; gap: .2rem; margin: .45rem 0 0; color: rgb(255 255 255 / 70%); }
 .locale-switch button { padding: .1rem .6rem; border: 0; border-radius: 999px; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
@@ -420,13 +421,18 @@ legend { margin-bottom: .5rem; padding: 0; font-family: var(--serif); font-size:
     .topbar { flex-wrap: wrap; gap: .5rem; padding: .6rem 1rem; }
     .brand { font-size: 1.2rem; }
     .brand .pict { width: 32px; height: 32px; }
-    /* Five tabs: the pictogram above the label, as a tab bar */
-    .nav { display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; width: 100%; gap: .15rem; }
+    /* Five tabs: the pictogram above the label, as a tab bar. Each as wide as its label at least: "Mes espaces" and
+       "Notifications" never overlap */
+    .nav { display: grid; grid-auto-columns: minmax(min-content, 1fr); grid-auto-flow: column; width: 100%; gap: .15rem; }
     .nav a { position: relative; flex-direction: column; gap: .1rem; padding: .3rem .1rem; border-radius: 14px; font-size: .72rem; white-space: nowrap; }
     .nav .badge { position: absolute; top: .1rem; right: calc(50% - 1.6rem); }
     .main { padding: 1.5rem 1rem 2.5rem; }
     .footer { width: calc(100% - 2rem); padding: .9rem 1rem; }
-    .locale-banner { padding: .65rem 1rem; text-align: center; }
+    /* Both buttons on one line: the band stays short above the top bar */
+    .locale-banner { gap: .45rem; padding: .6rem 1rem; text-align: center; }
+    .locale-banner p { font-size: 1rem; }
+    .locale-banner form { flex-wrap: nowrap; }
+    .locale-banner .button { padding: .4rem .85rem; font-size: .88rem; white-space: nowrap; }
     .plate-head h1 { font-size: 2.2rem; }
     .plate-head > p { font-size: 1.05rem; }
     .toasts { top: 7.4rem; }
