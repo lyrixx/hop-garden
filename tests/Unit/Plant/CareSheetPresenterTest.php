@@ -2,6 +2,8 @@
 
 namespace App\Tests\Unit\Plant;
 
+use App\Locale\IntlFormatter;
+use App\Tests\Utils\Translation\Translators;
 use App\Plant\CareSheetPresenter;
 use App\Plant\Entity\CareSheet;
 use App\Plant\Model\CareSheetField;
@@ -17,7 +19,7 @@ final class CareSheetPresenterTest extends TestCase
 {
     public function testOneRowPerFieldWithItsConfidence(): void
     {
-        $rows = (new CareSheetPresenter())->rows(PlantFactory::careSheet(pruningMonths: [3, 11], deadheadingMonths: [], exposure: Exposure::PartShade, watering: Watering::High));
+        $rows = self::presenter()->rows(PlantFactory::careSheet(pruningMonths: [3, 11], deadheadingMonths: [], exposure: Exposure::PartShade, watering: Watering::High));
 
         self::assertSame(
             [
@@ -31,14 +33,14 @@ final class CareSheetPresenterTest extends TestCase
                 ['Pruning advice', 'Cut the faded flower heads back to the first pair of buds.', 'high'],
                 ['Cutting advice', 'Take softwood cuttings of 10 cm.', 'high'],
             ],
-            array_map(static fn (CareSheetRow $row): array => [$row->field->label(), $row->value, $row->confidence->value], $rows),
+            array_map(static fn (CareSheetRow $row): array => [$row->field->trans(Translators::for('en')), $row->value, $row->confidence->value], $rows),
         );
     }
 
     public function testAdviceFitsOnOneLine(): void
     {
         $careSheet = new CareSheet(-3, true, Exposure::Sun, Watering::Low, [], [], [], "Cut back\n\n  in spring,\tlightly. ", '   ', [CareSheetField::FrostSensitive->value => Confidence::High], [new Source(Source::LLM_KNOWLEDGE)]);
-        $presenter = new CareSheetPresenter();
+        $presenter = self::presenter();
 
         self::assertSame('Cut back in spring, lightly.', $presenter->valueOf($careSheet, CareSheetField::PruningAdvice));
         self::assertSame('—', $presenter->valueOf($careSheet, CareSheetField::CuttingAdvice));
@@ -47,9 +49,20 @@ final class CareSheetPresenterTest extends TestCase
         self::assertSame('Low', $presenter->valueOf($careSheet, CareSheetField::Watering));
     }
 
-    public function testMonthNames(): void
+    public function testInFrench(): void
     {
-        self::assertSame('January', CareSheetPresenter::monthName(1));
-        self::assertSame('December', CareSheetPresenter::monthName(12));
+        $rows = self::presenter('fr')->rows(PlantFactory::careSheet(pruningMonths: [3, 11], exposure: Exposure::PartShade, watering: Watering::High));
+
+        self::assertSame(
+            ["-15\u{a0}°C", 'Non', 'Mi-ombre', 'Abondant', 'mars, novembre'],
+            array_map(static fn (CareSheetRow $row): string => $row->value, \array_slice($rows, 0, 5)),
+        );
+    }
+
+    private static function presenter(string $locale = 'en'): CareSheetPresenter
+    {
+        $translator = Translators::for($locale);
+
+        return new CareSheetPresenter($translator, new IntlFormatter($translator));
     }
 }

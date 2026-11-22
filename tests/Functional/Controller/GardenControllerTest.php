@@ -713,7 +713,7 @@ final class GardenControllerTest extends WebTestCase
         $planting->startDrafting(new UuidV7());
         $this->save($planting);
 
-        self::getContainer()->get(DraftCareSheetHandler::class)(new DraftCareSheet($planting->getId(), $planting->getConversationId() ?? self::fail()));
+        self::getContainer()->get(DraftCareSheetHandler::class)(new DraftCareSheet($planting->getId(), $planting->getConversationId() ?? self::fail(), 'en'));
 
         return $planting;
     }

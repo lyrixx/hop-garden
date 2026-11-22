@@ -35,7 +35,7 @@ abstract class McpTestCase extends KernelTestCase
         }
 
         $this->client = Client::builder()->setClientInfo('hop-garden-tests', '1.0.0')->setMaxRetries(0)->build();
-        $this->client->connect(new HttpTransport('http://localhost' . $path, httpClient: new KernelHttpClient(self::$kernel ?? throw new \LogicException('The kernel is not booted.'))));
+        $this->client->connect(new HttpTransport('http://localhost' . $path, httpClient: self::getContainer()->get(KernelHttpClient::class)));
 
         return $this->client;
     }

@@ -7,6 +7,7 @@ services:
     app.ai.platform:
         class: Symfony\AI\Platform\PlatformInterface
         factory: ['App\Tests\Utils\Chat\ScriptedGardener', 'createPlatform']
+        arguments: ['@event_dispatcher']
 
     # The agent reaches the MCP server over HTTP, handled by the kernel in process
     App\Tests\Utils\Mcp\KernelHttpClient:

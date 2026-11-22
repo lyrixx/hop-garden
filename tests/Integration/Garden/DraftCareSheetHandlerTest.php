@@ -84,7 +84,7 @@ final class DraftCareSheetHandlerTest extends KernelTestCase
         $planting->startDrafting(new UuidV7());
         self::getContainer()->get(EntityManagerInterface::class)->flush();
 
-        self::getContainer()->get(DraftCareSheetHandler::class)(new DraftCareSheet($planting->getId(), $staleConversationId));
+        self::getContainer()->get(DraftCareSheetHandler::class)(new DraftCareSheet($planting->getId(), $staleConversationId, 'en'));
 
         self::assertSame([], RecordingHub::published(ChatPublisher::topic($staleConversationId)));
         $planting = $this->reload($planting);
@@ -128,7 +128,7 @@ final class DraftCareSheetHandlerTest extends KernelTestCase
     public function testAPlantingDeletedMeanwhileIsSkipped(): void
     {
         $planting = $this->startDrafting(new Planting('Hortensia du portail', null, null, new \DateTimeImmutable('2026-11-01'), 191052, 'Hydrangea paniculata'));
-        $message = new DraftCareSheet($planting->getId(), $planting->getConversationId() ?? self::fail());
+        $message = new DraftCareSheet($planting->getId(), $planting->getConversationId() ?? self::fail(), 'en');
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
         $entityManager->remove($planting);
         $entityManager->flush();
@@ -165,7 +165,7 @@ final class DraftCareSheetHandlerTest extends KernelTestCase
 
     private function handle(Planting $planting): void
     {
-        self::getContainer()->get(DraftCareSheetHandler::class)(new DraftCareSheet($planting->getId(), $planting->getConversationId() ?? self::fail()));
+        self::getContainer()->get(DraftCareSheetHandler::class)(new DraftCareSheet($planting->getId(), $planting->getConversationId() ?? self::fail(), 'en'));
     }
 
     /**

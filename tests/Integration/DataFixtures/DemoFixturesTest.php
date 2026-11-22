@@ -2,6 +2,7 @@
 
 namespace App\Tests\Integration\DataFixtures;
 
+use Symfony\Contracts\Translation\TranslatorInterface;
 use App\DataFixtures\DemoFixtures;
 use App\Garden\Entity\Planting;
 use App\Garden\Entity\Space;
@@ -44,7 +45,7 @@ final class DemoFixturesTest extends KernelTestCase
         );
         self::assertSame(
             ['Front garden' => 'Full sun, clay', 'North bed' => 'Shade, clay', 'Terrace' => 'Part shade, loamy'],
-            array_merge(...array_map(static fn (Space $space): array => [$space->getName() => $space->describeConditions()], self::getContainer()->get(SpaceRepository::class)->findAllByName())),
+            array_merge(...array_map(static fn (Space $space): array => [$space->getName() => $space->describeConditions(self::getContainer()->get(TranslatorInterface::class))], self::getContainer()->get(SpaceRepository::class)->findAllByName())),
         );
 
         self::assertSame(1, self::getContainer()->get(ReminderChecker::class)->check(self::mockTime('2026-12-01 07:00')->now()));

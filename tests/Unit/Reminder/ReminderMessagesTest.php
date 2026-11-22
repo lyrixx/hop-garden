@@ -2,6 +2,8 @@
 
 namespace App\Tests\Unit\Reminder;
 
+use App\Locale\IntlFormatter;
+use App\Tests\Utils\Translation\Translators;
 use App\DataSource\OpenMeteo\Model\DailyMinimum;
 use App\Plant\Entity\CareSheet;
 use App\Plant\Model\Exposure;
@@ -18,7 +20,7 @@ final class ReminderMessagesTest extends TestCase
 {
     public function testTheCalendarMessagesGiveTheAdviceOfTheCareSheet(): void
     {
-        $messages = new ReminderMessages();
+        $messages = self::messages();
 
         self::assertSame('Time to prune Rose. Cut the faded flower heads back to the first pair of buds.', $messages->forCalendar(self::reminder(ReminderType::Pruning)));
         self::assertSame('Time to deadhead Rose: cut the faded flowers.', $messages->forCalendar(self::reminder(ReminderType::Deadheading)));
@@ -30,14 +32,14 @@ final class ReminderMessagesTest extends TestCase
         $careSheet = new CareSheet(-15, false, Exposure::Sun, Watering::Medium, [3], [], [6], '', '', [], [new Source(Source::LLM_KNOWLEDGE)]);
         $plant = PlantFactory::validated('Rose', $careSheet);
 
-        self::assertSame('Time to prune Rose.', (new ReminderMessages())->forCalendar($plant->enableReminder(ReminderType::Pruning)));
+        self::assertSame('Time to prune Rose.', (self::messages())->forCalendar($plant->enableReminder(ReminderType::Pruning)));
     }
 
     public function testAFrostReminderIsNotACalendarOne(): void
     {
         $this->expectException(\LogicException::class);
 
-        (new ReminderMessages())->forCalendar(self::reminder(ReminderType::Frost));
+        (self::messages())->forCalendar(self::reminder(ReminderType::Frost));
     }
 
     public function testAFrostSensitivePlantIsBroughtIndoors(): void
@@ -46,7 +48,7 @@ final class ReminderMessagesTest extends TestCase
 
         self::assertSame(
             'Frost expected on Tuesday 1 December (-3.2 °C): bring Rose indoors. Down to -12.4 °C on Thursday 3 December.',
-            (new ReminderMessages())->forFrost($reminder, self::risk(['2026-12-01' => -3.2, '2026-12-02' => -8.5, '2026-12-03' => -12.4])),
+            (self::messages())->forFrost($reminder, self::risk(['2026-12-01' => -3.2, '2026-12-02' => -8.5, '2026-12-03' => -12.4])),
         );
     }
 
@@ -56,8 +58,15 @@ final class ReminderMessagesTest extends TestCase
 
         self::assertSame(
             'Frost expected on Thursday 3 December (-17.0 °C): cover Rose.',
-            (new ReminderMessages())->forFrost($reminder, self::risk(['2026-12-03' => -17.0, '2026-12-04' => -14.0])),
+            (self::messages())->forFrost($reminder, self::risk(['2026-12-03' => -17.0, '2026-12-04' => -14.0])),
         );
+    }
+
+    private static function messages(): ReminderMessages
+    {
+        $translator = Translators::for('en');
+
+        return new ReminderMessages($translator, new IntlFormatter($translator));
     }
 
     private static function reminder(ReminderType $type, bool $frostSensitive = false): Reminder

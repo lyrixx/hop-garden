@@ -2,6 +2,8 @@
 
 namespace App\Tests\Unit\Garden;
 
+use App\Locale\IntlFormatter;
+use App\Tests\Utils\Translation\Translators;
 use App\DataSource\OpenMeteo\Model\DailyMinimum;
 use App\DataSource\OpenMeteo\Model\FrostForecast;
 use App\Garden\Entity\Planting;
@@ -26,7 +28,8 @@ final class RecommendationEngineTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->engine = new RecommendationEngine(new FrostRiskEvaluator());
+        $translator = Translators::for('en');
+        $this->engine = new RecommendationEngine(new FrostRiskEvaluator(), $translator, new IntlFormatter($translator));
     }
 
     public function testTheSameExposureSuitsIt(): void

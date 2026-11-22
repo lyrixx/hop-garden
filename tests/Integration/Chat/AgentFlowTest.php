@@ -40,11 +40,11 @@ final class AgentFlowTest extends KernelTestCase
         $conversationId = (new UuidV7())->toRfc4122();
         $handler = self::getContainer()->get(RunAgentHandler::class);
 
-        $handler(new RunAgent($conversationId, ScriptedGardener::PLANTED . ' sur le balcon'));
+        $handler(new RunAgent($conversationId, ScriptedGardener::PLANTED . ' sur le balcon', 'en'));
         // What the space card does once tapped
         $entityManager->persist(new Space('Balcon', Exposure::Sun, Soil::Loamy, new \DateTimeImmutable('2026-11-22')));
         $entityManager->flush();
-        $handler(new RunAgent($conversationId, 'I created the space Balcon.'));
+        $handler(new RunAgent($conversationId, 'I created the space Balcon.', 'en'));
 
         self::assertSame(['chat-card chat-proposal is-arriving', 'chat-card chat-proposal is-arriving'], $this->appended($conversationId));
 
@@ -65,13 +65,13 @@ final class AgentFlowTest extends KernelTestCase
         $conversationId = (new UuidV7())->toRfc4122();
         $handler = self::getContainer()->get(RunAgentHandler::class);
 
-        $handler(new RunAgent($conversationId, ScriptedGardener::PLANTED . ' sur la terrasse'));
+        $handler(new RunAgent($conversationId, ScriptedGardener::PLANTED . ' sur la terrasse', 'en'));
         $choices = $this->choices($conversationId);
         self::assertCount(1, $choices);
         self::assertFalse($choices[0]->answered, 'The last question stays on.');
         self::assertSame(ScriptedGardener::SPECIES_QUESTION, $choices[0]->choices?->question);
 
-        $handler(new RunAgent($conversationId, (string) $choices[0]->choices->options[0]));
+        $handler(new RunAgent($conversationId, (string) $choices[0]->choices->options[0], 'en'));
 
         self::assertSame(['chat-choices is-arriving', 'chat-card is-arriving'], $this->appended($conversationId));
         self::assertTrue($this->choices($conversationId)[0]->answered, 'Answered by the next message.');
