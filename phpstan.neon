@@ -19,7 +19,7 @@ parameters:
         # Doctrine assigns the id
         -
             identifier: property.unusedType
-            message: '#^Property App\\(Garden|Plant|Reminder)\\Entity\\\w+::\$id \(int\|null\) is never assigned int#'
+            message: '#^Property App\\(Account|Garden|Plant|Reminder)\\Entity\\\w+::\$id \(int\|null\) is never assigned int#'
 
     typeAliases:
         ContextData: '''
