@@ -1,0 +1,6 @@
+framework:
+    mailer:
+        # Mailpit in dev (.env.dev, its inbox at https://mail.hop-garden.test), nothing in the tests
+        dsn: '%env(MAILER_DSN)%'
+        headers:
+            From: '%env(MAILER_FROM)%'
