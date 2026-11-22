@@ -2,6 +2,7 @@
 
 namespace App\Tests\Unit\Garden\Form;
 
+use App\Factory\GardenFactory;
 use App\Factory\PlantingFactory;
 use App\Factory\SpaceFactory;
 use App\Garden\Form\Model\PlantingFormData;
@@ -20,7 +21,7 @@ final class PlantingFormDataTest extends TestCase
         $data->diseases = '   ';
         $data->careRecords = [CareTask::Pruning->value => new \DateTimeImmutable('2026-03-10'), CareTask::Watering->value => null];
 
-        $planting = $data->toPlanting(new \DateTimeImmutable('2026-11-21 10:00'), 'photo.png');
+        $planting = $data->toPlanting($northBed->getGarden(), new \DateTimeImmutable('2026-11-21 10:00'), 'photo.png');
 
         self::assertSame('Hortensia du portail', $planting->getName());
         self::assertSame(191052, $planting->getTrefleId());
@@ -42,7 +43,7 @@ final class PlantingFormDataTest extends TestCase
         $data->trefleId = 191052;
         $data->scientificName = ' ';
 
-        $planting = $data->toPlanting(new \DateTimeImmutable('2026-11-21'), null);
+        $planting = $data->toPlanting(GardenFactory::createOne(), new \DateTimeImmutable('2026-11-21'), null);
 
         self::assertNull($planting->getScientificName());
         self::assertNull($planting->getTrefleId());

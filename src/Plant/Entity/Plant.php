@@ -2,6 +2,7 @@
 
 namespace App\Plant\Entity;
 
+use App\Garden\Entity\Garden;
 use App\Plant\Exception\PlantAlreadyValidatedException;
 use App\Plant\Exception\PlantNotValidatedException;
 use App\Plant\Model\PlantStatus;
@@ -13,6 +14,9 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
+/**
+ * The care sheet of a species, in a garden: drafted by the agent or by hand, validated by a member.
+ */
 #[ORM\Entity(repositoryClass: PlantRepository::class)]
 #[ORM\Index(fields: ['status'])]
 class Plant
@@ -33,6 +37,9 @@ class Plant
     private Collection $reminders;
 
     private function __construct(
+        #[ORM\ManyToOne]
+        #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+        private Garden $garden,
         #[ORM\Column]
         private string $commonName,
         #[ORM\Column]
@@ -57,6 +64,7 @@ class Plant
      * A draft only: no reminder and no recommendation until the user validates it.
      */
     public static function propose(
+        Garden $garden,
         string $commonName,
         string $scientificName,
         string $family,
@@ -66,7 +74,7 @@ class Plant
         ?string $imageUrl = null,
         ?string $notes = null,
     ): self {
-        return new self($commonName, $scientificName, $family, $careSheet, $createdAt, $trefleId, $imageUrl, $notes);
+        return new self($garden, $commonName, $scientificName, $family, $careSheet, $createdAt, $trefleId, $imageUrl, $notes);
     }
 
     public function validate(\DateTimeImmutable $validatedAt): void
@@ -134,6 +142,11 @@ class Plant
     public function getId(): int
     {
         return $this->id ?? throw new \LogicException('The plant has not been persisted yet.');
+    }
+
+    public function getGarden(): Garden
+    {
+        return $this->garden;
     }
 
     public function getCommonName(): string

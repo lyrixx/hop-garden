@@ -3,6 +3,7 @@
 namespace App\Tests\Unit\Plant;
 
 use App\Factory\CareSheetFactory;
+use App\Factory\GardenFactory;
 use App\Factory\PlantFactory;
 use App\Plant\Entity\Plant;
 use App\Plant\Exception\PlantAlreadyValidatedException;
@@ -16,7 +17,7 @@ final class PlantTest extends TestCase
 {
     public function testAProposedPlantIsADraft(): void
     {
-        $plant = Plant::propose('Panicled hydrangea', 'Hydrangea paniculata', 'Hydrangeaceae', CareSheetFactory::createOne(), new \DateTimeImmutable('2026-11-21 09:55'), 191052, 'https://example.com/paniculata.jpg', 'Grows fast.');
+        $plant = Plant::propose(GardenFactory::createOne(), 'Panicled hydrangea', 'Hydrangea paniculata', 'Hydrangeaceae', CareSheetFactory::createOne(), new \DateTimeImmutable('2026-11-21 09:55'), 191052, 'https://example.com/paniculata.jpg', 'Grows fast.');
 
         self::assertSame(PlantStatus::Draft, $plant->getStatus());
         self::assertFalse($plant->isValidated());

@@ -48,9 +48,12 @@ class Reminder
         $this->enabled = false;
     }
 
+    /**
+     * In the timezone of the date: the month of the garden.
+     */
     public function wasTriggeredInMonthOf(\DateTimeImmutable $date): bool
     {
-        return null !== $this->lastTriggeredAt && $this->lastTriggeredAt->format('Y-m') === $date->format('Y-m');
+        return null !== $this->lastTriggeredAt && $this->lastTriggeredAt->setTimezone($date->getTimezone())->format('Y-m') === $date->format('Y-m');
     }
 
     public function markTriggered(\DateTimeImmutable $at): void

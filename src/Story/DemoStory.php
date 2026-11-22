@@ -3,10 +3,12 @@
 namespace App\Story;
 
 use App\Factory\CareSheetFactory;
+use App\Factory\GardenFactory;
 use App\Factory\PlantFactory;
 use App\Factory\PlantingFactory;
 use App\Factory\SpaceFactory;
 use App\Factory\UserFactory;
+use App\Garden\Entity\GardenLocation;
 use App\Garden\Model\CareTask;
 use App\Garden\Model\Soil;
 use App\Locale\Model\SupportedLocale;
@@ -22,8 +24,9 @@ use Zenstruck\Foundry\Attribute\AsFixture;
 use Zenstruck\Foundry\Story;
 
 /**
- * "castor demo:reset": the administrator, two members and an account on the waiting list; two validated plants with
- * their reminders, their plantings in three spaces of the garden, no conversation, no notification.
+ * "castor demo:reset": the administrator, three members and an account on the waiting list. Alice and Bob share "The
+ * allotment" (Alice its owner): two validated plants with their reminders, their plantings in three spaces. Carol has
+ * "Carol's balcony", a lavender on it: she sees nothing of theirs. No conversation, no notification.
  */
 #[AsFixture(name: 'demo')]
 final class DemoStory extends Story
@@ -41,14 +44,20 @@ final class DemoStory extends Story
         // Their password is UserFactory::PASSWORD. Keep in sync with demo_reset() in castor.php, which prints them, and
         // with the login of video/capture.mjs
         UserFactory::new()->admin()->create(['email' => 'admin@hop-garden.test', 'displayName' => 'Admin', 'registeredAt' => $now->modify('-60 days')]);
-        UserFactory::new()->approved()->create(['email' => 'alice@hop-garden.test', 'displayName' => 'Alice', 'preferredLocale' => SupportedLocale::English, 'registeredAt' => $now->modify('-30 days')]);
-        UserFactory::new()->approved()->create(['email' => 'bob@hop-garden.test', 'displayName' => 'Bob', 'preferredLocale' => SupportedLocale::French, 'registeredAt' => $now->modify('-20 days')]);
+        $alice = UserFactory::new()->approved()->create(['email' => 'alice@hop-garden.test', 'displayName' => 'Alice', 'preferredLocale' => SupportedLocale::English, 'registeredAt' => $now->modify('-31 days')]);
+        $bob = UserFactory::new()->approved()->create(['email' => 'bob@hop-garden.test', 'displayName' => 'Bob', 'preferredLocale' => SupportedLocale::French, 'registeredAt' => $now->modify('-21 days')]);
+        $carol = UserFactory::new()->approved()->create(['email' => 'carol@hop-garden.test', 'displayName' => 'Carol', 'preferredLocale' => SupportedLocale::English, 'registeredAt' => $now->modify('-15 days')]);
         UserFactory::new()->verified()->create(['email' => 'dave@hop-garden.test', 'displayName' => 'Dave', 'preferredLocale' => SupportedLocale::French, 'registeredAt' => $now->modify('-2 days')]);
+
+        // Bob joins the day after (GardenFactory::withMembers()); the places of fixtures/http/open-meteo/geocoding/
+        $allotment = GardenFactory::new()->ownedBy($alice)->withMembers($bob)->at(new GardenLocation('Lyon, Auvergne-Rhône-Alpes, France', 45.74846, 4.84671, 'Europe/Paris'))->create(['name' => 'The allotment', 'createdAt' => $now->modify('-30 days')]);
+        $balcony = GardenFactory::new()->ownedBy($carol)->at(new GardenLocation('Lille, Hauts-de-France, France', 50.63297, 3.05858, 'Europe/Paris'))->create(['name' => "Carol's balcony", 'createdAt' => $now->modify('-14 days')]);
 
         $rose = PlantFactory::new()
             ->validated($now->modify('-30 days'))
             ->withEnabledReminders(ReminderType::Pruning, ReminderType::Deadheading)
             ->create([
+                'garden' => $allotment,
                 'commonName' => 'Climbing rose',
                 'scientificName' => 'Rosa canina',
                 'family' => 'Rosaceae',
@@ -73,6 +82,7 @@ final class DemoStory extends Story
             ->validated($now->modify('-20 days'))
             ->withEnabledReminders(ReminderType::Frost)
             ->create([
+                'garden' => $allotment,
                 'commonName' => 'Lemon tree',
                 'scientificName' => 'Citrus × limon',
                 'family' => 'Rutaceae',
@@ -93,9 +103,9 @@ final class DemoStory extends Story
             ])
         ;
 
-        $frontGarden = SpaceFactory::createOne(['name' => 'Front garden', 'exposure' => Exposure::Sun, 'soil' => Soil::Clay, 'createdAt' => $now->modify('-30 days')]);
-        $terrace = SpaceFactory::createOne(['name' => 'Terrace', 'exposure' => Exposure::PartShade, 'soil' => Soil::Loamy, 'createdAt' => $now->modify('-30 days')]);
-        SpaceFactory::createOne(['name' => 'North bed', 'exposure' => Exposure::Shade, 'soil' => Soil::Clay, 'createdAt' => $now->modify('-30 days')]);
+        $frontGarden = SpaceFactory::createOne(['garden' => $allotment, 'name' => 'Front garden', 'exposure' => Exposure::Sun, 'soil' => Soil::Clay, 'createdAt' => $now->modify('-30 days')]);
+        $terrace = SpaceFactory::createOne(['garden' => $allotment, 'name' => 'Terrace', 'exposure' => Exposure::PartShade, 'soil' => Soil::Loamy, 'createdAt' => $now->modify('-30 days')]);
+        SpaceFactory::createOne(['garden' => $allotment, 'name' => 'North bed', 'exposure' => Exposure::Shade, 'soil' => Soil::Clay, 'createdAt' => $now->modify('-30 days')]);
 
         // The rose was pruned last March, the lemon tree is in part shade and not sheltered yet. On the terrace, the
         // second rose and the lemon tree are neighbours.
@@ -118,6 +128,39 @@ final class DemoStory extends Story
             ->inSpace($terrace)
             ->linkedTo($rose)
             ->create(['name' => 'Rose on the trellis', 'createdAt' => $now->modify('-10 days'), 'trefleId' => 263311, 'scientificName' => 'Rosa canina'])
+        ;
+
+        // Carol's: a lavender in the window box of her balcony, pruned after its flowering
+        $lavender = PlantFactory::new()
+            ->validated($now->modify('-13 days'))
+            ->withEnabledReminders(ReminderType::Pruning, ReminderType::Frost)
+            ->create([
+                'garden' => $balcony,
+                'commonName' => 'English lavender',
+                'scientificName' => 'Lavandula angustifolia',
+                'family' => 'Lamiaceae',
+                'careSheet' => CareSheetFactory::new()->withConfidence(Confidence::High)->with([
+                    'minTemperatureC' => -15,
+                    'frostSensitive' => false,
+                    'exposure' => Exposure::Sun,
+                    'watering' => Watering::Low,
+                    'pruningMonths' => [3, 8],
+                    'deadheadingMonths' => [7],
+                    'cuttingMonths' => [8, 9],
+                    'pruningAdvice' => 'Trim the flower stems after flowering, and shape the bush in March, never into the old wood.',
+                    'cuttingAdvice' => 'Take 8 cm cuttings of non-flowering shoots in late summer, in a gritty compost.',
+                    'sources' => [new Source('Trefle'), new Source(Source::LLM_KNOWLEDGE)],
+                ]),
+                'createdAt' => $now->modify('-14 days'),
+                'trefleId' => 155623,
+            ])
+        ;
+        $windowBox = SpaceFactory::createOne(['garden' => $balcony, 'name' => 'Window box', 'exposure' => Exposure::Sun, 'soil' => Soil::Sandy, 'createdAt' => $now->modify('-14 days')]);
+        PlantingFactory::new()
+            ->inSpace($windowBox)
+            ->withCareRecord(CareTask::Watering, $now->modify('-5 days'))
+            ->linkedTo($lavender)
+            ->create(['name' => 'Lavender of the window box', 'createdAt' => $now->modify('-13 days'), 'trefleId' => 155623, 'scientificName' => 'Lavandula angustifolia'])
         ;
 
         // Conversations are no Doctrine entities: the demo starts without any, even loaded over the current data

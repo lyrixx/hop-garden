@@ -6,12 +6,15 @@ use App\Garden\Entity\Planting;
 use App\Garden\Entity\Space;
 use App\Garden\Model\CareTask;
 use App\Plant\Entity\Plant;
+use App\Story\DefaultGardenStory;
 use Symfony\Component\Uid\UuidV7;
+use Zenstruck\Foundry\Factory;
 use Zenstruck\Foundry\Object\Instantiator;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * A planting the user added to the garden, without space nor care sheet unless told.
+ * A planting the user added to the garden, without space nor care sheet unless told. In the garden of its space or of
+ * its care sheet, else in the default garden of the test (DefaultGardenStory).
  *
  * @extends PersistentObjectFactory<Planting>
  */
@@ -90,6 +93,19 @@ final class PlantingFactory extends PersistentObjectFactory
     {
         // The plant is no argument of the constructor: Planting::linkTo() takes it
         return $this
+            ->beforeInstantiate(static function (array $attributes): array {
+                // Made first, for their garden
+                foreach (['space', 'plant'] as $field) {
+                    if (($attributes[$field] ?? null) instanceof Factory) {
+                        $attributes[$field] = $attributes[$field]->create();
+                    }
+                }
+                $space = $attributes['space'] ?? null;
+                $plant = $attributes['plant'] ?? null;
+                $attributes['garden'] ??= $space instanceof Space ? $space->getGarden() : ($plant instanceof Plant ? $plant->getGarden() : DefaultGardenStory::get('garden'));
+
+                return $attributes;
+            })
             ->instantiateWith(Instantiator::withConstructor()->allowExtra('plant'))
             ->afterInstantiate(static function (Planting $planting, array $attributes): void {
                 $plant = $attributes['plant'] ?? null;

@@ -2,15 +2,18 @@
 
 namespace App\Tests\Integration\Plant;
 
+use App\Factory\GardenFactory;
 use App\Factory\PlantFactory;
 use App\Factory\PlantingFactory;
 use App\Factory\SpaceFactory;
+use App\Garden\Entity\Garden;
 use App\Garden\Entity\Planting;
 use App\Plant\Entity\Plant;
 use App\Plant\Exception\PlantNotFoundException;
 use App\Plant\Model\PlantWithPlantings;
 use App\Plant\PlantRepository;
 use App\Reminder\Model\ReminderType;
+use App\Story\DefaultGardenStory;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -31,7 +34,17 @@ final class PlantRepositoryTest extends KernelTestCase
         $this->expectException(PlantNotFoundException::class);
         $this->expectExceptionMessageIs('No plant with id 999999.');
 
-        $this->plantRepository->get(999999);
+        $this->plantRepository->get(self::garden(), 999999);
+    }
+
+    public function testAPlantOfAnotherGardenIsNotFound(): void
+    {
+        $plant = PlantFactory::createOne(['garden' => GardenFactory::createOne()]);
+
+        self::assertNull($this->plantRepository->findOneInGarden(self::garden(), $plant->getId()));
+        $this->expectException(PlantNotFoundException::class);
+        $this->expectExceptionMessageIs(\sprintf('No plant with id %d.', $plant->getId()));
+        $this->plantRepository->get(self::garden(), $plant->getId());
     }
 
     public function testTheDraftsOfTheChatNewestFirst(): void
@@ -40,8 +53,9 @@ final class PlantRepositoryTest extends KernelTestCase
         PlantFactory::createOne(['commonName' => 'Newer draft', 'createdAt' => new \DateTimeImmutable('2026-11-02 10:00')]);
         PlantingFactory::new()->linkedTo(PlantFactory::new(['commonName' => 'Draft of a planting']))->create();
         PlantFactory::new()->validated()->create(['commonName' => 'Validated']);
+        PlantFactory::createOne(['commonName' => 'Draft of another garden', 'garden' => GardenFactory::createOne()]);
 
-        self::assertSame(['Newer draft', 'Older draft'], self::names($this->plantRepository->findDraftsWithoutPlanting()));
+        self::assertSame(['Newer draft', 'Older draft'], self::names($this->plantRepository->findDraftsWithoutPlanting(self::garden())));
     }
 
     public function testTheValidatedPlantsByNameWithTheirReminders(): void
@@ -49,9 +63,10 @@ final class PlantRepositoryTest extends KernelTestCase
         PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Cutting)->create(['commonName' => 'Sage']);
         PlantFactory::new()->validated()->create(['commonName' => 'Lavender']);
         PlantFactory::createOne(['commonName' => 'Box']);
+        PlantFactory::new()->validated()->create(['commonName' => 'Rosemary', 'garden' => GardenFactory::createOne()]);
         $this->entityManager->clear();
 
-        $plants = $this->plantRepository->findValidated();
+        $plants = $this->plantRepository->findValidated(self::garden());
 
         self::assertSame(['Lavender', 'Sage'], self::names($plants));
         self::assertSame([ReminderType::Cutting], $plants[1]->getEnabledReminderTypes());
@@ -65,9 +80,9 @@ final class PlantRepositoryTest extends KernelTestCase
         $macrophylla->create(['commonName' => 'Draft hydrangea']);
         PlantFactory::createOne(['commonName' => 'Panicled hydrangea', 'scientificName' => 'Hydrangea paniculata']);
 
-        self::assertSame(['Bigleaf hydrangea', 'Hortensia'], self::names($this->plantRepository->findValidatedBySpecies('hydrangea MACROPHYLLA')));
-        self::assertSame([], $this->plantRepository->findValidatedBySpecies('Hydrangea paniculata'), 'A draft only.');
-        self::assertSame([], $this->plantRepository->findValidatedBySpecies('Hydrangea'), 'The species, not the genus.');
+        self::assertSame(['Bigleaf hydrangea', 'Hortensia'], self::names($this->plantRepository->findValidatedBySpecies(self::garden(), 'hydrangea MACROPHYLLA')));
+        self::assertSame([], $this->plantRepository->findValidatedBySpecies(self::garden(), 'Hydrangea paniculata'), 'A draft only.');
+        self::assertSame([], $this->plantRepository->findValidatedBySpecies(self::garden(), 'Hydrangea'), 'The species, not the genus.');
     }
 
     public function testEverySpeciesValidatedFirstWithMyPlantsAndTheirSpace(): void
@@ -84,7 +99,7 @@ final class PlantRepositoryTest extends KernelTestCase
         PlantingFactory::createOne(['name' => 'Without care sheet']);
         $this->entityManager->clear();
 
-        $entries = $this->plantRepository->findAllWithPlantings();
+        $entries = $this->plantRepository->findAllWithPlantings(self::garden());
 
         self::assertSame(
             [
@@ -108,10 +123,10 @@ final class PlantRepositoryTest extends KernelTestCase
         PlantFactory::new()->validated()->create(['commonName' => 'Panicled hydrangea', 'scientificName' => 'Hydrangea paniculata', 'createdAt' => new \DateTimeImmutable('2026-11-02'), 'trefleId' => 191052]);
         PlantFactory::createOne();
 
-        self::assertSame('Panicled hydrangea', $this->plantRepository->findOneBySpecies(191052, 'Hydrangea paniculata')?->getCommonName(), 'The validated one first.');
-        self::assertSame('Bigleaf hydrangea', $this->plantRepository->findOneBySpecies(191047, 'HYDRANGEA macrophylla')?->getCommonName(), 'A draft without Trefle id, by its name.');
-        self::assertSame('Panicled hydrangea', $this->plantRepository->findOneBySpecies(191052, 'Another name')?->getCommonName(), 'By its Trefle id.');
-        self::assertNull($this->plantRepository->findOneBySpecies(263311, 'Rosa canina'));
+        self::assertSame('Panicled hydrangea', $this->plantRepository->findOneBySpecies(self::garden(), 191052, 'Hydrangea paniculata')?->getCommonName(), 'The validated one first.');
+        self::assertSame('Bigleaf hydrangea', $this->plantRepository->findOneBySpecies(self::garden(), 191047, 'HYDRANGEA macrophylla')?->getCommonName(), 'A draft without Trefle id, by its name.');
+        self::assertSame('Panicled hydrangea', $this->plantRepository->findOneBySpecies(self::garden(), 191052, 'Another name')?->getCommonName(), 'By its Trefle id.');
+        self::assertNull($this->plantRepository->findOneBySpecies(self::garden(), 263311, 'Rosa canina'));
     }
 
     /**
@@ -122,5 +137,13 @@ final class PlantRepositoryTest extends KernelTestCase
     private static function names(array $plants): array
     {
         return array_map(static fn (Plant $plant): string => $plant->getCommonName(), $plants);
+    }
+
+    private static function garden(): Garden
+    {
+        $garden = DefaultGardenStory::get('garden');
+        self::assertInstanceOf(Garden::class, $garden);
+
+        return $garden;
     }
 }

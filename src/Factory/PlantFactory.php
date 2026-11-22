@@ -4,11 +4,14 @@ namespace App\Factory;
 
 use App\Plant\Entity\Plant;
 use App\Reminder\Model\ReminderType;
+use App\Story\DefaultGardenStory;
+use Zenstruck\Foundry\LazyValue;
 use Zenstruck\Foundry\Object\Instantiator;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
- * A draft, as the agent proposes it: validated() for a plant of the garden.
+ * A draft, as the agent proposes it: validated() for a plant of the garden. In the default garden of the test unless
+ * told (DefaultGardenStory).
  *
  * @extends PersistentObjectFactory<Plant>
  */
@@ -50,6 +53,7 @@ final class PlantFactory extends PersistentObjectFactory
     protected function defaults(): array
     {
         return [
+            'garden' => LazyValue::new(static fn () => DefaultGardenStory::get('garden')),
             'commonName' => 'Bigleaf hydrangea',
             'scientificName' => 'Hydrangea macrophylla',
             'family' => 'Hydrangeaceae',

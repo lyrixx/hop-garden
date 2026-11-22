@@ -5,9 +5,11 @@ namespace App\Tests\Integration\Garden;
 use App\Factory\PlantFactory;
 use App\Factory\PlantingFactory;
 use App\Factory\SpaceFactory;
+use App\Garden\Entity\Garden;
 use App\Garden\Entity\Planting;
 use App\Garden\PlantingRepository;
 use App\Reminder\Model\ReminderType;
+use App\Story\DefaultGardenStory;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -56,7 +58,7 @@ final class PlantingRepositoryTest extends KernelTestCase
         PlantingFactory::createOne(['name' => 'Lavender']);
         $this->entityManager->clear();
 
-        $plantings = $this->plantingRepository->findAllByName();
+        $plantings = $this->plantingRepository->findAllByName(self::garden());
 
         self::assertSame(['Climbing rose', 'Lavender', 'sage'], self::names($plantings));
         self::assertSame([ReminderType::Pruning], $plantings[0]->getPlant()?->getEnabledReminderTypes());
@@ -70,5 +72,13 @@ final class PlantingRepositoryTest extends KernelTestCase
     private static function names(array $plantings): array
     {
         return array_map(static fn (Planting $planting): string => $planting->getName(), $plantings);
+    }
+
+    private static function garden(): Garden
+    {
+        $garden = DefaultGardenStory::get('garden');
+        self::assertInstanceOf(Garden::class, $garden);
+
+        return $garden;
     }
 }

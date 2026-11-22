@@ -2,6 +2,7 @@
 
 namespace App\Plant;
 
+use App\Garden\Entity\Garden;
 use App\Garden\Entity\Planting;
 use App\Plant\Entity\Plant;
 use App\Plant\Exception\PlantNotFoundException;
@@ -13,6 +14,9 @@ use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
+ * The care sheets of the species of a garden: the queries take the garden, a care sheet of another one is never found.
+ * One found by id is checked by App\Garden\Security\GardenResourceVoter.
+ *
  * @extends ServiceEntityRepository<Plant>
  */
 class PlantRepository extends ServiceEntityRepository
@@ -27,9 +31,17 @@ class PlantRepository extends ServiceEntityRepository
         $this->getEntityManager()->persist($plant);
     }
 
-    public function get(int $id): Plant
+    /**
+     * The same answer whether another garden has it or not: it is not said to exist.
+     */
+    public function get(Garden $garden, int $id): Plant
     {
-        return $this->find($id) ?? throw PlantNotFoundException::withId($id);
+        return $this->findOneInGarden($garden, $id) ?? throw PlantNotFoundException::withId($id);
+    }
+
+    public function findOneInGarden(Garden $garden, int $id): ?Plant
+    {
+        return $this->findOneBy(['garden' => $garden, 'id' => $id]);
     }
 
     /**
@@ -45,11 +57,13 @@ class PlantRepository extends ServiceEntityRepository
      *
      * @return list<Plant>
      */
-    public function findDraftsWithoutPlanting(): array
+    public function findDraftsWithoutPlanting(Garden $garden): array
     {
         /** @var list<Plant> $plants */
         $plants = $this->createQueryBuilder('p')
+            ->andWhere('p.garden = :garden')
             ->andWhere('p.status = :status')
+            ->setParameter('garden', $garden)
             ->andWhere(\sprintf('NOT EXISTS (SELECT planting.id FROM %s planting WHERE planting.plant = p)', Planting::class))
             ->setParameter('status', PlantStatus::Draft)
             ->orderBy('p.createdAt', \SortDirection::Descending)
@@ -65,10 +79,12 @@ class PlantRepository extends ServiceEntityRepository
      *
      * @return list<PlantWithPlantings>
      */
-    public function findAllWithPlantings(): array
+    public function findAllWithPlantings(Garden $garden): array
     {
         /** @var list<Plant|Planting|null> $entities */
         $entities = $this->createQueryBuilder('p')
+            ->andWhere('p.garden = :garden')
+            ->setParameter('garden', $garden)
             ->addSelect('planting', 'space')
             // Planting holds the relation, and Plant has no inverse side to keep in sync
             ->leftJoin(Planting::class, 'planting', Join::WITH, 'planting.plant = p')
@@ -105,11 +121,13 @@ class PlantRepository extends ServiceEntityRepository
      * The care sheet already made for this species, validated or still a draft: a draft of the chat may have no Trefle
      * id, so the scientific name counts too.
      */
-    public function findOneBySpecies(int $trefleId, string $scientificName): ?Plant
+    public function findOneBySpecies(Garden $garden, int $trefleId, string $scientificName): ?Plant
     {
         /** @var ?Plant $plant */
         $plant = $this->createQueryBuilder('p')
+            ->andWhere('p.garden = :garden')
             ->andWhere('p.trefleId = :trefleId OR LOWER(p.scientificName) = LOWER(:scientificName)')
+            ->setParameter('garden', $garden)
             ->addSelect('CASE WHEN p.status = :validated THEN 0 ELSE 1 END AS HIDDEN statusOrder')
             ->setParameter('trefleId', $trefleId)
             ->setParameter('scientificName', $scientificName)
@@ -127,13 +145,15 @@ class PlantRepository extends ServiceEntityRepository
     /**
      * @return list<Plant>
      */
-    public function findValidated(): array
+    public function findValidated(Garden $garden): array
     {
         /** @var list<Plant> $plants */
         $plants = $this->createQueryBuilder('p')
             ->addSelect('r')
             ->leftJoin('p.reminders', 'r')
+            ->andWhere('p.garden = :garden')
             ->andWhere('p.status = :status')
+            ->setParameter('garden', $garden)
             ->setParameter('status', PlantStatus::Validated)
             ->orderBy('p.commonName', \SortDirection::Ascending)
             ->getQuery()
@@ -146,11 +166,13 @@ class PlantRepository extends ServiceEntityRepository
     /**
      * @return list<Plant>
      */
-    public function findValidatedBySpecies(string $scientificName): array
+    public function findValidatedBySpecies(Garden $garden, string $scientificName): array
     {
         /** @var list<Plant> $plants */
         $plants = $this->createQueryBuilder('p')
+            ->andWhere('p.garden = :garden')
             ->andWhere('p.status = :status')
+            ->setParameter('garden', $garden)
             ->andWhere('LOWER(p.scientificName) = LOWER(:scientificName)')
             ->setParameter('status', PlantStatus::Validated)
             ->setParameter('scientificName', $scientificName)

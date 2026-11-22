@@ -2,13 +2,16 @@
 
 namespace App\Tests\Unit\Garden;
 
+use App\Factory\GardenFactory;
 use App\Factory\PlantFactory;
+use App\Garden\Entity\Garden;
 use App\Garden\Entity\Planting;
 use App\Garden\Entity\Space;
 use App\Garden\Exception\CareSheetAlreadyLinkedException;
 use App\Garden\Model\CareTask;
 use App\Garden\Model\Soil;
 use App\Plant\Model\Exposure;
+use App\Story\DefaultGardenStory;
 use App\Tests\Utils\Factory\EntityId;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\UuidV7;
@@ -173,7 +176,7 @@ final class PlantingTest extends TestCase
 
     public function testTheGardenInfoIsRevisedButNotTheSpecies(): void
     {
-        $planting = new Planting('Hydrangea', null, null, new \DateTimeImmutable('2026-11-01'), 191047, 'Hydrangea macrophylla', 'old.png');
+        $planting = new Planting(self::garden(), 'Hydrangea', null, null, new \DateTimeImmutable('2026-11-01'), 191047, 'Hydrangea macrophylla', 'old.png');
 
         $shed = self::space('By the shed');
 
@@ -189,14 +192,42 @@ final class PlantingTest extends TestCase
         self::assertSame(191047, $planting->getTrefleId());
     }
 
+    public function testAPlantingGrowsInItsOwnGardenOnly(): void
+    {
+        $planting = self::planting('Rose');
+        $elsewhere = GardenFactory::createOne();
+
+        try {
+            $planting->revise('Rose', new Space($elsewhere, 'Balcony', null, null, new \DateTimeImmutable('2026-11-01')), null);
+            self::fail('A space of another garden.');
+        } catch (\LogicException $e) {
+            self::assertSame('A planting cannot grow in a space of another garden.', $e->getMessage());
+        }
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessageIs('A planting follows a care sheet of its own garden only.');
+        $planting->linkTo(PlantFactory::createOne(['garden' => $elsewhere]));
+    }
+
+    /**
+     * The one of the factories: PlantFactory makes its care sheets in it.
+     */
+    private static function garden(): Garden
+    {
+        $garden = DefaultGardenStory::get('garden');
+        self::assertInstanceOf(Garden::class, $garden);
+
+        return $garden;
+    }
+
     private static function planting(string $name, ?Space $space = null): Planting
     {
-        return new Planting($name, $space, null, new \DateTimeImmutable('2026-11-01'));
+        return new Planting(self::garden(), $name, $space, null, new \DateTimeImmutable('2026-11-01'));
     }
 
     private static function space(string $name): Space
     {
-        return new Space($name, Exposure::Shade, Soil::Clay, new \DateTimeImmutable('2026-11-01'));
+        return new Space(self::garden(), $name, Exposure::Shade, Soil::Clay, new \DateTimeImmutable('2026-11-01'));
     }
 
     /**

@@ -12,8 +12,8 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 
 /**
- * A plant planted somewhere in the garden: what the user sees there, and the care they gave it. The care sheet of
- * its species lives in the Plant it is linked to.
+ * A plant planted somewhere in a garden: what its members see there, and the care they gave it. The care sheet of its
+ * species lives in the Plant it is linked to, of the same garden.
  */
 #[ORM\Entity(repositoryClass: PlantingRepository::class)]
 class Planting
@@ -53,6 +53,9 @@ class Planting
     private ?string $proposalId = null;
 
     public function __construct(
+        #[ORM\ManyToOne]
+        #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+        private Garden $garden,
         #[ORM\Column]
         private string $name,
         /**
@@ -85,7 +88,7 @@ class Planting
             throw new \LogicException(\sprintf('Plant %d is not validated.', $plant->getId()));
         }
 
-        $planting = new self($name, $space, null, $createdAt, $plant->getTrefleId(), $plant->getScientificName());
+        $planting = new self($plant->getGarden(), $name, $space, null, $createdAt, $plant->getTrefleId(), $plant->getScientificName());
         $planting->linkTo($plant);
         $planting->proposalId = $proposalId;
 
@@ -129,6 +132,10 @@ class Planting
      */
     public function linkTo(Plant $plant): void
     {
+        if ($plant->getGarden() !== $this->garden) {
+            throw new \LogicException('A planting follows a care sheet of its own garden only.');
+        }
+
         $this->plant = $plant;
         $this->draftingFailed = false;
     }
@@ -184,6 +191,11 @@ class Planting
     public function getId(): int
     {
         return $this->id ?? throw new \LogicException('The planting has not been persisted yet.');
+    }
+
+    public function getGarden(): Garden
+    {
+        return $this->garden;
     }
 
     public function getName(): string

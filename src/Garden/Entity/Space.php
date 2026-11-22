@@ -11,7 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * A spot of the user's garden (the balcony, the north bed...): its exposure and its soil are those of the plants
+ * A spot of a garden (the balcony, the north bed...): its exposure and its soil are those of the plants
  * growing there, and they are neighbours.
  */
 #[ORM\Entity(repositoryClass: SpaceRepository::class)]
@@ -37,6 +37,9 @@ class Space
     private ?string $proposalId = null;
 
     public function __construct(
+        #[ORM\ManyToOne]
+        #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+        private Garden $garden,
         #[ORM\Column]
         private string $name,
         /**
@@ -55,9 +58,9 @@ class Space
     /**
      * Created from the space card the agent proposed, as the user completed it.
      */
-    public static function proposed(string $proposalId, string $name, ?Exposure $exposure, ?Soil $soil, \DateTimeImmutable $createdAt): self
+    public static function proposed(Garden $garden, string $proposalId, string $name, ?Exposure $exposure, ?Soil $soil, \DateTimeImmutable $createdAt): self
     {
-        $space = new self($name, $exposure, $soil, $createdAt);
+        $space = new self($garden, $name, $exposure, $soil, $createdAt);
         $space->proposalId = $proposalId;
 
         return $space;
@@ -91,6 +94,10 @@ class Space
      */
     public function welcome(Planting $planting): void
     {
+        if ($planting->getGarden() !== $this->garden) {
+            throw new \LogicException('A planting cannot grow in a space of another garden.');
+        }
+
         if (!$this->plantings->contains($planting)) {
             $this->plantings->add($planting);
         }
@@ -109,6 +116,11 @@ class Space
     public function getId(): int
     {
         return $this->id ?? throw new \LogicException('The space has not been persisted yet.');
+    }
+
+    public function getGarden(): Garden
+    {
+        return $this->garden;
     }
 
     public function getName(): string
