@@ -1,12 +1,12 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ plant.validated ? 'Edit' : 'Review' }} {{ plant.commonName }} · Hop Garden{% endblock %}
+{% block title %}{{ (plant.validated ? 'care_sheet.edit.title' : 'care_sheet.review.title')|trans({name: plant.commonName}) }} · Hop Garden{% endblock %}
 
 {% block body %}
     <header class="plate-head">
-        <nav class="breadcrumb"><span class="page-label page-label-species">Species</span> <a href="{{ path('plant_index') }}">All species</a> › <a href="{{ path('plant_show', {id: plant.id}) }}"><em>{{ plant.scientificName }}</em></a> › {{ plant.validated ? 'Edit' : 'Review' }}</nav>
-        <h1>{{ plant.validated ? 'Edit' : 'Review the draft of' }} <em>{{ plant.scientificName }}</em></h1>
-        <p>A value you change counts as verified (high confidence).{% if not plant.validated %} Its reminders wait until you validate the draft.{% endif %}</p>
+        <nav class="breadcrumb"><span class="page-label page-label-species">{{ 'species.label'|trans }}</span> <a href="{{ path('plant_index') }}">{{ 'species.all'|trans }}</a> › <a href="{{ path('plant_show', {id: plant.id}) }}"><em>{{ plant.scientificName }}</em></a> › {{ (plant.validated ? 'action.edit' : 'action.review')|trans }}</nav>
+        <h1>{{ (plant.validated ? 'care_sheet.edit.heading' : 'care_sheet.review.page_heading')|trans({species: '<em>' ~ plant.scientificName|e ~ '</em>'})|raw }}</h1>
+        <p>{{ 'care_sheet.edit.verified'|trans }}{% if not plant.validated %} {{ 'care_sheet.review.reminders_wait'|trans }}{% endif %}</p>
     </header>
 
     {{ include('plant/_form.html.twig', {cancel_url: path('plant_show', {id: plant.id})}) }}

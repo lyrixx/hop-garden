@@ -24,14 +24,14 @@ final class RunAgentHandlerTest extends KernelTestCase
         $conversationId = new UuidV7();
         $handler = self::getContainer()->get(RunAgentHandler::class);
 
-        $handler(new RunAgent($conversationId->toRfc4122(), 'hortensia'));
+        $handler(new RunAgent($conversationId->toRfc4122(), 'hortensia', 'en'));
 
         $events = $this->events($conversationId);
         self::assertSame(['start', 'tool_call', 'answer', 'done'], array_values(array_unique(array_column($events, 'type'))));
         self::assertSame('search_plant(query: "hortensia")', $events[1]['summary']);
         self::assertSame(['type' => 'answer', 'bubble' => 'new', 'html' => '<p>' . ScriptedGardener::QUESTION . '</p>'], $events[2], 'Rendered on the server, as the history.');
 
-        $handler(new RunAgent($conversationId->toRfc4122(), 'paniculata'));
+        $handler(new RunAgent($conversationId->toRfc4122(), 'paniculata', 'en'));
 
         $events = \array_slice($this->events($conversationId), \count($events));
         $toolCalls = array_column(array_filter($events, static fn (array $event): bool => 'tool_call' === $event['type']), 'summary');
@@ -58,7 +58,7 @@ final class RunAgentHandlerTest extends KernelTestCase
         self::bootKernel();
         $conversationId = new UuidV7();
 
-        self::getContainer()->get(RunAgentHandler::class)(new RunAgent($conversationId->toRfc4122(), ScriptedGardener::STREAMED));
+        self::getContainer()->get(RunAgentHandler::class)(new RunAgent($conversationId->toRfc4122(), ScriptedGardener::STREAMED, 'en'));
 
         self::assertSame(
             [
@@ -80,7 +80,7 @@ final class RunAgentHandlerTest extends KernelTestCase
         self::bootKernel();
         $conversationId = new UuidV7();
 
-        self::getContainer()->get(RunAgentHandler::class)(new RunAgent($conversationId->toRfc4122(), ScriptedGardener::NARRATED));
+        self::getContainer()->get(RunAgentHandler::class)(new RunAgent($conversationId->toRfc4122(), ScriptedGardener::NARRATED, 'en'));
 
         self::assertSame(
             [
@@ -102,7 +102,7 @@ final class RunAgentHandlerTest extends KernelTestCase
         $conversationId = new UuidV7();
         $handler = self::getContainer()->get(RunAgentHandler::class);
 
-        $handler(new RunAgent($conversationId->toRfc4122(), ScriptedGardener::NARRATED));
+        $handler(new RunAgent($conversationId->toRfc4122(), ScriptedGardener::NARRATED, 'en'));
 
         $events = $this->events($conversationId);
         self::assertSame(
@@ -116,7 +116,7 @@ final class RunAgentHandlerTest extends KernelTestCase
             $events,
         );
 
-        $handler(new RunAgent($conversationId->toRfc4122(), 'paniculata'));
+        $handler(new RunAgent($conversationId->toRfc4122(), 'paniculata', 'en'));
 
         $events = \array_slice($this->events($conversationId), \count($events));
         self::assertSame(['start', 'draft_card', 'answer', 'done'], array_values(array_unique(array_column($events, 'type'))), 'The draft card still comes.');
@@ -133,7 +133,7 @@ final class RunAgentHandlerTest extends KernelTestCase
         $conversationId = new UuidV7();
 
         // Handled: the worker goes on with the next message
-        self::getContainer()->get(RunAgentHandler::class)(new RunAgent($conversationId->toRfc4122(), 'hortensia, ' . ScriptedGardener::UNREACHABLE));
+        self::getContainer()->get(RunAgentHandler::class)(new RunAgent($conversationId->toRfc4122(), 'hortensia, ' . ScriptedGardener::UNREACHABLE, 'en'));
 
         self::assertSame(
             [['type' => 'start'], ['type' => 'error', 'message' => 'The assistant could not answer: The model provider does not answer.'], ['type' => 'done']],
@@ -147,7 +147,7 @@ final class RunAgentHandlerTest extends KernelTestCase
         $conversationId = new UuidV7();
 
         try {
-            self::getContainer()->get(RunAgentHandler::class)(new RunAgent($conversationId->toRfc4122(), ScriptedGardener::BROKEN));
+            self::getContainer()->get(RunAgentHandler::class)(new RunAgent($conversationId->toRfc4122(), ScriptedGardener::BROKEN, 'en'));
             self::fail('A bug is not hidden.');
         } catch (\LogicException $e) {
             self::assertSame('The agent is broken.', $e->getMessage());

@@ -3,22 +3,22 @@
 namespace App\Reminder\Model;
 
 use App\Plant\Entity\CareSheet;
+use Symfony\Contracts\Translation\TranslatableInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
-enum ReminderType: string
+enum ReminderType: string implements TranslatableInterface
 {
     case Pruning = 'pruning';
     case Deadheading = 'deadheading';
     case Cutting = 'cutting';
     case Frost = 'frost';
 
-    public function label(): string
+    /**
+     * Its label, in translations/messages+intl-icu.*.yaml.
+     */
+    public function trans(TranslatorInterface $translator, ?string $locale = null): string
     {
-        return match ($this) {
-            self::Pruning => 'Pruning',
-            self::Deadheading => 'Deadheading',
-            self::Cutting => 'Cuttings',
-            self::Frost => 'Frost alert',
-        };
+        return $translator->trans('reminder_type.' . $this->value, locale: $locale);
     }
 
     /**

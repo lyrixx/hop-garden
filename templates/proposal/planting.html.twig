@@ -1,13 +1,13 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Add {{ proposal.name }} to my garden · Hop Garden{% endblock %}
+{% block title %}{{ 'proposal.planting.title'|trans({name: proposal.name}) }} · Hop Garden{% endblock %}
 
 {# The card of App\Controller\ProposalController as a page: the URL propose_planting gives an external MCP client #}
 {% block body %}
     <header class="plate-head">
-        <nav class="breadcrumb"><a href="{{ path('garden') }}">My garden</a> › Add a plant</nav>
-        <h1>Add to my garden</h1>
-        <p>Your assistant proposes this plant. Nothing is added until you tap the card.</p>
+        <nav class="breadcrumb"><a href="{{ path('garden') }}">{{ 'nav.garden'|trans }}</a> › {{ 'garden.add_a_plant'|trans }}</nav>
+        <h1>{{ 'action.add_to_my_garden'|trans }}</h1>
+        <p>{{ 'proposal.planting.intro'|trans }}</p>
     </header>
     <twig:Proposal:PlantingCard :proposal="proposal" :planting="planting" :plant="plant" :space="space" :form="form ?? null" :unavailable="unavailable ?? null"/>
 {% endblock %}

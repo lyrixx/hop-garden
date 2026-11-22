@@ -1,19 +1,19 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Notifications · Hop Garden{% endblock %}
+{% block title %}{{ 'nav.notifications'|trans }} · Hop Garden{% endblock %}
 
 {% block body %}
 <div class="with-specimen">
 <div>
-    <twig:PlateHead tab="V" title="Notifications" subtitle="Pruning, deadheading and cuttings on the first day of their months, frost when the forecast gets colder than a plant can bear."/>
+    <twig:PlateHead tab="V" :title="'nav.notifications'|trans" :subtitle="'notification.subtitle'|trans"/>
 
     {# What the agent gets from upcoming_reminders and get_frost_forecast #}
     <div class="reminder-board">
         <section class="card reminder-section coming-up" aria-labelledby="coming-up-title">
-            <h2 id="coming-up-title"><span class="pict"><twig:Icon name="bell" :size="18"/></span> Coming up</h2>
-            <p class="hint">The enabled reminders of the next {{ coming_up_days // 7 }} weeks, and the frost alerts of the forecast.</p>
+            <h2 id="coming-up-title"><span class="pict"><twig:Icon name="bell" :size="18"/></span> {{ 'notification.coming_up.title'|trans }}</h2>
+            <p class="hint">{{ 'notification.coming_up.hint'|trans({weeks: coming_up_days // 7}) }}</p>
             {% if coming_up is empty %}
-                <p class="reminder-empty">No reminder coming up. Turn reminders on from the card of a species.</p>
+                <p class="reminder-empty">{{ 'notification.coming_up.empty'|trans }}</p>
             {% else %}
                 <ul class="upcoming-list">
                     {% for upcoming in coming_up %}
@@ -22,29 +22,29 @@
                 </ul>
             {% endif %}
             {% if forecast_days is null %}
-                <p class="hint">Frost alerts are left out: no forecast for now.</p>
+                <p class="hint">{{ 'notification.coming_up.no_forecast'|trans }}</p>
             {% endif %}
         </section>
 
         <section class="card reminder-section frost-forecast" aria-labelledby="frost-forecast-title">
-            <h2 id="frost-forecast-title"><span class="pict pict-frost"><twig:Icon name="snowflake" :size="18"/></span> Frost forecast</h2>
+            <h2 id="frost-forecast-title"><span class="pict pict-frost"><twig:Icon name="snowflake" :size="18"/></span> {{ 'forecast.title'|trans }}</h2>
             {% if forecast_days is null %}
-                <p class="warning forecast-unavailable">The frost forecast is unavailable: Open-Meteo did not answer. Try again in a few minutes.</p>
+                <p class="warning forecast-unavailable">{{ 'forecast.unavailable'|trans }}</p>
             {% else %}
-                <p class="hint">The minimum of each day, and the plants at risk: colder than their hardiness plus 2 °C, or 0 °C if frost sensitive.</p>
+                <p class="hint">{{ 'forecast.hint'|trans }}</p>
                 <ul class="forecast-list">
                     {% for day in forecast_days %}
                         <twig:Reminder:ForecastDay :day="day" :plantingIds="planting_ids"/>
                     {% endfor %}
                 </ul>
-                <p class="meta">Weather data by <a href="https://open-meteo.com/">Open-Meteo.com</a> (CC BY 4.0)</p>
+                <p class="meta">{{ 'forecast.credit'|trans({open_meteo: '<a href="https://open-meteo.com/">Open-Meteo.com</a>'})|raw }}</p>
             {% endif %}
         </section>
     </div>
 
-    <h2 class="received-title">Received</h2>
+    <h2 class="received-title">{{ 'notification.received.title'|trans }}</h2>
     {% if notifications is empty %}
-        <p class="callout">Nothing yet. Reminders are checked every day at 7:00.</p>
+        <p class="callout">{{ 'notification.received.empty'|trans }}</p>
     {% else %}
         <ul class="notification-list">
             {% for notification in notifications %}
@@ -52,9 +52,9 @@
                 <li class="card notification notification-{{ type.value }} {{ notification.read ? '' : 'is-unread' }}">
                     <span class="pict {{ type.calendar ? '' : 'pict-frost' }}"><twig:Icon :name="type.pictogram" :size="18"/></span>
                     <div>
-                        <span class="tag tag-{{ type.value }}">{{ type.label }}</span>
+                        <span class="tag tag-{{ type.value }}">{{ type|trans }}</span>
                         <p>{{ notification.message }}</p>
-                        <p class="meta"><twig:Reminder:PlantLink :plant="notification.reminder.plant" :plantingIds="planting_ids"/> · {{ notification.createdAt|date('l j F, H:i') }}</p>
+                        <p class="meta"><twig:Reminder:PlantLink :plant="notification.reminder.plant" :plantingIds="planting_ids"/> · {{ notification.createdAt|day_and_time }}</p>
                     </div>
                 </li>
             {% endfor %}

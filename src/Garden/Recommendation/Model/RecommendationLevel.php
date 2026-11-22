@@ -2,24 +2,25 @@
 
 namespace App\Garden\Recommendation\Model;
 
+use Symfony\Contracts\Translation\TranslatableInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
 /**
  * From the most to the least pressing.
  */
-enum RecommendationLevel: string
+enum RecommendationLevel: string implements TranslatableInterface
 {
     case Warning = 'warning';
     case Action = 'action';
     case Info = 'info';
     case Ok = 'ok';
 
-    public function label(): string
+    /**
+     * Its label, in translations/messages+intl-icu.*.yaml.
+     */
+    public function trans(TranslatorInterface $translator, ?string $locale = null): string
     {
-        return match ($this) {
-            self::Warning => 'Warning',
-            self::Action => 'To do',
-            self::Info => 'Advice',
-            self::Ok => 'All good',
-        };
+        return $translator->trans('recommendation_level.' . $this->value, locale: $locale);
     }
 
     public function priority(): int

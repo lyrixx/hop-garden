@@ -3,13 +3,13 @@
 {% block title %}{{ space.name }} · Hop Garden{% endblock %}
 
 {% block body %}
-    <nav class="breadcrumb"><a href="{{ path('spaces') }}">My spaces</a> › {{ space.name }}</nav>
+    <nav class="breadcrumb"><a href="{{ path('spaces') }}">{{ 'nav.spaces'|trans }}</a> › {{ space.name }}</nav>
 
     <article class="card crowned planting-card space-card">
         <header class="card-head">
             <span class="plant-card-image"><twig:Icon name="grid" :size="34"/></span>
             <div>
-                <p class="kicker">No. {{ space.id }}</p>
+                <p class="kicker">{{ 'specimen.number'|trans({number: space.id}) }}</p>
                 <h3>{{ space.name }}</h3>
             </div>
         </header>
@@ -17,28 +17,28 @@
         <table class="care-sheet">
             <tbody>
                 <tr>
-                    <th scope="row"><span class="pict pict-sun"><twig:Icon :name="space.exposure ? space.exposure.value : 'sun'" :size="17"/></span> Exposure</th>
-                    <td>{{ space.exposure ? space.exposure.label : 'Not recorded' }}</td>
+                    <th scope="row"><span class="pict pict-sun"><twig:Icon :name="space.exposure ? space.exposure.value : 'sun'" :size="17"/></span> {{ 'space.exposure'|trans }}</th>
+                    <td>{{ space.exposure ? space.exposure|trans : 'space.not_recorded'|trans }}</td>
                 </tr>
                 <tr>
-                    <th scope="row"><span class="pict"><twig:Icon name="sprout" :size="17"/></span> Soil</th>
-                    <td>{{ space.soil ? space.soil.label : 'Not recorded' }}</td>
+                    <th scope="row"><span class="pict"><twig:Icon name="sprout" :size="17"/></span> {{ 'space.soil'|trans }}</th>
+                    <td>{{ space.soil ? space.soil|trans : 'space.not_recorded'|trans }}</td>
                 </tr>
             </tbody>
         </table>
 
         <footer class="card-foot">
-            <p>Added on {{ space.createdAt|date('j F Y') }}.</p>
+            <p>{{ 'space.added_on'|trans({date: space.createdAt|long_date}) }}</p>
             <div class="actions">
-                <twig:Button href="{{ path('space_edit', {id: space.id}) }}" icon="pencil" class="button-secondary">Edit the space</twig:Button>
+                <twig:Button href="{{ path('space_edit', {id: space.id}) }}" icon="pencil" class="button-secondary">{{ 'space.edit.button'|trans }}</twig:Button>
             </div>
         </footer>
     </article>
 
     <section class="space-plants">
-        <h2>Growing there</h2>
+        <h2>{{ 'space.growing_there'|trans }}</h2>
         {% if space.plantings is empty %}
-            <p class="callout">No plant in {{ space.name }} yet. Choose this space in the garden info of a plant, or <a href="{{ path('garden_new') }}">add a plant</a>.</p>
+            <p class="callout">{{ 'space.show.empty'|trans({space: space.name|e, link: '<a href="' ~ path('garden_new') ~ '">', link_end: '</a>'})|raw }}</p>
         {% else %}
             <ul class="plant-grid">
                 {% for planting in space.plantings %}

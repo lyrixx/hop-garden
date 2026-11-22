@@ -7,46 +7,48 @@
 <div class="plate-colophon">
     {% if not plant.validated %}
         {% if sheet.llmOnly %}
-            <p class="warning">Trefle does not know this plant: every value comes from the assistant. Please verify.</p>
+            <p class="warning">{{ 'plant_card.llm_only'|trans }}</p>
         {% elseif sheet.hasLlmKnowledge %}
-            <p class="review-note">Review the highlighted values: the assistant is not sure of them.</p>
+            <p class="review-note">{{ 'plant_card.review'|trans }}</p>
         {% else %}
             {# Created by hand: its values are placeholders, until the user changes them #}
-            <p class="review-note">Fill in the highlighted values, then validate. A value left as is stays highlighted, even when it is right.</p>
+            <p class="review-note">{{ 'plant_card.fill_in'|trans }}</p>
         {% endif %}
     {% endif %}
     {% if plant.notes %}<p class="notes">{{ plant.notes }}</p>{% endif %}
 
     <p>
-        Sources:
+        {{ 'plant_card.sources'|trans }}
         {% for source in sheet.sources %}
-            {%- if source.url %}<a href="{{ source.url }}" rel="noopener">{{ source.name }}</a>{% else %}{{ source.name }}{% endif %}{{ not loop.last ? ', ' }}
+            {%- if source.url %}<a href="{{ source.url }}" rel="noopener">{{ source|trans }}</a>{% else %}{{ source|trans }}{% endif %}{{ not loop.last ? ', ' }}
         {%- endfor %}
-        · Check on <a href="https://www.rhs.org.uk/search?query={{ plant.scientificName|url_encode }}" rel="noopener">RHS</a>
-        or <a href="https://www.snhf.org/?s={{ plant.scientificName|url_encode }}" rel="noopener">SNHF</a>
+        · {{ 'plant_card.check_on'|trans({
+            rhs: '<a href="https://www.rhs.org.uk/search?query=' ~ plant.scientificName|url_encode ~ '" rel="noopener">RHS</a>',
+            snhf: '<a href="https://www.snhf.org/?s=' ~ plant.scientificName|url_encode ~ '" rel="noopener">SNHF</a>',
+        })|raw }}
     </p>
     <p class="plate-credit">
         {% if plate.schematic %}
-            Schematic figure: the Biodiversity Heritage Library has no plate of this species yet.
+            {{ 'plant_card.schematic_credit'|trans }}
         {% else %}
-            Figure after <em>{{ plate.depicts }}</em>, {{ plate.work }} ({{ plate.published }}).
-            <a href="{{ plate.url }}" rel="noopener">Biodiversity Heritage Library</a>, public domain.
+            {{ 'plant_card.plate_credit'|trans({depicts: '<em>' ~ plate.depicts|e ~ '</em>', work: plate.work|e, published: plate.published|e})|raw }}
+            {{ 'plant_card.plate_library'|trans({library: '<a href="' ~ plate.url|e('html_attr') ~ '" rel="noopener">Biodiversity Heritage Library</a>'})|raw }}
         {% endif %}
     </p>
 </div>
 
 <div class="actions">
-    <twig:Button href="{{ path('plant_edit', {id: plant.id}) }}" icon="pencil" class="button-secondary">Edit</twig:Button>
+    <twig:Button href="{{ path('plant_edit', {id: plant.id}) }}" icon="pencil" class="button-secondary">{{ 'action.edit'|trans }}</twig:Button>
     {% if plant.validated %}
         {% set my_plant_path = my_plant_path(plant) %}
         {% if my_plant_path %}
-            <twig:Button href="{{ my_plant_path }}" icon="sprout" class="button-next" data-turbo-frame="_top">See my plant</twig:Button>
+            <twig:Button href="{{ my_plant_path }}" icon="sprout" class="button-next" data-turbo-frame="_top">{{ 'action.see_my_plant'|trans }}</twig:Button>
         {% endif %}
     {% else %}
-        <span class="hint">Validate the card to set reminders.</span>
+        <span class="hint">{{ 'plant_card.validate_for_reminders'|trans }}</span>
         <form method="post" action="{{ path('plant_validate', {id: plant.id}) }}" data-chat-follow-up>
             <input type="hidden" name="_token" value="{{ csrf_token('plant') }}">
-            <twig:Button icon="check">Validate</twig:Button>
+            <twig:Button icon="check">{{ 'action.validate'|trans }}</twig:Button>
         </form>
     {% endif %}
 </div>

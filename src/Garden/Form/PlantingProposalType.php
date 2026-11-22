@@ -15,7 +15,7 @@ final class PlantingProposalType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $builder->add('name', TextType::class, ['label' => 'Its name in your garden', 'empty_data' => '', 'attr' => ['autocomplete' => 'off']]);
+        $builder->add('name', TextType::class, ['label' => 'proposal.planting.form.name', 'empty_data' => '', 'attr' => ['autocomplete' => 'off']]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

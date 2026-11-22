@@ -2,10 +2,13 @@
 
 namespace App\Plant\Model;
 
+use Symfony\Contracts\Translation\TranslatableInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
 /**
  * The fields of a care sheet, named as the MCP tools and the confidence map name them.
  */
-enum CareSheetField: string
+enum CareSheetField: string implements TranslatableInterface
 {
     case MinTemperatureC = 'min_temperature_c';
     case FrostSensitive = 'frost_sensitive';
@@ -17,19 +20,12 @@ enum CareSheetField: string
     case PruningAdvice = 'pruning_advice';
     case CuttingAdvice = 'cutting_advice';
 
-    public function label(): string
+    /**
+     * Its label, in translations/messages+intl-icu.*.yaml.
+     */
+    public function trans(TranslatorInterface $translator, ?string $locale = null): string
     {
-        return match ($this) {
-            self::MinTemperatureC => 'Hardiness',
-            self::FrostSensitive => 'Frost sensitive',
-            self::Exposure => 'Exposure',
-            self::Watering => 'Watering',
-            self::PruningMonths => 'Pruning',
-            self::DeadheadingMonths => 'Deadheading',
-            self::CuttingMonths => 'Cuttings',
-            self::PruningAdvice => 'Pruning advice',
-            self::CuttingAdvice => 'Cutting advice',
-        };
+        return $translator->trans('care_sheet_field.' . $this->value, locale: $locale);
     }
 
     /**

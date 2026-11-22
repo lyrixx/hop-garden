@@ -1,0 +1,399 @@
+# Keep the same keys in every language: tests/Unit/Translation/CatalogsTest.php checks them.
+# ICU MessageFormat: {name} for a parameter, {count, plural, ...} and {value, select, ...}; ’ for an apostrophe, never '.
+action:
+    add_to_my_garden: "Ajouter à mon jardin"
+    cancel: "Annuler"
+    close: "Fermer"
+    create_the_space: "Créer l’espace"
+    edit: "Modifier"
+    retry: "Réessayer"
+    review: "Relire"
+    save: "Enregistrer"
+    see_my_plant: "Voir ma plante"
+    see_the_space: "Voir l’espace"
+    validate: "Valider"
+answer:
+    no: "Non"
+    yes: "Oui"
+care_sheet:
+    edit:
+        heading: "Modifier {species}"
+        title: "Modifier {name}"
+        verified: "Une valeur que vous modifiez compte comme vérifiée (confiance élevée)."
+    form:
+        hardiness: "Rusticité (°C)"
+        notes: "Notes"
+    review:
+        heading: "Relire {species}"
+        page_heading: "Relire le brouillon de {species}"
+        reminders_wait: "Ses rappels attendent que vous validiez le brouillon."
+        title: "Relire {name}"
+    save_the_draft: "Enregistrer le brouillon"
+care_sheet_field:
+    cutting_advice: "Conseils de bouturage"
+    cutting_months: "Boutures"
+    deadheading_months: "Fleurs fanées"
+    exposure: "Exposition"
+    frost_sensitive: "Sensible au gel"
+    min_temperature_c: "Rusticité"
+    pruning_advice: "Conseils de taille"
+    pruning_months: "Taille"
+    watering: "Arrosage"
+care_task:
+    feeding: "Engrais"
+    frost_protection: "Protection contre le gel"
+    mulching: "Paillage"
+    pruning: "Taille"
+    watering: "Arrosage"
+chat:
+    draft_gone: "Ce brouillon n’existe plus."
+    error:
+        failed: "L’assistant n’a pas pu répondre : {reason}"
+        unknown: "L’assistant n’a pas pu répondre, voyez les logs du worker."
+    heading: "Votre assistant de jardinage"
+    loading_card: "Chargement de la carte…"
+    loading_draft: "Chargement du brouillon…"
+    message:
+        draft_new_species: "Rédige la fiche de culture d’une nouvelle espèce"
+        draft_species: "Rédige la fiche de culture de {species}"
+    new_conversation: "Nouvelle conversation"
+    # What a card says to the agent once tapped, in the bubble of the user
+    notice:
+        care_sheet_validated: "J’ai validé la fiche de culture de l’espèce {name}."
+        planting_added: "J’ai ajouté {name} à mon jardin."
+        planting_added_in_space: "J’ai ajouté {name} à mon jardin, dans l’espace {space}."
+        space_created: "J’ai créé l’espace {name}."
+    placeholder: "Le nom d’une plante, ou une question sur votre jardin…"
+    send: "Envoyer"
+    send_error: "Le message n’a pas pu être envoyé. Rechargez la page et réessayez."
+    silence: "Toujours pas de réponse : le worker tourne-t-il ? (castor start-workers)"
+    subtitle: "Nommez une plante : l’assistant l’identifie, rédige sa fiche de culture avec Trefle et ses propres connaissances, et vous la validez."
+    suggestion:
+        hydrangea: "hortensia"
+        label: "Essayez"
+        lavender: "lavande"
+        prune: "Que dois-je tailler ce mois-ci ?"
+    title: "Assistant"
+confidence:
+    high: "élevée"
+    low: "faible"
+    medium: "moyenne"
+    title: "Confiance de l’assistant : {confidence}"
+exposure:
+    part_shade: "Mi-ombre"
+    shade: "Ombre"
+    sun: "Plein soleil"
+flash:
+    planting:
+        added_drafting: "{name} est dans votre jardin. L’assistant rédige sa fiche de culture."
+        added_with_care_sheet: "{name} est dans votre jardin, avec la fiche de culture de {species}."
+        linked: "{name} suit maintenant la fiche de culture de {species}."
+        not_same_species: "Cette fiche de culture n’est pas une fiche validée de la même espèce."
+        saved: "Les infos de jardin de {name} sont enregistrées."
+    space:
+        added: "{name} fait partie de vos espaces. Placez-y vos plantes depuis leurs infos de jardin."
+        saved: "L’espace {name} est enregistré."
+    species:
+        draft_ready: "Le brouillon de {name} est prêt : remplissez sa fiche de culture, puis validez-la."
+        draft_updated: "Brouillon mis à jour : validez-le quand il vous semble juste."
+        exists: "{species} a déjà sa fiche de culture : la voici."
+        reminder_needs_validation: "Validez d’abord sa fiche de culture : les rappels se règlent sur une fiche validée."
+        updated: "Fiche de culture mise à jour."
+        validated: "La fiche de {name} est validée. Choisissez ses rappels ci-dessous."
+footer:
+    demo_mode: "Mode démo : Trefle et Open-Meteo répondent par des réponses enregistrées."
+    plant_data: "Données botaniques : {trefle}."
+    plates: "Planches : {library}, domaine public."
+    reviewed: "Les données de culture rédigées par un LLM sont relues par un humain avant d’être enregistrées."
+    weather_data: "Données météo par {open_meteo}, sous licence {license}."
+forecast:
+    at_risk: "Menacées :"
+    credit: "Données météo par {open_meteo} (CC BY 4.0)"
+    down_to: ", jusqu’à {temperature}"
+    hint: "Le minimum de chaque jour, et les plantes menacées : sous leur rusticité plus 2 °C, ou sous 0 °C si elles sont sensibles au gel."
+    no_plant_at_risk: "Aucune plante menacée"
+    title: "Prévisions de gel"
+    unavailable: "Les prévisions de gel sont indisponibles : Open-Meteo n’a pas répondu. Réessayez dans quelques minutes."
+form:
+    name: "Nom"
+garden:
+    add_a_plant: "Ajouter une plante"
+    drafts: "Brouillons d’espèces à relire"
+    empty: "Rien de planté pour l’instant. {first}Ajoutez votre première plante{first_end}, ou {assistant}demandez à l’assistant{assistant_end}."
+    subtitle: "Chacune de mes plantes là où elle pousse : sa photo, les soins reçus, et l’espèce à laquelle elle appartient, avec sa fiche de culture et ses rappels."
+hardiness:
+    caption: "Échelle de rusticité, en °C"
+    label: "Rustique jusqu’à {coldest} °C, alerte gel sous {threshold} °C"
+    threshold: "alerte gel {threshold} °C"
+list:
+    and: "{items} et {last}"
+locale:
+    banner:
+        available: "Hop Garden existe en français"
+        label: "Langue"
+        stay: "Rester en {current, select, en {anglais} other {français}}"
+        switch: "Passer en français"
+    switch:
+        label: "Langue de l’interface"
+nav:
+    assistant: "Assistant"
+    garden: "Mon jardin"
+    notifications: "Notifications"
+    spaces: "Mes espaces"
+    species: "Espèces"
+notification:
+    coming_up:
+        empty: "Aucun rappel à venir. Activez les rappels depuis la fiche d’une espèce."
+        hint: "Les rappels activés des {weeks} prochaines semaines, et les alertes gel des prévisions."
+        no_forecast: "Sans les alertes gel : pas de prévisions pour l’instant."
+        title: "À venir"
+    received:
+        empty: "Rien pour l’instant. Les rappels sont vérifiés chaque jour à 7 h."
+        title: "Reçues"
+    subtitle: "La taille, les fleurs fanées et les boutures le premier jour de leurs mois, le gel quand les prévisions descendent sous ce qu’une plante supporte."
+plant_card:
+    check_on: "À vérifier auprès de la {rhs} ou de la {snhf}"
+    fill_in: "Complétez les valeurs surlignées, puis validez. Une valeur laissée telle quelle reste surlignée, même si elle est juste."
+    hardiness: "Rusticité"
+    llm_only: "Trefle ne connaît pas cette plante : chaque valeur vient de l’assistant. Vérifiez-les."
+    plate_credit: "Figure d’après {depicts}, {work} ({published})."
+    plate_library: "{library}, domaine public."
+    review: "Relisez les valeurs surlignées : l’assistant n’en est pas sûr."
+    schematic_credit: "Figure schématique : la Biodiversity Heritage Library n’a pas encore de planche de cette espèce."
+    sources: "Sources :"
+    validate_for_reminders: "Validez la fiche pour régler ses rappels."
+planting:
+    care_done: "Soins apportés"
+    care_record: "{task} le {date}"
+    choose_space: "choisissez-en un"
+    diseases: "Maladies ou ravageurs"
+    draft_waiting: "Le brouillon de sa fiche de culture attend votre relecture, sur la page de son espèce. Validez-le pour obtenir les recommandations."
+    drafting: "L’assistant rédige la fiche de culture de {name}, via MCP."
+    drafting_failed: "L’assistant s’est arrêté sans rédiger de fiche de culture. Ce que vous avez saisi est conservé."
+    edit:
+        breadcrumb: "Modifier les infos de jardin"
+        intro: "Où et comment elle pousse dans votre jardin."
+        species_stays: "Son espèce reste {species}, avec sa fiche de culture."
+        title: "Modifier les infos de jardin de {name}"
+    form:
+        care_records:
+            hint: "La dernière fois, si vous vous en souvenez. Une taille ne vaut que pour sa saison : l’an prochain, Hop Garden vous la rappelle."
+            label: "Soins déjà faits"
+        diseases:
+            placeholder: "Oïdium sur les feuilles du bas…"
+        name:
+            placeholder: "Hortensia, rosier du portail…"
+        photo:
+            help: "JPEG, PNG ou WebP, jusqu’à 10 Mo. Sans photo, un pictogramme la remplace."
+            help_replace: "JPEG, PNG ou WebP, jusqu’à 10 Mo. Une nouvelle photo remplace l’actuelle."
+            label: "Photo"
+        space:
+            help: "Où elle pousse aujourd’hui : elle prend l’exposition et le sol de l’espace, et les plantes qui y poussent sont ses voisines."
+    label: "Ma plante"
+    neighbours: "Voisines"
+    new:
+        breadcrumb: "Nouvelle plante"
+        intro: "Décrivez-la telle qu’elle pousse dans votre jardin. Hop Garden la compare avec la fiche de culture de son espèce."
+        intro_of_species: "Nommez votre plante et dites où elle pousse. Elle suit la fiche de culture de {name}, avec ses rappels."
+        title: "Ajouter une plante à votre jardin"
+        title_of_species: "Ajouter {species} à votre jardin"
+    no_care_sheet: "Pas encore de fiche de culture."
+    no_neighbour: "Aucune pour l’instant dans {space}"
+    no_space: "Dans aucun espace pour l’instant : {link}, pour son exposition, son sol et ses voisines."
+    none_recorded: "Rien de noté"
+    same_species: "Ou utilisez une fiche de culture déjà validée pour {species} :"
+    since: "Dans votre jardin depuis le {date}."
+    use_the_sheet_of: "Utiliser la fiche de {name}"
+plate:
+    schematic_alt: "Figure schématique d’un arbuste à fleurs"
+plate_part:
+    bud: "Bourgeon"
+    flower: "Fleur"
+    leaf: "Feuille"
+    shoot: "Pousse"
+    stem: "Tige"
+proposal:
+    planting:
+        care_sheet_gone: "Cette fiche de culture n’existe plus. Redemandez à l’assistant."
+        form:
+            name: "Son nom dans votre jardin"
+        intro: "Votre assistant propose cette plante. Rien n’est ajouté avant que vous touchiez la carte."
+        space_gone: "Cet espace n’existe plus. Redemandez à l’assistant."
+        title: "Ajouter {name} à mon jardin"
+        validate_first: "Validez d’abord la fiche de culture de cette espèce."
+    space:
+        heading: "Créer un espace"
+        intro: "Votre assistant propose cet espace. Choisissez son exposition et son sol : rien n’est créé avant que vous touchiez la carte."
+        title: "Créer {name}"
+recommendation:
+    exposure:
+        close: "Elle préfère {preferred, select, sun {le plein soleil} part_shade {la mi-ombre} other {l’ombre}} et se trouve ici {actual, select, sun {en plein soleil} part_shade {à la mi-ombre} other {à l’ombre}} : elle devrait s’en accommoder, mais serait mieux {preferred, select, sun {en plein soleil} part_shade {à la mi-ombre} other {à l’ombre}}."
+        far: "Elle a besoin {preferred, select, sun {du plein soleil} part_shade {de mi-ombre} other {d’ombre}} et se trouve ici {actual, select, sun {en plein soleil} part_shade {à la mi-ombre} other {à l’ombre}} : déplacez-la vers un coin {preferred, select, sun {en plein soleil} part_shade {à la mi-ombre} other {à l’ombre}}, à l’automne ou au début du printemps."
+        no_space: "Indiquez où elle pousse, avec « {button} » : sa fiche de culture demande {preferred, select, sun {le plein soleil} part_shade {la mi-ombre} other {l’ombre}}."
+        suits: "{actual, select, sun {Le plein soleil lui convient.} part_shade {La mi-ombre lui convient.} other {L’ombre lui convient.}}"
+        unknown: "Indiquez l’exposition de {space}, dans « {page} » : sa fiche de culture demande {preferred, select, sun {le plein soleil} part_shade {la mi-ombre} other {l’ombre}}."
+    frost:
+        bring_indoors: "{expected}. Elle est sensible au gel : rentrez-la ou mettez-la à l’abri."
+        cover: "{expected}, plus froid que sa rusticité ({hardiness} °C) : couvrez-la d’un voile d’hivernage."
+        expected_from: "Gel annoncé à partir du {first}, jusqu’à {temperature} le {coldest}"
+        expected_on: "Gel annoncé le {date} ({temperature})"
+        hardy: "Rustique jusqu’à {hardiness} °C."
+        hardy_above_forecast: "Rustique jusqu’à {hardiness} °C : les prévisions restent au-dessus."
+        sensitive_before_autumn: "Sensible au gel (rustique jusqu’à {hardiness} °C) : rentrez-la ou mettez-la à l’abri avant les premières gelées d’automne."
+        sensitive_unprotected: "Sensible au gel (rustique jusqu’à {hardiness} °C), et aucune protection notée cet hiver : rentrez-la ou mettez-la à l’abri."
+        sheltered: "Protégée du gel le {date}."
+        sheltered_check: "{expected}. Protégée le {date} : vérifiez que la protection tient."
+    pruning:
+        done: "Taillée le {date} : c’est fait pour cette saison. Prochaine fois en {months}."
+        in: "Taillez-la en {months}."
+        last: "Dernière taille le {date}."
+        none: "Pas de taille régulière dans sa fiche de culture."
+        now: "C’est le moment de la tailler ({months})."
+    source: "D’après la fiche de culture de {species}, comparée à ce que vous avez décrit."
+    title: "Recommandations"
+    watering:
+        high: "Elle a besoin de beaucoup d’eau : gardez la terre fraîche, surtout en été."
+        high_in_sun: "Elle a besoin de beaucoup d’eau et se trouve ici en plein soleil : arrosez-la souvent en été, et paillez pour garder la terre fraîche."
+        last: "Dernier arrosage le {date}."
+        low: "Elle demande peu d’eau : arrosez-la seulement lors des longues sécheresses, et ne la laissez jamais dans une terre détrempée."
+        low_in_shade: "Elle demande peu d’eau, et l’ombre garde la terre fraîche : arrosez-la seulement lors des longues sécheresses."
+        medium: "Arrosez-la en période sèche."
+recommendation_level:
+    action: "À faire"
+    info: "Conseil"
+    ok: "Tout va bien"
+    warning: "Attention"
+recommendation_subject:
+    exposure: "Exposition"
+    frost: "Gel"
+    pruning: "Taille"
+    watering: "Arrosage"
+reminder:
+    disable: "Désactiver le rappel : {type}"
+    enable: "Activer le rappel : {type}"
+    frost_threshold: "Alerte sous {threshold} °C dans les prévisions"
+    label: "Rappels"
+    message:
+        cutting: "C’est le moment de bouturer {name}."
+        deadheading: "C’est le moment de supprimer les fleurs fanées de {name}."
+        frost_coldest: "Jusqu’à {temperature} le {date}."
+        frost_cover: "Gel annoncé le {date} ({temperature}) : protégez {name} d’un voile d’hivernage."
+        frost_indoors: "Gel annoncé le {date} ({temperature}) : rentrez {name} à l’abri."
+        pruning: "C’est le moment de tailler {name}."
+    no_month: "Aucun mois à rappeler"
+    none: "Aucun rappel"
+    none_short: "Aucun"
+    on_the_first: "Rappel le 1er du mois : {months}"
+reminder_type:
+    cutting: "Boutures"
+    deadheading: "Fleurs fanées"
+    frost: "Alerte gel"
+    pruning: "Taille"
+soil:
+    chalky: "Calcaire"
+    clay: "Argileux"
+    loamy: "Franc"
+    peaty: "Tourbeux"
+    sandy: "Sableux"
+    silty: "Limoneux"
+source:
+    llm_knowledge: "Connaissances du LLM"
+space:
+    add: "Ajouter un espace"
+    add_the_space: "Ajouter l’espace"
+    added_on: "Ajouté le {date}."
+    conditions:
+        exposure_and_soil: "{exposure}, sol {soil_lower}"
+        soil_only: "Sol {soil_lower}"
+    conditions_not_recorded: "Exposition et sol à renseigner"
+    edit:
+        button: "Modifier l’espace"
+        intro: "Son exposition et son sol s’appliquent à toutes les plantes qui y poussent."
+        title: "Modifier {name}"
+    exposure: "Exposition"
+    form:
+        exposure:
+            help: "Le soleil qu’il reçoit un jour d’été."
+        name:
+            placeholder: "Balcon, massif nord, potager…"
+        not_sure: "Je ne sais pas"
+    growing_there: "Ce qui y pousse"
+    index:
+        empty: "Aucun espace pour l’instant. {link}Ajoutez le premier{link_end} : le balcon, le massif nord, le potager…"
+        subtitle: "Les coins de votre jardin : chacun donne son exposition et son sol aux plantes qui y poussent, et en fait des voisines."
+        title: "Vos espaces"
+    label: "Espace"
+    mine: "Mon espace"
+    new: "Nouvel espace"
+    new_intro: "Un coin de votre jardin, comme le balcon ou le massif nord. Les plantes qui y poussent partagent son exposition et son sol, et sont voisines."
+    no_plant_yet: "Aucune plante pour l’instant"
+    none: "Dans aucun espace pour l’instant"
+    not_recorded: "À renseigner"
+    show:
+        empty: "Aucune plante dans {space} pour l’instant. Choisissez cet espace dans les infos de jardin d’une plante, ou {link}ajoutez une plante{link_end}."
+    soil: "Sol"
+species:
+    all: "Toutes les espèces"
+    create_the_draft: "Créer le brouillon"
+    form:
+        name:
+            help: "Nom commun ou latin : Trefle trouve l’espèce."
+            placeholder: "Hortensia, Rosa canina…"
+    hardy_down_to: "Rustique jusqu’à {temperature} °C"
+    hardy_down_to_frost_sensitive: "Rustique jusqu’à {temperature} °C, sensible au gel"
+    index:
+        drafts: "Brouillons à relire"
+        empty: "Aucune espèce pour l’instant. {link}Créez la première{link_end}, ou ajoutez une plante à votre jardin : son espèce suivra."
+        no_planting: "Aucune de vos plantes ne la suit."
+        no_planting_draft: "Aucune de vos plantes pour l’instant : validez-la, puis ajoutez votre plante au jardin."
+        or_ask: "ou {link}demandez à l’assistant de la rédiger{link_end}"
+        plantings: "{count, plural, one {# plante} other {# plantes}} dans votre jardin"
+        subtitle: "La fiche de culture de chaque espèce, sa planche et son nom latin, et mes plantes qui la suivent."
+        validated: "Fiches de culture validées"
+    label: "Espèce"
+    new: "Nouvelle espèce"
+    new_intro: "Choisissez-la avec Trefle, puis remplissez vous-même sa fiche de culture et validez-la. Ajoutez ensuite votre plante au jardin."
+    review_and_validate: "Relire et valider la fiche de culture"
+    sheet_and_reminders: "Fiche de l’espèce et rappels"
+    show:
+        no_planting: "Aucune de vos plantes ne suit cette fiche de culture."
+        no_planting_draft: "Validez la fiche, puis ajoutez votre plante au jardin."
+        shared: "Elles partagent cette fiche de culture, et donc ses rappels."
+        title: "{name}, l’espèce"
+    unknown: "Inconnue"
+    validate_for_reminders: "Validez sa fiche de culture pour régler ses rappels."
+    watering: "Arrosage {watering, select, low {faible} medium {modéré} other {abondant}}"
+species_picker:
+    ask_the_assistant: "Demandez à l’assistant de la rédiger"
+    change: "Changer"
+    rather_not: "Vous préférez ne pas remplir sa fiche de culture vous-même ?"
+    unavailable: "Trefle ne répond pas : votre nom est gardé tel quel."
+    unavailable_required: "Trefle ne répond pas : réessayez dans un instant."
+    unknown: "Trefle ne connaît pas ce nom : il est gardé tel quel."
+    unknown_required: "Trefle ne connaît pas ce nom : essayez son nom latin."
+    which: "De quelle espèce s’agit-il ?"
+    which_optional: "De quelle espèce s’agit-il ? (facultatif)"
+specimen:
+    alt: "{species}, planche coloriée à la main (Biodiversity Heritage Library)"
+    number: "N° {number, number, ::group-off}"
+status:
+    added: "Ajoutée"
+    care_sheet: "Fiche de culture"
+    care_sheet_in_progress: "Fiche en cours"
+    care_sheet_validated: "Fiche validée"
+    created: "Créé"
+    draft: "Brouillon"
+    draft_to_review: "Brouillon à relire"
+    draft_to_validate: "Brouillon à valider"
+    in_garden: "Dans votre jardin"
+    validated: "Validée"
+toast:
+    frost: "Alerte gel"
+    reminder: "Rappel"
+    see: "Voir {name}"
+unit:
+    celsius: "{temperature} °C"
+watering:
+    high: "Abondant"
+    low: "Faible"
+    medium: "Modéré"

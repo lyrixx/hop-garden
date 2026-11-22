@@ -6,12 +6,12 @@
 {% set plant = notification.reminder.plant %}
 {% set frost = not notification.reminder.type.calendar %}
 <div class="card toast toast-{{ notification.reminder.type.value }}" id="toast-{{ notification.id }}" role="status" data-controller="toast">
-    <button type="button" class="toast-close" aria-label="Close" data-action="toast#close">×</button>
+    <button type="button" class="toast-close" aria-label="{{ 'action.close'|trans }}" data-action="toast#close">×</button>
     <span class="pict {{ frost ? 'pict-frost' }}"><twig:Icon :name="frost ? 'snowflake' : 'bell'" :size="22"/></span>
     <div>
-        <strong>{{ frost ? 'Frost alert' : 'Reminder' }}</strong>
+        <strong>{{ (frost ? 'toast.frost' : 'toast.reminder')|trans }}</strong>
         <p>{{ notification.message }}</p>
         {# My plant, in the garden, that the reminder is about #}
-        <a href="{{ my_plant_path(plant) ?? path('plant_show', {id: plant.id}) }}">See {{ plant.commonName }}</a>
+        <a href="{{ my_plant_path(plant) ?? path('plant_show', {id: plant.id}) }}">{{ 'toast.see'|trans({name: plant.commonName}) }}</a>
     </div>
 </div>

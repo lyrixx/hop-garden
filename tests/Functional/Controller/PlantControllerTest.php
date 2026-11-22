@@ -523,7 +523,7 @@ final class PlantControllerTest extends WebTestCase
         self::assertResponseRedirects('/plants/' . $draft->getId());
         self::assertSame([], $this->reload($draft)->getEnabledReminderTypes());
         $this->client->followRedirect();
-        self::assertSelectorTextContains('.flash-warning', 'is still a draft: the user must validate it before reminders can be set.');
+        self::assertSelectorTextContains('.flash-warning', 'Validate its care sheet first: reminders are set on a validated care sheet only.');
     }
 
     public function testAnUnknownReminderTypeIsNotFound(): void

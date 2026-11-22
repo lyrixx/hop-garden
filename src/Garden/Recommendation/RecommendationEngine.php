@@ -8,23 +8,22 @@ use App\Garden\Model\CareTask;
 use App\Garden\Recommendation\Model\Recommendation;
 use App\Garden\Recommendation\Model\RecommendationLevel;
 use App\Garden\Recommendation\Model\RecommendationSubject;
-use App\Plant\CareSheetPresenter;
+use App\Locale\IntlFormatter;
 use App\Plant\Entity\CareSheet;
 use App\Plant\Model\Exposure;
 use App\Plant\Model\Watering;
 use App\Reminder\FrostRiskEvaluator;
 use App\Reminder\Model\ReminderType;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Compares what the user sees in the garden with the care sheet of the species, with fixed rules. The exposure is
  * the one of the space the plant grows in. Soil, diseases and neighbours have no field in the care sheet: they are
- * left to the advice written by the agent. A fact the user did not give yet is asked for, never guessed.
+ * left to the advice written by the agent. A fact the user did not give yet is asked for, never guessed. In the
+ * language of the translator.
  */
 final readonly class RecommendationEngine
 {
-    private const string DATE_FORMAT = 'j F Y';
-    private const string FORECAST_DATE_FORMAT = 'l j F';
-
     /**
      * Frosts happen from October to April, in the temperate Western European climate the care data assumes.
      */
@@ -38,6 +37,8 @@ final readonly class RecommendationEngine
 
     public function __construct(
         private FrostRiskEvaluator $frostRiskEvaluator,
+        private TranslatorInterface $translator,
+        private IntlFormatter $formatter,
     ) {
     }
 
@@ -64,37 +65,29 @@ final readonly class RecommendationEngine
     {
         $preferred = $careSheet->getExposure();
         $space = $planting->getSpace();
+        // The exposures as their values: a language needs its own articles and prepositions for each
         if (null === $space) {
-            return new Recommendation(RecommendationLevel::Info, RecommendationSubject::Exposure, \sprintf(
-                'Tell us where it grows, with "Edit garden info": its care sheet asks for %s.',
-                mb_strtolower($preferred->label()),
-            ));
+            return new Recommendation(RecommendationLevel::Info, RecommendationSubject::Exposure, $this->translator->trans('recommendation.exposure.no_space', [
+                'button' => $this->translator->trans('planting.edit.breadcrumb'),
+                'preferred' => $preferred->value,
+            ]));
         }
 
         $actual = $space->getExposure();
         if (null === $actual) {
-            return new Recommendation(RecommendationLevel::Info, RecommendationSubject::Exposure, \sprintf(
-                'Tell us the exposure of %s, in "My spaces": its care sheet asks for %s.',
-                $space->getName(),
-                mb_strtolower($preferred->label()),
-            ));
+            return new Recommendation(RecommendationLevel::Info, RecommendationSubject::Exposure, $this->translator->trans('recommendation.exposure.unknown', [
+                'space' => $space->getName(),
+                'page' => $this->translator->trans('nav.spaces'),
+                'preferred' => $preferred->value,
+            ]));
         }
 
+        $exposures = ['preferred' => $preferred->value, 'actual' => $actual->value];
+
         return match (abs(self::sunlight($preferred) - self::sunlight($actual))) {
-            0 => new Recommendation(RecommendationLevel::Ok, RecommendationSubject::Exposure, \sprintf(
-                '%s suits it.',
-                $actual->label(),
-            )),
-            1 => new Recommendation(RecommendationLevel::Info, RecommendationSubject::Exposure, \sprintf(
-                'It prefers %1$s and gets %2$s here: it should cope, but would do better in %1$s.',
-                mb_strtolower($preferred->label()),
-                mb_strtolower($actual->label()),
-            )),
-            default => new Recommendation(RecommendationLevel::Warning, RecommendationSubject::Exposure, \sprintf(
-                'It needs %1$s and gets %2$s here: move it to a spot in %1$s, in autumn or early spring.',
-                mb_strtolower($preferred->label()),
-                mb_strtolower($actual->label()),
-            )),
+            0 => new Recommendation(RecommendationLevel::Ok, RecommendationSubject::Exposure, $this->translator->trans('recommendation.exposure.suits', $exposures)),
+            1 => new Recommendation(RecommendationLevel::Info, RecommendationSubject::Exposure, $this->translator->trans('recommendation.exposure.close', $exposures)),
+            default => new Recommendation(RecommendationLevel::Warning, RecommendationSubject::Exposure, $this->translator->trans('recommendation.exposure.far', $exposures)),
         };
     }
 
@@ -102,19 +95,15 @@ final readonly class RecommendationEngine
     {
         $exposure = $planting->getSpace()?->getExposure();
 
-        $message = match ($careSheet->getWatering()) {
-            Watering::High => Exposure::Sun === $exposure
-                ? 'It needs plenty of water and gets full sun here: water it often in summer, and mulch the soil to keep it moist.'
-                : 'It needs plenty of water: keep the soil moist, especially in summer.',
-            Watering::Medium => 'Water it during dry spells.',
-            Watering::Low => Exposure::Shade === $exposure
-                ? 'It needs little water, and the shade keeps the soil moist: water it only during long droughts.'
-                : 'It needs little water: water it only during long droughts, and never leave it in soggy soil.',
-        };
+        $message = $this->translator->trans(match ($careSheet->getWatering()) {
+            Watering::High => Exposure::Sun === $exposure ? 'recommendation.watering.high_in_sun' : 'recommendation.watering.high',
+            Watering::Medium => 'recommendation.watering.medium',
+            Watering::Low => Exposure::Shade === $exposure ? 'recommendation.watering.low_in_shade' : 'recommendation.watering.low',
+        });
 
         $lastWatered = $planting->lastDone(CareTask::Watering);
         if (null !== $lastWatered) {
-            $message .= \sprintf(' Last watered on %s.', $lastWatered->format(self::DATE_FORMAT));
+            $message .= ' ' . $this->translator->trans('recommendation.watering.last', ['date' => $this->formatter->longDate($lastWatered)]);
         }
 
         return new Recommendation(RecommendationLevel::Info, RecommendationSubject::Watering, $message);
@@ -129,54 +118,45 @@ final readonly class RecommendationEngine
         if (null !== $risk) {
             $coldest = $risk->coldestDay();
             $expected = $coldest === $risk->firstDay()
-                ? \sprintf('Frost expected on %s (%s °C)', $coldest->date->format(self::FORECAST_DATE_FORMAT), number_format($coldest->minTemperatureC, 1))
-                : \sprintf(
-                    'Frost expected from %s, down to %s °C on %s',
-                    $risk->firstDay()->date->format(self::FORECAST_DATE_FORMAT),
-                    number_format($coldest->minTemperatureC, 1),
-                    $coldest->date->format(self::FORECAST_DATE_FORMAT),
-                );
+                ? $this->translator->trans('recommendation.frost.expected_on', [
+                    'date' => $this->formatter->dayAndMonth($coldest->date),
+                    'temperature' => $this->formatter->temperature($coldest->minTemperatureC),
+                ])
+                : $this->translator->trans('recommendation.frost.expected_from', [
+                    'first' => $this->formatter->dayAndMonth($risk->firstDay()->date),
+                    'temperature' => $this->formatter->temperature($coldest->minTemperatureC),
+                    'coldest' => $this->formatter->dayAndMonth($coldest->date),
+                ]);
 
             if (null !== $protectedOn) {
-                return new Recommendation(RecommendationLevel::Info, RecommendationSubject::Frost, \sprintf(
-                    '%s. Sheltered on %s: check that the protection holds.',
-                    $expected,
-                    $protectedOn->format(self::DATE_FORMAT),
-                ));
+                return new Recommendation(RecommendationLevel::Info, RecommendationSubject::Frost, $this->translator->trans('recommendation.frost.sheltered_check', [
+                    'expected' => $expected,
+                    'date' => $this->formatter->longDate($protectedOn),
+                ]));
             }
 
             return new Recommendation(RecommendationLevel::Warning, RecommendationSubject::Frost, $careSheet->isFrostSensitive()
-                ? \sprintf('%s. It is frost sensitive: bring it indoors or shelter it.', $expected)
-                : \sprintf('%s, colder than its hardiness (%d °C): cover it with a winter fleece.', $expected, $hardiness),
+                ? $this->translator->trans('recommendation.frost.bring_indoors', ['expected' => $expected])
+                : $this->translator->trans('recommendation.frost.cover', ['expected' => $expected, 'hardiness' => $hardiness]),
             );
         }
 
         if (!$careSheet->isFrostSensitive()) {
-            return new Recommendation(RecommendationLevel::Ok, RecommendationSubject::Frost, \sprintf(
-                'Hardy down to %d °C%s.',
-                $hardiness,
-                null !== $forecast ? ': the forecast stays above' : '',
+            return new Recommendation(RecommendationLevel::Ok, RecommendationSubject::Frost, $this->translator->trans(
+                null !== $forecast ? 'recommendation.frost.hardy_above_forecast' : 'recommendation.frost.hardy',
+                ['hardiness' => $hardiness],
             ));
         }
 
         if (!self::isColdSeason($today)) {
-            return new Recommendation(RecommendationLevel::Info, RecommendationSubject::Frost, \sprintf(
-                'Frost sensitive (hardy down to %d °C): bring it indoors or shelter it before the first autumn frost.',
-                $hardiness,
-            ));
+            return new Recommendation(RecommendationLevel::Info, RecommendationSubject::Frost, $this->translator->trans('recommendation.frost.sensitive_before_autumn', ['hardiness' => $hardiness]));
         }
 
         if (null !== $protectedOn) {
-            return new Recommendation(RecommendationLevel::Ok, RecommendationSubject::Frost, \sprintf(
-                'Sheltered from frost on %s.',
-                $protectedOn->format(self::DATE_FORMAT),
-            ));
+            return new Recommendation(RecommendationLevel::Ok, RecommendationSubject::Frost, $this->translator->trans('recommendation.frost.sheltered', ['date' => $this->formatter->longDate($protectedOn)]));
         }
 
-        return new Recommendation(RecommendationLevel::Info, RecommendationSubject::Frost, \sprintf(
-            'Frost sensitive (hardy down to %d °C), and no frost protection recorded this winter: bring it indoors or shelter it.',
-            $hardiness,
-        ));
+        return new Recommendation(RecommendationLevel::Info, RecommendationSubject::Frost, $this->translator->trans('recommendation.frost.sensitive_unprotected', ['hardiness' => $hardiness]));
     }
 
     private function pruning(Planting $planting, CareSheet $careSheet, \DateTimeImmutable $today): Recommendation
@@ -186,26 +166,25 @@ final readonly class RecommendationEngine
         $lastPruned = $planting->lastDone(CareTask::Pruning);
 
         if ([] === $months) {
-            return new Recommendation(RecommendationLevel::Ok, RecommendationSubject::Pruning, trim('No regular pruning in its care sheet. ' . $advice));
+            return new Recommendation(RecommendationLevel::Ok, RecommendationSubject::Pruning, trim($this->translator->trans('recommendation.pruning.none') . ' ' . $advice));
         }
 
-        $when = self::monthList($months);
-        $lastPrunedOn = null !== $lastPruned ? \sprintf(' Last pruned on %s.', $lastPruned->format(self::DATE_FORMAT)) : '';
+        $when = $this->formatter->monthList($months);
+        $lastPrunedOn = null !== $lastPruned ? ' ' . $this->translator->trans('recommendation.pruning.last', ['date' => $this->formatter->longDate($lastPruned)]) : '';
 
         $periodStart = self::pruningPeriodStart($months, $today);
         if (null === $periodStart) {
-            return new Recommendation(RecommendationLevel::Info, RecommendationSubject::Pruning, trim(\sprintf('Prune it in %s. %s', $when, $advice)) . $lastPrunedOn);
+            return new Recommendation(RecommendationLevel::Info, RecommendationSubject::Pruning, trim($this->translator->trans('recommendation.pruning.in', ['months' => $when]) . ' ' . $advice) . $lastPrunedOn);
         }
 
         if (null !== $lastPruned && $lastPruned->format('Y-m-d') >= $periodStart->format('Y-m-d')) {
-            return new Recommendation(RecommendationLevel::Ok, RecommendationSubject::Pruning, \sprintf(
-                'Pruned on %s: done for this season. Next time in %s.',
-                $lastPruned->format(self::DATE_FORMAT),
-                $when,
-            ));
+            return new Recommendation(RecommendationLevel::Ok, RecommendationSubject::Pruning, $this->translator->trans('recommendation.pruning.done', [
+                'date' => $this->formatter->longDate($lastPruned),
+                'months' => $when,
+            ]));
         }
 
-        return new Recommendation(RecommendationLevel::Action, RecommendationSubject::Pruning, trim(\sprintf('Time to prune it (%s). %s', $when, $advice)) . $lastPrunedOn);
+        return new Recommendation(RecommendationLevel::Action, RecommendationSubject::Pruning, trim($this->translator->trans('recommendation.pruning.now', ['months' => $when]) . ' ' . $advice) . $lastPrunedOn);
     }
 
     /**
@@ -268,16 +247,5 @@ final readonly class RecommendationEngine
             Exposure::PartShade => 1,
             Exposure::Shade => 2,
         };
-    }
-
-    /**
-     * @param non-empty-list<int> $months
-     */
-    private static function monthList(array $months): string
-    {
-        $names = array_map(CareSheetPresenter::monthName(...), $months);
-        $last = array_pop($names);
-
-        return [] === $names ? $last : implode(', ', $names) . ' and ' . $last;
     }
 }

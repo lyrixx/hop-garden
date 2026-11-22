@@ -10,6 +10,6 @@
     'wormia-subsessilis': 'Wormia subsessilis',
 } %}
 <figure class="card crowned specimen">
-    <img src="{{ asset('images/plates/' ~ plate ~ '.webp') }}" alt="{{ plates[plate] }}, hand-coloured plate (Biodiversity Heritage Library)" loading="lazy">
+    <img src="{{ asset('images/plates/' ~ plate ~ '.webp') }}" alt="{{ 'specimen.alt'|trans({species: plates[plate]}) }}" loading="lazy">
     <figcaption><span class="fig">Fig. {{ fig }}</span> {{ plates[plate] }}</figcaption>
 </figure>

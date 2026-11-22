@@ -21,6 +21,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
+use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\UX\TwigComponent\ComponentRendererInterface;
 
 final class PlantController extends AbstractController
@@ -56,7 +57,7 @@ final class PlantController extends AbstractController
 
             $existing = $this->plantRepository->findOneBySpecies($candidate->trefleId, $candidate->scientificName);
             if (null !== $existing) {
-                $this->addFlash('success', \sprintf('%s has its care sheet already: here it is.', $existing->getScientificName()));
+                $this->addFlash('success', new TranslatableMessage('flash.species.exists', ['species' => $existing->getScientificName()]));
 
                 return $this->redirectToRoute('plant_show', ['id' => $existing->getId()], Response::HTTP_SEE_OTHER);
             }
@@ -65,7 +66,7 @@ final class PlantController extends AbstractController
             $this->plantRepository->add($plant);
             $this->entityManager->flush();
 
-            $this->addFlash('success', \sprintf('The draft of %s is ready: fill in its care sheet, then validate it.', $plant->getCommonName()));
+            $this->addFlash('success', new TranslatableMessage('flash.species.draft_ready', ['name' => $plant->getCommonName()]));
 
             return $this->redirectToRoute('plant_edit', ['id' => $plant->getId()], Response::HTTP_SEE_OTHER);
         }
@@ -113,7 +114,7 @@ final class PlantController extends AbstractController
             return $this->redirectToRoute('plant_card', ['id' => $plant->getId()], Response::HTTP_SEE_OTHER);
         }
 
-        $this->addFlash('success', \sprintf('%s is validated. Pick its reminders below.', $plant->getCommonName()));
+        $this->addFlash('success', new TranslatableMessage('flash.species.validated', ['name' => $plant->getCommonName()]));
 
         return $this->redirectToRoute('plant_show', ['id' => $plant->getId()], Response::HTTP_SEE_OTHER);
     }
@@ -139,7 +140,7 @@ final class PlantController extends AbstractController
                 return $this->redirectToRoute('plant_card', ['id' => $plant->getId()], Response::HTTP_SEE_OTHER);
             }
 
-            $this->addFlash('success', $plant->isValidated() ? 'Care sheet updated.' : 'Draft updated: validate it when it looks right.');
+            $this->addFlash('success', new TranslatableMessage($plant->isValidated() ? 'flash.species.updated' : 'flash.species.draft_updated'));
 
             return $this->redirectToRoute('plant_show', ['id' => $plant->getId()], Response::HTTP_SEE_OTHER);
         }
@@ -159,8 +160,8 @@ final class PlantController extends AbstractController
                 $plant->disableReminder($type);
             }
             $this->entityManager->flush();
-        } catch (PlantNotValidatedException $e) {
-            $this->addFlash('warning', $e->getMessage());
+        } catch (PlantNotValidatedException) {
+            $this->addFlash('warning', new TranslatableMessage('flash.species.reminder_needs_validation'));
         }
 
         // Switched in its frame: the card holds the frame of each reminder

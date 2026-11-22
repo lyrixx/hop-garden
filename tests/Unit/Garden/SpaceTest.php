@@ -5,6 +5,7 @@ namespace App\Tests\Unit\Garden;
 use App\Garden\Entity\Space;
 use App\Garden\Model\Soil;
 use App\Plant\Model\Exposure;
+use App\Tests\Utils\Translation\Translators;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -13,7 +14,7 @@ final class SpaceTest extends TestCase
     #[DataProvider('provideItsConditionsInAFewWordsCases')]
     public function testItsConditionsInAFewWords(?Exposure $exposure, ?Soil $soil, ?string $expected): void
     {
-        self::assertSame($expected, new Space('North bed', $exposure, $soil, new \DateTimeImmutable('2026-11-01'))->describeConditions());
+        self::assertSame($expected, new Space('North bed', $exposure, $soil, new \DateTimeImmutable('2026-11-01'))->describeConditions(Translators::for('en')));
     }
 
     /**

@@ -2,18 +2,20 @@
 
 namespace App\Plant\Model;
 
-enum Watering: string
+use Symfony\Contracts\Translation\TranslatableInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+enum Watering: string implements TranslatableInterface
 {
     case Low = 'low';
     case Medium = 'medium';
     case High = 'high';
 
-    public function label(): string
+    /**
+     * Its label, in translations/messages+intl-icu.*.yaml.
+     */
+    public function trans(TranslatorInterface $translator, ?string $locale = null): string
     {
-        return match ($this) {
-            self::Low => 'Low',
-            self::Medium => 'Medium',
-            self::High => 'High',
-        };
+        return $translator->trans('watering.' . $this->value, locale: $locale);
     }
 }

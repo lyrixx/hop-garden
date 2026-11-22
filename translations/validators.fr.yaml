@@ -1,0 +1,15 @@
+# Keep the same keys in every language: tests/Unit/Translation/CatalogsTest.php checks them.
+# The messages of the constraints, with the {{ parameters }} of the Validator.
+care_record:
+    in_the_future: "Cette date est dans le futur."
+planting:
+    photo:
+        mime_types: "Envoyez une photo JPEG, PNG ou WebP."
+space:
+    name:
+        taken: "Le jardin a déjà un espace nommé « {{ name }} »."
+species:
+    not_picked: "Choisissez son espèce parmi celles que Trefle trouve."
+    picked:
+        not_found: "Choisissez de nouveau son espèce : Trefle ne la trouve pas pour ce nom."
+        unavailable: "Trefle ne répond pas : réessayez dans un instant."

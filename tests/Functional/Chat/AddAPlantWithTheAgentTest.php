@@ -9,6 +9,8 @@ use App\Garden\Entity\Space;
 use App\Garden\Model\Soil;
 use App\Garden\PlantingRepository;
 use App\Garden\SpaceRepository;
+use App\Locale\Model\SupportedLocale;
+use App\Locale\PreferredLocale;
 use App\Plant\Entity\Plant;
 use App\Plant\Model\Exposure;
 use App\Plant\PlantRepository;
@@ -165,6 +167,36 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
         $this->tap($this->card($page, 'planting'), 'Add to my garden');
 
         self::assertSame('Terrace', $this->plantingOf($hydrangea)->getSpace()?->getName());
+    }
+
+    /**
+     * B and C in French: each card tells the agent in the language of the interface, as the bubble of the user shows it.
+     */
+    public function testTheCardsTellTheAgentInTheLanguageOfTheInterface(): void
+    {
+        self::getContainer()->get(PreferredLocale::class)->set(SupportedLocale::French);
+        self::getContainer()->get(EntityManagerInterface::class)->flush();
+
+        $page = $this->say(ScriptedGardener::PLANTED . ' sur le balcon');
+        $page = $this->say((string) $page->filter('.chat-choices button.chat-choice:not([disabled])')->first()->attr('data-chat-text-param'));
+        $hydrangea = $this->plants()->findOneBy(['scientificName' => 'Hydrangea macrophylla']) ?? throw new \LogicException('No draft.');
+        $draft = $page->filter('.chat-card article.plant-card.is-draft');
+        $this->client->submit($draft->selectButton('Valider')->form(), [], ['HTTP_TURBO_FRAME' => 'plant-card-' . $hydrangea->getId() . '-frame']);
+
+        $page = $this->say($this->noticeOf($this->client->followRedirect()));
+        self::assertSame('J’ai validé la fiche de culture de l’espèce Bigleaf hydrangea.', $page->filter('#chat-log .bubble-user')->last()->text());
+        $created = $this->tap($this->card($page, 'space'), 'Créer l’espace', ['exposure' => 'sun', 'soil' => 'loamy']);
+        self::assertSame('Créé', $created->filter('.status')->text());
+
+        $page = $this->say($this->noticeOf($created));
+        self::assertSame('J’ai créé l’espace Balcon.', $page->filter('#chat-log .bubble-user')->last()->text());
+        $added = $this->tap($this->card($page, 'planting'), 'Ajouter à mon jardin');
+        self::assertSame('Ajoutée', $added->filter('.status')->text());
+
+        $page = $this->say($this->noticeOf($added));
+        self::assertSame('J’ai ajouté Hortensia à mon jardin, dans l’espace Balcon.', $page->filter('#chat-log .bubble-user')->last()->text());
+        self::assertSame(ScriptedGardener::ADDED, $page->filter('#chat-log .bubble-assistant')->last()->text(), 'The agent understood.');
+        self::assertSame('Balcon', $this->plantingOf($hydrangea)->getSpace()?->getName());
     }
 
     /**

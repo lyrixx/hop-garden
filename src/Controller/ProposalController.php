@@ -25,6 +25,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Translation\TranslatableMessage;
 
 /**
  * The cards the agent proposes to add to the garden: nothing is written until the user taps one. Each card is loaded
@@ -66,9 +67,9 @@ final class ProposalController extends AbstractController
         $plant = $plantRepository->find($proposal->plantId);
         $space = null !== $proposal->spaceId ? $spaceRepository->find($proposal->spaceId) : null;
         $unavailable = match (true) {
-            null === $plant => 'This care sheet no longer exists. Ask the assistant again.',
-            !$plant->isValidated() => 'Validate the care sheet of this species first.',
-            null !== $proposal->spaceId && null === $space => 'This space no longer exists. Ask the assistant again.',
+            null === $plant => new TranslatableMessage('proposal.planting.care_sheet_gone'),
+            !$plant->isValidated() => new TranslatableMessage('proposal.planting.validate_first'),
+            null !== $proposal->spaceId && null === $space => new TranslatableMessage('proposal.planting.space_gone'),
             default => null,
         };
 

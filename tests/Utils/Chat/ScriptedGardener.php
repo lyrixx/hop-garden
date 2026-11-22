@@ -14,6 +14,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Test\MockPlatformFactory;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Plays the "hortensia" scenario of the demo in place of an LLM: what the model decides is scripted,
@@ -24,12 +25,13 @@ use Symfony\AI\Platform\Test\MockPlatformFactory;
  *
  * A message holding UNREACHABLE plays a provider that does not answer, one holding BROKEN a bug of the agent, one
  * holding STREAMED a provider that streams its answer in STREAMED_DELTAS, one holding NARRATED a provider that streams
- * NARRATED_DELTAS around a call of list_collection.
+ * NARRATED_DELTAS around a call of list_collection. One holding LANGUAGE answers with the section of its prompt on the
+ * language of the interface (App\Chat\InterfaceLanguagePrompt).
  *
  * PLANTED plays "add a plant the user grows" as config/agent/gardener.md asks it, from the results of the tools and
- * the messages the cards send once tapped: the care sheet of the species if validated, else a search, the choice of
- * the species and a draft (scenario C); then the space of PLACES the user named if it exists (A), else a space card
- * (B), or the choice of a space when they did not say where; then the "Add to my garden" card.
+ * the messages the cards send once tapped, in any language: the care sheet of the species if validated, else a search,
+ * the choice of the species and a draft (scenario C); then the space of PLACES the user named if it exists (A), else a
+ * space card (B), or the choice of a space when they did not say where; then the "Add to my garden" card.
  */
 final class ScriptedGardener
 {
@@ -40,6 +42,8 @@ final class ScriptedGardener
     public const string STREAMED = 'streamed answer';
     public const array STREAMED_DELTAS = ['Prune it ', 'in March, ', 'above a bud.', "\n", 'Then ', 'mulch.'];
     public const string NARRATED = 'narrated answer';
+    public const string LANGUAGE = 'which language';
+    public const string LANGUAGE_SECTION = '## The language of the interface';
     public const string PLANTED = 'Je viens de planter un hortensia';
     // The places of PLANTED, and the name of their space in the garden
     public const array PLACES = ['sur la terrasse' => 'Terrace', 'sur le balcon' => 'Balcon'];
@@ -51,9 +55,13 @@ final class ScriptedGardener
     public const string ADDED = 'Il est dans votre jardin.';
     public const array NARRATED_DELTAS = ['Let me look at your garden.', 'Here it is.'];
 
-    public static function createPlatform(): Platform
+    /**
+     * With the event dispatcher of the application, as the platforms of the bundle: its listeners render the prompt of
+     * the gardener, a template.
+     */
+    public static function createPlatform(EventDispatcherInterface $eventDispatcher): Platform
     {
-        return MockPlatformFactory::createPlatform(self::answer(...));
+        return MockPlatformFactory::createPlatform(self::answer(...), eventDispatcher: $eventDispatcher);
     }
 
     /**
@@ -81,6 +89,10 @@ final class ScriptedGardener
 
         if ('user' === $last['role'] && str_contains($text, self::STREAMED)) {
             return self::stream(...array_map(static fn (string $delta): TextDelta => new TextDelta($delta), self::STREAMED_DELTAS));
+        }
+
+        if ('user' === $last['role'] && str_contains($text, self::LANGUAGE)) {
+            return new TextResult(self::languageSection($messages));
         }
 
         if ('user' === $last['role'] && str_contains($text, self::NARRATED)) {
@@ -134,11 +146,13 @@ final class ScriptedGardener
                 }
             }
 
-            // The messages of the cards, once tapped
-            if (str_starts_with($text, 'I validated the care sheet of ') || str_starts_with($text, 'I created the space ')) {
+            // The message a card sends once tapped, in the language of the interface: read by the step it follows,
+            // never by its words
+            $card = self::lastStep($messages);
+            if (\in_array($card, ['flow-propose', 'flow-space'], true)) {
                 return self::call('flow-spaces', 'hopgarden_list_spaces', []);
             }
-            if (str_starts_with($text, 'I added ')) {
+            if ('flow-planting' === $card) {
                 return new TextResult(self::ADDED);
             }
 
@@ -209,6 +223,20 @@ final class ScriptedGardener
         }
 
         return null;
+    }
+
+    /**
+     * @param list<mixed> $messages
+     */
+    private static function languageSection(array $messages): string
+    {
+        foreach ($messages as $message) {
+            if (\is_array($message) && 'system' === $message['role'] && str_contains(self::text($message), self::LANGUAGE_SECTION)) {
+                return trim(substr(self::text($message), (int) strpos(self::text($message), self::LANGUAGE_SECTION)));
+            }
+        }
+
+        throw new \LogicException('The prompt has no section on the language of the interface.');
     }
 
     /**

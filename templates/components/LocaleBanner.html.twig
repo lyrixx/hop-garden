@@ -1,0 +1,13 @@
+{# The language of the browser, offered in that language (App\Twig\Components\LocaleBanner) #}
+{% set offered = this.offered %}
+{% if offered %}
+    <aside class="locale-banner" lang="{{ offered.value }}" aria-label="{{ 'locale.banner.label'|trans({}, 'messages', offered.value) }}">
+        <p>{{ 'locale.banner.available'|trans({}, 'messages', offered.value) }}</p>
+        <form method="post" action="{{ path('locale') }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('locale') }}">
+            <input type="hidden" name="returnTo" value="{{ app.request.requestUri }}">
+            <button type="submit" class="button button-light" name="locale" value="{{ offered.value }}">{{ 'locale.banner.switch'|trans({}, 'messages', offered.value) }}</button>
+            <button type="submit" class="button locale-banner-stay" name="locale" value="{{ this.current.value }}">{{ 'locale.banner.stay'|trans({current: this.current.value}, 'messages', offered.value) }}</button>
+        </form>
+    </aside>
+{% endif %}

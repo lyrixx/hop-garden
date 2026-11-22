@@ -2,6 +2,7 @@
 
 namespace App\Reminder\Command;
 
+use App\Locale\PreferredLocale;
 use App\Reminder\ReminderChecker;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
@@ -11,6 +12,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Translation\LocaleSwitcher;
 
 #[AsCommand(name: 'app:reminders:run', description: 'Checks the reminders now, as the scheduler does every day at 7:00')]
 final readonly class RunRemindersCommand
@@ -21,6 +23,8 @@ final readonly class RunRemindersCommand
         private ClockInterface $clock,
         #[Autowire(env: 'GARDEN_TIMEZONE')]
         private string $gardenTimezone,
+        private LocaleSwitcher $localeSwitcher,
+        private PreferredLocale $preferredLocale,
     ) {
     }
 
@@ -44,8 +48,13 @@ final readonly class RunRemindersCommand
             $now = $simulated;
         }
 
-        $sent = $this->reminderChecker->check($now);
-        $this->entityManager->flush();
+        // As the scheduler does: see CheckRemindersHandler
+        $sent = $this->localeSwitcher->runWithLocale($this->preferredLocale->get()->value, function () use ($now): int {
+            $sent = $this->reminderChecker->check($now);
+            $this->entityManager->flush();
+
+            return $sent;
+        });
 
         $io->success(\sprintf('%d notification(s) sent for %s.', $sent, $now->format('l j F Y')));
 

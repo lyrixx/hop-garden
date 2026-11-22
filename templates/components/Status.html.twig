@@ -4,5 +4,5 @@
 #}
 {%- props validated = false -%}
 <span class="status status-{{ validated ? 'validated' : 'draft' }}">
-    {%- if validated %}<twig:Icon name="check" :size="14"/> {% endif %}{% block content %}{{ validated ? 'In your garden' : 'Draft' }}{% endblock -%}
+    {%- if validated %}<twig:Icon name="check" :size="14"/> {% endif %}{% block content %}{{ (validated ? 'status.in_garden' : 'status.draft')|trans }}{% endblock -%}
 </span>

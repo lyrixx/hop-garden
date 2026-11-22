@@ -5,7 +5,7 @@
 #}
 {% props plate %}
 <div class="plate-picture" style="aspect-ratio: {{ plate.width }} / {{ plate.height }}">
-    <img src="{{ asset(plate.image) }}" alt="{{ plate.depicts ?? 'Schematic figure of a flowering shrub' }}" width="{{ plate.width }}" height="{{ plate.height }}">
+    <img src="{{ asset(plate.image) }}" alt="{{ plate.depicts ?? 'plate.schematic_alt'|trans }}" width="{{ plate.width }}" height="{{ plate.height }}">
     <svg class="plate-leaders" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
         {% for figure in plate.figures %}
             <line x1="{{ figure.anchor.x }}" y1="{{ figure.anchor.y }}" x2="{{ figure.side.value == 'left' ? -5 : 105 }}" y2="{{ figure.numberY }}" vector-effect="non-scaling-stroke"/>

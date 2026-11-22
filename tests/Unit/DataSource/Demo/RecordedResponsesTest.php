@@ -22,7 +22,7 @@ final class RecordedResponsesTest extends TestCase
     #[TestWith(['hortensia', 'Hydrangea macrophylla'])]
     #[TestWith(['Hortensias', 'Hydrangea macrophylla'])]
     #[TestWith(['Panicled hydrangea', 'Hydrangea paniculata'])]
-    #[TestWith(['ROSIER', 'Rosa canina'])]
+    #[TestWith(['ROSES', 'Rosa canina'])]
     public function testANameIsFoundThroughItsAlias(string $query, string $firstScientificName): void
     {
         $data = $this->get('https://trefle.io/api/v1/plants/search?q=' . rawurlencode($query) . '&token=');

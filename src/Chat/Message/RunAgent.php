@@ -13,6 +13,10 @@ final readonly class RunAgent
     public function __construct(
         public string $conversationId,
         public string $text,
+        /**
+         * Of the user who sent it, for the answer and the cards the worker renders: see App\Locale\PreferredLocale.
+         */
+        public string $locale,
     ) {
     }
 }

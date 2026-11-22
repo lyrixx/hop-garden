@@ -4,11 +4,13 @@ namespace App\Plate\Model;
 
 use App\Plant\Model\CareSheetField;
 use App\Reminder\Model\ReminderType;
+use Symfony\Contracts\Translation\TranslatableInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * The part of the plant a figure of the plate points at, and the care sheet fields it explains.
  */
-enum PlatePart: string
+enum PlatePart: string implements TranslatableInterface
 {
     case Bud = 'bud';
     case Leaf = 'leaf';
@@ -16,15 +18,12 @@ enum PlatePart: string
     case Flower = 'flower';
     case Shoot = 'shoot';
 
-    public function label(): string
+    /**
+     * Its label, in translations/messages+intl-icu.*.yaml.
+     */
+    public function trans(TranslatorInterface $translator, ?string $locale = null): string
     {
-        return match ($this) {
-            self::Bud => 'Bud',
-            self::Leaf => 'Leaf',
-            self::Stem => 'Stem',
-            self::Flower => 'Flower',
-            self::Shoot => 'Shoot',
-        };
+        return $translator->trans('plate_part.' . $this->value, locale: $locale);
     }
 
     public function latinLabel(): string

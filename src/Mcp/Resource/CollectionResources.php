@@ -2,19 +2,25 @@
 
 namespace App\Mcp\Resource;
 
+use App\Locale\Model\SupportedLocale;
 use App\Mcp\PlantNormalizer;
 use App\Plant\PlantRepository;
 use Mcp\Capability\Attribute\McpResource;
 use Mcp\Capability\Attribute\McpResourceTemplate;
 use Mcp\Exception\ResourceReadException;
+use Symfony\Component\Translation\LocaleSwitcher;
 use Twig\Environment;
 
+/**
+ * In English, as the tools and their results: the MCP server speaks to a model, whatever the language of the page.
+ */
 final readonly class CollectionResources
 {
     public function __construct(
         private PlantRepository $plantRepository,
         private PlantNormalizer $plantNormalizer,
         private Environment $twig,
+        private LocaleSwitcher $localeSwitcher,
     ) {
     }
 
@@ -27,7 +33,7 @@ final readonly class CollectionResources
     )]
     public function collection(): string
     {
-        return $this->twig->render('mcp/collection.md.twig', [
+        return $this->render('mcp/collection.md.twig', [
             'plants' => $this->plantRepository->findValidated(),
             'normalizer' => $this->plantNormalizer,
         ]);
@@ -47,9 +53,17 @@ final readonly class CollectionResources
             throw new ResourceReadException(\sprintf('No plant with id "%s".', $id));
         }
 
-        return $this->twig->render('mcp/plant.md.twig', [
+        return $this->render('mcp/plant.md.twig', [
             'plant' => $plant,
             'url' => $this->plantNormalizer->urlOf($plant),
         ]);
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function render(string $template, array $context): string
+    {
+        return $this->localeSwitcher->runWithLocale(SupportedLocale::English->value, fn (): string => $this->twig->render($template, $context));
     }
 }

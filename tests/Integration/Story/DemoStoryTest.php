@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 use Symfony\Component\Uid\UuidV7;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * What "castor demo:reset" then "castor demo:frost" show, on the test database.
@@ -48,7 +49,7 @@ final class DemoStoryTest extends KernelTestCase
         );
         self::assertSame(
             ['Front garden' => 'Full sun, clay', 'North bed' => 'Shade, clay', 'Terrace' => 'Part shade, loamy'],
-            array_merge(...array_map(static fn (Space $space): array => [$space->getName() => $space->describeConditions()], self::getContainer()->get(SpaceRepository::class)->findAllByName())),
+            array_merge(...array_map(static fn (Space $space): array => [$space->getName() => $space->describeConditions(self::getContainer()->get(TranslatorInterface::class))], self::getContainer()->get(SpaceRepository::class)->findAllByName())),
         );
 
         self::assertSame(1, self::getContainer()->get(ReminderChecker::class)->check(self::mockTime('2026-12-01 07:00')->now()));

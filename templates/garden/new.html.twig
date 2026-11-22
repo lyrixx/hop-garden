@@ -1,17 +1,17 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Add a plant to your garden · Hop Garden{% endblock %}
+{% block title %}{{ 'planting.new.title'|trans }} · Hop Garden{% endblock %}
 
 {% block body %}
     <header class="plate-head">
         {% if plant %}
-            <nav class="breadcrumb"><span class="page-label page-label-species">Species</span> <a href="{{ path('plant_index') }}">All species</a> › <a href="{{ path('plant_show', {id: plant.id}) }}"><em>{{ plant.scientificName }}</em></a> › Add to my garden</nav>
-            <h1>Add <em>{{ plant.scientificName }}</em> to your garden</h1>
-            <p>Name your plant and say where it grows. It follows the care sheet of {{ plant.commonName }}, with its reminders.</p>
+            <nav class="breadcrumb"><span class="page-label page-label-species">{{ 'species.label'|trans }}</span> <a href="{{ path('plant_index') }}">{{ 'species.all'|trans }}</a> › <a href="{{ path('plant_show', {id: plant.id}) }}"><em>{{ plant.scientificName }}</em></a> › {{ 'action.add_to_my_garden'|trans }}</nav>
+            <h1>{{ 'planting.new.title_of_species'|trans({species: '<em>' ~ plant.scientificName|e ~ '</em>'})|raw }}</h1>
+            <p>{{ 'planting.new.intro_of_species'|trans({name: plant.commonName}) }}</p>
         {% else %}
-            <nav class="breadcrumb"><span class="page-label page-label-plant">My plant</span> <a href="{{ path('garden') }}">My garden</a> › New plant</nav>
-            <h1>Add a plant to your garden</h1>
-            <p>Describe it as it grows in your garden. Hop Garden compares it with the care sheet of its species.</p>
+            <nav class="breadcrumb"><span class="page-label page-label-plant">{{ 'planting.label'|trans }}</span> <a href="{{ path('garden') }}">{{ 'nav.garden'|trans }}</a> › {{ 'planting.new.breadcrumb'|trans }}</nav>
+            <h1>{{ 'planting.new.title'|trans }}</h1>
+            <p>{{ 'planting.new.intro'|trans }}</p>
         {% endif %}
     </header>
 
@@ -22,7 +22,7 @@
             {# Picked on the page of the species: it stays #}
             <div class="garden-species">
                 {{ form_row(form.name) }}
-                <p class="garden-species-chosen"><span class="kicker">Species</span> <em>{{ plant.scientificName }}</em> <span class="hint">{{ plant.commonName }}</span></p>
+                <p class="garden-species-chosen"><span class="kicker">{{ 'species.label'|trans }}</span> <em>{{ plant.scientificName }}</em> <span class="hint">{{ plant.commonName }}</span></p>
             </div>
         {% else %}
             <twig:SpeciesPicker :form="form"/>
@@ -31,8 +31,8 @@
         {{ include('garden/_form.html.twig') }}
 
         <div class="actions">
-            <twig:Button href="{{ plant ? path('plant_show', {id: plant.id}) : path('garden') }}" class="button-secondary">Cancel</twig:Button>
-            <twig:Button icon="sprout" :iconSize="18">Add to my garden</twig:Button>
+            <twig:Button href="{{ plant ? path('plant_show', {id: plant.id}) : path('garden') }}" class="button-secondary">{{ 'action.cancel'|trans }}</twig:Button>
+            <twig:Button icon="sprout" :iconSize="18">{{ 'action.add_to_my_garden'|trans }}</twig:Button>
         </div>
     {{ form_end(form) }}
 {% endblock %}

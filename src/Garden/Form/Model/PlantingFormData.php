@@ -27,7 +27,7 @@ final class PlantingFormData implements SpeciesPickerData
     #[Assert\Length(max: 255)]
     public ?string $scientificName = null;
 
-    #[Assert\Image(maxSize: '10M', mimeTypes: self::PHOTO_MIME_TYPES, mimeTypesMessage: 'Send a JPEG, PNG or WebP photo.')]
+    #[Assert\Image(maxSize: '10M', mimeTypes: self::PHOTO_MIME_TYPES, mimeTypesMessage: 'planting.photo.mime_types')]
     public ?UploadedFile $photo = null;
 
     public ?Space $space = null;
@@ -38,7 +38,7 @@ final class PlantingFormData implements SpeciesPickerData
     /**
      * @var array<string, ?\DateTimeImmutable> when each care task was last done, keyed by CareTask values
      */
-    #[Assert\All([new Assert\LessThanOrEqual('today', message: 'This date is in the future.')])]
+    #[Assert\All([new Assert\LessThanOrEqual('today', message: 'care_record.in_the_future')])]
     public array $careRecords = [];
 
     public static function fromPlanting(Planting $planting): self

@@ -689,7 +689,7 @@ final class GardenControllerTest extends WebTestCase
     {
         $planting = PlantingFactory::new()->drafting()->create(['name' => ScriptedGardener::NARRATED, 'createdAt' => new \DateTimeImmutable('2026-03-01')]);
 
-        self::getContainer()->get(DraftCareSheetHandler::class)(new DraftCareSheet($planting->getId(), $planting->getConversationId() ?? self::fail()));
+        self::getContainer()->get(DraftCareSheetHandler::class)(new DraftCareSheet($planting->getId(), $planting->getConversationId() ?? self::fail(), 'en'));
 
         return $planting;
     }

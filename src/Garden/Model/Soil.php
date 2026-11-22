@@ -2,7 +2,10 @@
 
 namespace App\Garden\Model;
 
-enum Soil: string
+use Symfony\Contracts\Translation\TranslatableInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+enum Soil: string implements TranslatableInterface
 {
     case Chalky = 'chalky';
     case Clay = 'clay';
@@ -11,15 +14,11 @@ enum Soil: string
     case Sandy = 'sandy';
     case Silty = 'silty';
 
-    public function label(): string
+    /**
+     * Its label, in translations/messages+intl-icu.*.yaml.
+     */
+    public function trans(TranslatorInterface $translator, ?string $locale = null): string
     {
-        return match ($this) {
-            self::Chalky => 'Chalky',
-            self::Clay => 'Clay',
-            self::Loamy => 'Loamy',
-            self::Peaty => 'Peaty',
-            self::Sandy => 'Sandy',
-            self::Silty => 'Silty',
-        };
+        return $translator->trans('soil.' . $this->value, locale: $locale);
     }
 }

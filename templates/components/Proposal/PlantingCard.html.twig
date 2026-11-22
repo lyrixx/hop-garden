@@ -4,13 +4,14 @@
     chat_controller.js).
     proposal: App\Garden\Model\PlantingProposal · planting: ?App\Garden\Entity\Planting, once added · plant:
     ?App\Plant\Entity\Plant, its species · space: ?App\Garden\Entity\Space · form: ?FormView, until added · unavailable:
-    ?string, why it can no longer be added
+    ?Symfony\Contracts\Translation\TranslatableInterface, why it can no longer be added
 #}
 {%- props proposal, planting = null, plant = null, space = null, form = null, unavailable = null -%}
 {% set plate = plant ? plate(plant.scientificName) : null %}
 <turbo-frame id="planting-proposal-{{ proposal.proposalId }}">
 <article class="card proposal-card {{ planting ? 'is-done' }}"
-    {%- if planting %} data-chat-notice="I added {{ planting.name }} to my garden{{ planting.space ? ', in ' ~ planting.space.name }}."{% endif %}>
+    {#- In the language of the interface, as the bubble of the user shows it (config/agent/gardener.md) #}
+    {%- if planting %} data-chat-notice="{{ planting.space ? 'chat.notice.planting_added_in_space'|trans({name: planting.name, space: planting.space.name}) : 'chat.notice.planting_added'|trans({name: planting.name}) }}"{% endif %}>
     <header class="proposal-card-head">
         <span class="proposal-card-figure">
             {%- if plate -%}
@@ -20,24 +21,24 @@
             {%- endif -%}
         </span>
         <div>
-            <p class="kicker">{{ planting ? 'My plant' : 'Add to my garden' }}</p>
+            <p class="kicker">{{ (planting ? 'planting.label' : 'action.add_to_my_garden')|trans }}</p>
             <h3>{{ planting ? planting.name : proposal.name }}</h3>
         </div>
-        {% if planting %}<twig:Status :validated="true">Added</twig:Status>{% endif %}
+        {% if planting %}<twig:Status :validated="true">{{ 'status.added'|trans }}</twig:Status>{% endif %}
     </header>
 
     <dl class="proposal-facts">
         <div>
-            <dt><span class="pict"><twig:Icon name="note" :size="15"/></span> Species</dt>
-            <dd>{% if plant %}<a href="{{ path('plant_show', {id: plant.id}) }}" data-turbo-frame="_top"><em>{{ plant.scientificName }}</em></a> · {{ plant.commonName }}{% else %}Unknown{% endif %}</dd>
+            <dt><span class="pict"><twig:Icon name="note" :size="15"/></span> {{ 'species.label'|trans }}</dt>
+            <dd>{% if plant %}<a href="{{ path('plant_show', {id: plant.id}) }}" data-turbo-frame="_top"><em>{{ plant.scientificName }}</em></a> · {{ plant.commonName }}{% else %}{{ 'species.unknown'|trans }}{% endif %}</dd>
         </div>
         <div>
-            <dt><span class="pict"><twig:Icon name="grid" :size="15"/></span> Space</dt>
+            <dt><span class="pict"><twig:Icon name="grid" :size="15"/></span> {{ 'space.label'|trans }}</dt>
             <dd>
                 {%- if space -%}
                     <a href="{{ path('space_show', {id: space.id}) }}" data-turbo-frame="_top">{{ space.name }}</a> <twig:Space:Conditions :space="space"/>
                 {%- else -%}
-                    Not in a space yet
+                    {{ 'space.none'|trans }}
                 {%- endif -%}
             </dd>
         </div>
@@ -45,15 +46,15 @@
 
     {% if planting %}
         <div class="actions">
-            <twig:Button href="{{ path('garden_show', {id: planting.id}) }}" icon="sprout" class="button-next" data-turbo-frame="_top">See my plant</twig:Button>
+            <twig:Button href="{{ path('garden_show', {id: planting.id}) }}" icon="sprout" class="button-next" data-turbo-frame="_top">{{ 'action.see_my_plant'|trans }}</twig:Button>
         </div>
     {% elseif unavailable %}
-        <p class="warning">{{ unavailable }}</p>
+        <p class="warning">{{ unavailable|trans }}</p>
     {% elseif form %}
         {{ form_start(form, {attr: {class: 'proposal-form', 'data-chat-follow-up': ''}}) }}
             {{ form_row(form.name) }}
             <div class="actions">
-                <twig:Button icon="sprout" :iconSize="18">Add to my garden</twig:Button>
+                <twig:Button icon="sprout" :iconSize="18">{{ 'action.add_to_my_garden'|trans }}</twig:Button>
             </div>
         {{ form_end(form) }}
     {% endif %}

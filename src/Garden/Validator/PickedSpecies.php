@@ -11,8 +11,8 @@ use Symfony\Component\Validator\Constraint;
 #[\Attribute(\Attribute::TARGET_CLASS)]
 final class PickedSpecies extends Constraint
 {
-    public string $notFoundMessage = 'Pick its species again: Trefle does not find it for this name.';
-    public string $unavailableMessage = 'Trefle does not answer: try again in a moment.';
+    public string $notFoundMessage = 'species.picked.not_found';
+    public string $unavailableMessage = 'species.picked.unavailable';
 
     /**
      * @param list<string>|null $groups

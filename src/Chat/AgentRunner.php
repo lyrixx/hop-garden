@@ -20,6 +20,7 @@ use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Uid\UuidV7;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpException;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Runs the gardener agent on a message of a conversation, and streams what it does to the Mercure topic of that
@@ -40,6 +41,7 @@ final readonly class AgentRunner
         private ToolCallDisplay $toolCallDisplay,
         private EventDispatcherInterface $eventDispatcher,
         private LoggerInterface $logger,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -79,14 +81,14 @@ final readonly class AgentRunner
             $answered = true;
         } catch (AgentException|PlatformException|HttpException $e) {
             $this->logger->error('The gardener agent failed.', ['exception' => $e]);
-            $this->publisher->publish($conversationId, ChatEvent::Error, ['message' => 'The assistant could not answer: ' . $e->getMessage()]);
+            $this->publisher->publish($conversationId, ChatEvent::Error, ['message' => $this->translator->trans('chat.error.failed', ['reason' => $e->getMessage()])]);
             $answered = true;
         } finally {
             $this->eventDispatcher->removeListener(ToolCallSucceeded::class, $onToolCallSucceeded);
 
             // Whatever went wrong, the page must not wait forever
             if (!$answered) {
-                $this->publisher->publish($conversationId, ChatEvent::Error, ['message' => 'The assistant could not answer, see the logs of the worker.']);
+                $this->publisher->publish($conversationId, ChatEvent::Error, ['message' => $this->translator->trans('chat.error.unknown')]);
             }
         }
 

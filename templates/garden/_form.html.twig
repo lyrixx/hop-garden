@@ -3,14 +3,14 @@
 
 <div class="garden-space">
     {{ form_row(form.space) }}
-    <p class="garden-space-new"><a href="{{ path('space_new') }}"><twig:Icon name="grid" :size="14"/> New space</a></p>
+    <p class="garden-space-new"><a href="{{ path('space_new') }}"><twig:Icon name="grid" :size="14"/> {{ 'space.new'|trans }}</a></p>
 </div>
 
 {{ form_row(form.diseases) }}
 
 <fieldset class="garden-care">
-    <legend>{{ form.careRecords.vars.label }}</legend>
-    <p class="hint">The last time, if you remember. A pruning counts for its season only: next year, Hop Garden reminds you again.</p>
+    <legend>{{ form.careRecords.vars.label|trans }}</legend>
+    <p class="hint">{{ 'planting.form.care_records.hint'|trans }}</p>
     {% for task in form.careRecords %}
         <div class="garden-care-field">{{ form_row(task) }}</div>
     {% endfor %}

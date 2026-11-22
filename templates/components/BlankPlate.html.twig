@@ -8,9 +8,9 @@
         <ol class="plate-legend">
             {% for figure in blank.figures|filter(figure => figure.side.value == side) %}
                 <li class="plate-fig">
-                    <h4><span class="plate-number">{{ figure.number }}</span> <em>{{ figure.part.latinLabel }}</em> <span class="kicker">{{ figure.part.label }}</span></h4>
+                    <h4><span class="plate-number">{{ figure.number }}</span> <em>{{ figure.part.latinLabel }}</em> <span class="kicker">{{ figure.part|trans }}</span></h4>
                     <ul class="blank-fields">
-                        {% for field in figure.part.fields %}<li>{{ field.label }}</li>{% endfor %}
+                        {% for field in figure.part.fields %}<li>{{ field|trans }}</li>{% endfor %}
                     </ul>
                 </li>
             {% endfor %}
@@ -22,13 +22,13 @@
 </div>
 
 {% set suggestions = [
-    {text: 'hortensia', plate: plate('Hydrangea macrophylla')},
-    {text: 'lavender', plate: plate('Lavandula angustifolia')},
-    {text: 'What should I prune this month?', icon: 'secateurs'},
+    {text: 'chat.suggestion.hydrangea'|trans, plate: plate('Hydrangea macrophylla')},
+    {text: 'chat.suggestion.lavender'|trans, plate: plate('Lavandula angustifolia')},
+    {text: 'chat.suggestion.prune'|trans, icon: 'secateurs'},
 ] %}
 
 <div class="suggestions">
-    <span class="suggestions-label">Try</span>
+    <span class="suggestions-label">{{ 'chat.suggestion.label'|trans }}</span>
     {% for suggestion in suggestions %}
         <button type="button" class="suggestion" data-action="chat#suggest" data-chat-text-param="{{ suggestion.text }}">
             <span class="suggestion-figure">

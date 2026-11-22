@@ -19,18 +19,24 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * @extends AbstractType<PlantingFormData>
  */
 final class PlantingType extends AbstractType
 {
+    public function __construct(
+        private readonly TranslatorInterface $translator,
+    ) {
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $careRecords = $builder->create('careRecords', FormType::class, ['label' => 'Care already done', 'required' => false]);
+        $careRecords = $builder->create('careRecords', FormType::class, ['label' => 'planting.form.care_records.label', 'required' => false]);
         foreach (CareTask::cases() as $task) {
             $careRecords->add($task->value, DateType::class, [
-                'label' => $task->label(),
+                'label' => $task,
                 'required' => false,
                 'widget' => 'single_text',
                 'input' => 'datetime_immutable',
@@ -42,7 +48,7 @@ final class PlantingType extends AbstractType
         /** @var ?Plant $plant */
         $plant = $options['plant'];
 
-        $builder->add('name', TextType::class, ['label' => 'Name', 'empty_data' => '', 'attr' => ['placeholder' => 'Hortensia, rose by the gate…', 'autocomplete' => 'off']]);
+        $builder->add('name', TextType::class, ['label' => 'form.name', 'empty_data' => '', 'attr' => ['placeholder' => 'planting.form.name.placeholder', 'autocomplete' => 'off']]);
 
         // Filled by the species picker, rendered as hidden inputs: once planted, or picked beforehand, the species stays
         if (null === $planting && null === $plant) {
@@ -56,24 +62,28 @@ final class PlantingType extends AbstractType
             ->add('photo', FileType::class, [
                 'required' => false,
                 'attr' => ['accept' => implode(',', PlantingFormData::PHOTO_MIME_TYPES)],
-                'help' => 'JPEG, PNG or WebP, up to 10 MB. Without a photo, a picto stands in.',
+                'label' => 'planting.form.photo.label',
+                'help' => 'planting.form.photo.help',
             ])
             ->add('space', EntityType::class, [
                 'class' => Space::class,
                 'required' => false,
-                'placeholder' => 'Not in a space yet',
-                'choice_label' => static function (Space $space): string {
-                    $conditions = $space->describeConditions();
+                'label' => 'space.label',
+                'placeholder' => 'space.none',
+                'choice_label' => function (Space $space): string {
+                    $conditions = $space->describeConditions($this->translator);
 
                     return null !== $conditions ? \sprintf('%s · %s', $space->getName(), $conditions) : $space->getName();
                 },
+                // Its name is the user's, its conditions translated already
+                'choice_translation_domain' => false,
                 'query_builder' => static fn (SpaceRepository $spaceRepository) => $spaceRepository->createOrderedQueryBuilder(),
-                'help' => 'Where it grows today: it gets the exposure and the soil of the space, and the plants there are its neighbours.',
+                'help' => 'planting.form.space.help',
             ])
             ->add('diseases', TextareaType::class, [
-                'label' => 'Diseases or pests',
+                'label' => 'planting.diseases',
                 'required' => false,
-                'attr' => ['placeholder' => 'Powdery mildew on the lower leaves…'],
+                'attr' => ['placeholder' => 'planting.form.diseases.placeholder'],
             ])
             ->add($careRecords)
         ;

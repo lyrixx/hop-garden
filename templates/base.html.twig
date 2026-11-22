@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app.request.locale }}">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,6 +13,8 @@
         {% block importmap %}{{ importmap('app') }}{% endblock %}
     </head>
     <body>
+        <twig:LocaleBanner/>
+
         <header class="topbar">
             <a class="brand" href="{{ path('chat') }}">
                 <span class="pict"><twig:Icon name="hop" :size="32"/></span>
@@ -20,12 +22,12 @@
             </a>
             <nav class="nav">
                 {% set route = app.current_route %}
-                <a href="{{ path('chat') }}" class="{{ route == 'chat' ? 'active' }}"><twig:Icon name="chat" :size="18"/> Assistant</a>
-                <a href="{{ path('garden') }}" class="{{ route starts with 'garden' ? 'active' }}"><twig:Icon name="sprout" :size="18"/> My garden</a>
-                <a href="{{ path('plant_index') }}" class="{{ route starts with 'plant_' ? 'active' }}"><twig:Icon name="flower" :size="18"/> Species</a>
-                <a href="{{ path('spaces') }}" class="{{ route starts with 'space' ? 'active' }}"><twig:Icon name="grid" :size="18"/> My spaces</a>
+                <a href="{{ path('chat') }}" class="{{ route == 'chat' ? 'active' }}"><twig:Icon name="chat" :size="18"/> {{ 'nav.assistant'|trans }}</a>
+                <a href="{{ path('garden') }}" class="{{ route starts with 'garden' ? 'active' }}"><twig:Icon name="sprout" :size="18"/> {{ 'nav.garden'|trans }}</a>
+                <a href="{{ path('plant_index') }}" class="{{ route starts with 'plant_' ? 'active' }}"><twig:Icon name="flower" :size="18"/> {{ 'nav.species'|trans }}</a>
+                <a href="{{ path('spaces') }}" class="{{ route starts with 'space' ? 'active' }}"><twig:Icon name="grid" :size="18"/> {{ 'nav.spaces'|trans }}</a>
                 <a href="{{ path('notifications') }}" class="{{ route == 'notifications' ? 'active' }}">
-                    <twig:Icon name="bell" :size="18"/> Notifications
+                    <twig:Icon name="bell" :size="18"/> {{ 'nav.notifications'|trans }}
                     <twig:Notification:Badge :unread="unread_notification_count()"/>
                 </a>
             </nav>
@@ -39,7 +41,7 @@
         <main class="main">
             {% for type, messages in app.flashes %}
                 {% for message in messages %}
-                    <div class="card flash flash-{{ type }}">{{ message }}</div>
+                    <div class="card flash flash-{{ type }}">{{ message|trans }}</div>
                 {% endfor %}
             {% endfor %}
 
@@ -48,12 +50,13 @@
 
         <footer class="footer">
             <p>
-                Plant data: <a href="https://trefle.io">Trefle</a>.
-                <a href="https://open-meteo.com/">Weather data by Open-Meteo.com</a>, under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
-                Care data filled by an LLM is reviewed by a human before being saved.
+                {{ 'footer.plant_data'|trans({trefle: '<a href="https://trefle.io">Trefle</a>'})|raw }}
+                {{ 'footer.weather_data'|trans({open_meteo: '<a href="https://open-meteo.com/">Open-Meteo.com</a>', license: '<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>'})|raw }}
+                {{ 'footer.reviewed'|trans }}
             </p>
-            <p>Plates: <a href="https://www.flickr.com/photos/biodivlibrary/">Biodiversity Heritage Library</a>, public domain.</p>
-            {% if app_demo %}<p><span class="demo-mode">Demo mode: Trefle and Open-Meteo answer from recorded responses.</span></p>{% endif %}
+            <p>{{ 'footer.plates'|trans({library: '<a href="https://www.flickr.com/photos/biodivlibrary/">Biodiversity Heritage Library</a>'})|raw }}</p>
+            {% if app_demo %}<p><span class="demo-mode">{{ 'footer.demo_mode'|trans }}</span></p>{% endif %}
+            <twig:LocaleSwitch/>
         </footer>
     </body>
 </html>

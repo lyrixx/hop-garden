@@ -1,0 +1,13 @@
+{#
+    The language of the interface, in the footer: each one in its own name, the current one pressed.
+    No prop.
+#}
+<form class="locale-switch" method="post" action="{{ path('locale') }}" aria-label="{{ 'locale.switch.label'|trans }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('locale') }}">
+    <input type="hidden" name="returnTo" value="{{ app.request.requestUri }}">
+    <twig:Icon name="globe" :size="15"/>
+    {%- for locale in enum_cases('App\\Locale\\Model\\SupportedLocale') %}
+        {%- set current = locale.value == app.request.locale %}
+        <button type="submit" name="locale" value="{{ locale.value }}" lang="{{ locale.value }}" aria-pressed="{{ current ? 'true' : 'false' }}"{{ current ? ' disabled' }}>{{ locale.nativeName }}</button>
+    {%- endfor %}
+</form>

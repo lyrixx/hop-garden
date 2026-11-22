@@ -81,9 +81,25 @@ Without option, the `default` context applies.
 - Spaces: `App\Garden\Entity\Space` carries the exposure and the soil; a `Planting` has an optional space (`SET NULL`),
   and its neighbours are the other plantings of its space. Pages `/spaces`, `/spaces/new`, `/spaces/{id}` and
   `/spaces/{id}/edit` (`SpaceController`); `RecommendationEngine` reads the exposure of the space
+- Languages: English (default) and French (`App\Locale\Model\SupportedLocale`), a setting, never in the URL. Designed
+  for accounts to come: `App\Locale\PreferredLocale` (`get()`, `set()`, `isChosen()`) is the only way to read or change
+  it, named after its role so that it can move to the user, while the messages a request dispatches (`RunAgent`,
+  `DraftCareSheet`) carry the locale captured when sent, which their handler applies with the `LocaleSwitcher`, and only
+  the reminder check, without recipient, reads `PreferredLocale` in its handler (and in `app:reminders:run`).
+  - Today a row of `App\Settings\Entity\Settings`, read by `App\Locale\RequestLocaleListener` for every request, and
+    emptied by `castor demo:reset`. Until one is chosen, `LocaleBanner` offers the language of the browser; the footer
+    switch (`LocaleSwitch`) posts to `/locale`.
+  - The agent gets the language at the end of its prompt (`App\Chat\InterfaceLanguagePrompt`) and writes its care
+    sheets in it. When the interface is not in English, the species search asks the LLM for the Latin names of a name
+    Trefle does not know (`App\Garden\LatinNameResolver`, cached per name).
+- Translations: `translations/messages+intl-icu.{en,fr}.yaml` (ICU MessageFormat: `{name}`, `plural`, `select`; ’ for
+  an apostrophe in French) and `translations/validators.{en,fr}.yaml` for the constraints. The enums translate their
+  label (`TranslatableInterface`); dates, months and temperatures go through `App\Locale\IntlFormatter` (Twig:
+  `day_and_month`, `long_date`, `day_and_time`, `temperature`, `month_abbr()`, `month_initial()`), in the timezone of
+  the date. A stored notification keeps the language it was sent in
 - `APP_DEMO=1` (default, in `.env`; `APP_DEMO=0` in `.env.local` for the real APIs, then restart the workers):
-  Trefle and Open-Meteo answer from `fixtures/http/`. Tests always run in demo mode (`.env.test`; Symfony
-  does not load `.env.local` in the test env)
+  Trefle and Open-Meteo answer from `fixtures/http/`, the Latin names of the species search from `fixtures/llm/`. Tests
+  always run in demo mode (`.env.test`; Symfony does not load `.env.local` in the test env)
 - PostgreSQL 16: user/pass/db = `app`/`app`, DATABASE_URL already configured
 - Traefik router, HTTPS on `<root_domain>` (see `castor.php`)
 - Production: one image, `app` (the "Production stages" of the Dockerfile, `.dockerignore` at the root). A new
@@ -104,7 +120,8 @@ castor qa:phpunit                            # PHPUnit
 ```
 
 After any PHP/Twig code change: `castor qa:cs --dry-run`,
-`castor qa:phpstan`, then `castor qa:phpunit`.
+`castor qa:phpstan`, then `castor qa:phpunit`. After a change of the texts:
+`castor builder -- bin/console debug:translation fr --only-missing`, which must find nothing (a test checks it too).
 
 ## Conventions
 
@@ -144,7 +161,7 @@ After any PHP/Twig code change: `castor qa:cs --dry-run`,
     the database) and `tests/Functional` (HTTP requests through the kernel); run one with
     `castor --context=test qa:phpunit --testsuite=unit`. The helpers they share live in `tests/Utils/`
     (`App\Tests\Utils\`): every class of `tests/` that is not a concrete test, such as the doubles, the traits, the
-    PHPUnit extensions and the abstract test cases. The Foundry factories are no test helpers: see 14.
+    PHPUnit extensions and the abstract test cases. The Foundry factories are no test helpers: see 15.
 11. No network in the tests: every HTTP client of the test environment goes through
     `App\Tests\Utils\Http\UnexpectedRequestGuard`, so an HTTP request that nothing simulates fails the test, even when
     the code under test catches the exception. Simulate it with a `MockHttpClient`, or with the recorded responses of
@@ -152,7 +169,12 @@ After any PHP/Twig code change: `castor qa:cs --dry-run`,
 12. A piece of interface shown in two places, or rendered both by a page and by the worker, is a Twig Component, so
     that a page, a frame and a stream render the same markup.
 13. `/garden/new?plant={id}` fixes the species of a new planting to a validated care sheet (no agent).
-14. Test and demo data come from Foundry, a dev dependency: the factories in `src/Factory/` (one per entity, and
+14. Every text of the interface goes through the translator, under a stable key, in every language of `translations/`
+    (`tests/Unit/Translation/CatalogsTest.php` checks they have the same keys). What comes from the user, the agent or
+    Trefle is not translated. The MCP tools and resources stay in English: they speak to a model. The messages the cards
+    send to the agent once tapped (`data-chat-notice`, `chat.notice.*`) are in the language of the interface, as the
+    bubble of the user shows them; nothing parses them, the agent reads them in any language.
+15. Test and demo data come from Foundry, a dev dependency: the factories in `src/Factory/` (one per entity, and
     `CareSheetFactory` for the embeddable), the demo data in `src/Story/DemoStory.php` (`#[AsFixture(name: 'demo')]`,
     loaded by `foundry:load-fixtures demo` in a database recreated from the migrations). `config/services.yaml` and
     `.dockerignore` leave both out of production; `config/packages/zenstruck_foundry.yaml` registers the story in dev

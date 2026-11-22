@@ -13,18 +13,18 @@
         {%- endif -%}
     </div>
     <p class="garden-species-chosen" {{ scientificName is null ? 'hidden' }}>
-        <span class="kicker">Species</span> <em>{{ scientificName }}</em>
-        <button type="button" class="chip" data-action="live#update" data-model="trefleId" data-value="">Change</button>
+        <span class="kicker">{{ 'species.label'|trans }}</span> <em>{{ scientificName }}</em>
+        <button type="button" class="chip" data-action="live#update" data-model="trefleId" data-value="">{{ 'species_picker.change'|trans }}</button>
     </p>
     {% set result = this.searchResult %}
     <div class="garden-species-candidates" aria-live="polite">
         {%- if result is not null -%}
             {%- if result.trefleUnavailable -%}
-                <p class="hint">{{ required ? 'Trefle does not answer: try again in a moment.' : 'Trefle does not answer: your name is kept as is.' }}</p>
+                <p class="hint">{{ (required ? 'species_picker.unavailable_required' : 'species_picker.unavailable')|trans }}</p>
             {%- elseif result.candidates is empty -%}
-                <p class="hint">{{ required ? 'Trefle does not know this name: try its Latin name.' : 'Trefle does not know this name: it is kept as is.' }}</p>
+                <p class="hint">{{ (required ? 'species_picker.unknown_required' : 'species_picker.unknown')|trans }}</p>
             {%- else -%}
-                <p class="kicker garden-species-label">Which species is it?{{ not required ? ' (optional)' }}</p>
+                <p class="kicker garden-species-label">{{ (required ? 'species_picker.which' : 'species_picker.which_optional')|trans }}</p>
                 {%- for candidate in result.candidates -%}
                     <button type="button" class="chip" data-action="live#update" data-model="trefleId" data-value="{{ candidate.trefleId }}"><em>{{ candidate.scientificName }}</em>{{ candidate.commonName ? ' · ' ~ candidate.commonName }}</button>
                 {%- endfor -%}
@@ -32,7 +32,7 @@
         {%- endif -%}
     </div>
     {%- if required -%}
-        {% set subject = scientificName ?? (name|trim is not empty ? name|trim : 'a new species') %}
-        <p class="hint garden-species-assistant">Rather not fill in its care sheet yourself? <a href="{{ path('chat', {message: 'Draft the care sheet of ' ~ subject}) }}">Ask the assistant to draft it</a></p>
+        {% set subject = scientificName ?? (name|trim is not empty ? name|trim : null) %}
+        <p class="hint garden-species-assistant">{{ 'species_picker.rather_not'|trans }} <a href="{{ path('chat', {message: subject is null ? 'chat.message.draft_new_species'|trans : 'chat.message.draft_species'|trans({species: subject})}) }}">{{ 'species_picker.ask_the_assistant'|trans }}</a></p>
     {%- endif -%}
 </div>

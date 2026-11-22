@@ -15,12 +15,12 @@
 | Field | Value | Confidence |
 |---|---|---|
 {% for row in care_sheet_rows(sheet) %}
-| {{ row.field.label }} | {{ row.value|replace({'|': '/'}) }} | {{ row.confidence.value }} |
+| {{ row.field|trans }} | {{ row.value|replace({'|': '/'}) }} | {{ row.confidence.value }} |
 {% endfor %}
 
 ## Reminders
 
-{{ plant.enabledReminderTypes|map(t => t.label)|join(', ')|default('None enabled.') }}
+{{ plant.enabledReminderTypes|map(t => t|trans)|join(', ')|default('None enabled.') }}
 
 ## Sources
 

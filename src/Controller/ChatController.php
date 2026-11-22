@@ -8,6 +8,7 @@ use App\Chat\ChatSession;
 use App\Chat\Message\RunAgent;
 use App\Chat\Model\ChatEntry;
 use App\Chat\Model\ChatMessageInput;
+use App\Locale\PreferredLocale;
 use App\Plant\PlantRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -23,6 +24,7 @@ final class ChatController extends AbstractController
 {
     public function __construct(
         private readonly ChatSession $chatSession,
+        private readonly PreferredLocale $preferredLocale,
     ) {
     }
 
@@ -54,7 +56,7 @@ final class ChatController extends AbstractController
         #[MapRequestPayload]
         ChatMessageInput $input,
     ): Response {
-        $bus->dispatch(new RunAgent($this->chatSession->getConversationId()->toRfc4122(), trim($input->text)));
+        $bus->dispatch(new RunAgent($this->chatSession->getConversationId()->toRfc4122(), trim($input->text), $this->preferredLocale->get()->value));
 
         // Sent by Turbo: the page shows the message already, the answer comes through Mercure
         if (TurboBundle::STREAM_FORMAT === $request->getPreferredFormat()) {
