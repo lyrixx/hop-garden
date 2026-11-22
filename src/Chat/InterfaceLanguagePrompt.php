@@ -6,6 +6,7 @@ use Symfony\AI\Agent\Attribute\AsInputProcessor;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Message\Template;
 use Symfony\Component\Translation\LocaleSwitcher;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -28,11 +29,14 @@ final readonly class InterfaceLanguagePrompt implements InputProcessorInterface
     {
         $messages = $input->getMessageBag();
         $prompt = $messages->getSystemMessage()?->getContent();
-        if (!\is_string($prompt)) {
-            throw new \LogicException('The gardener needs its prompt, as text, before its language: see config/packages/ai.yaml.');
-        }
+        $section = "\n\n" . $this->section();
 
-        $input->setMessageBag($messages->withSystemMessage(Message::forSystem($prompt . "\n\n" . $this->section())));
+        // The prompt of a file is a template of text (config/packages/ai.yaml): the section has no placeholder
+        $input->setMessageBag($messages->withSystemMessage(Message::forSystem(match (true) {
+            $prompt instanceof Template && 'string' === $prompt->getType() => Template::string($prompt->getTemplate() . $section),
+            \is_string($prompt) => $prompt . $section,
+            default => throw new \LogicException('The gardener needs its prompt before its language: see config/packages/ai.yaml.'),
+        })));
     }
 
     private function section(): string
