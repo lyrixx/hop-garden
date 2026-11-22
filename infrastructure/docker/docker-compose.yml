@@ -11,6 +11,7 @@ x-templates:
             - MERCURE_URL=http://frontend/.well-known/mercure
             - MERCURE_PUBLIC_URL=${PROJECT_URL}/.well-known/mercure
             - MERCURE_PUBLISHER_JWT_KEY=!ChangeThisMercureHubJWTSecretKey!
+            - MERCURE_SUBSCRIBER_JWT_KEY=!ChangeThisMercureSubscriberJWTKey!
             - MERCURE_JWT_ISSUER=${PROJECT_URL}
             - ANTHROPIC_API_KEY
             - OPENAI_API_KEY
@@ -53,7 +54,8 @@ services:
             MERCURE_URL: http://frontend/.well-known/mercure
             MERCURE_PUBLIC_URL: ${PROJECT_URL}/.well-known/mercure
             MERCURE_PUBLISHER_JWT_KEY: '!ChangeThisMercureHubJWTSecretKey!'
-            MERCURE_SUBSCRIBER_JWT_KEY: '!ChangeThisMercureHubJWTSecretKey!'
+            # Its own key: a subscriber cookie cannot publish
+            MERCURE_SUBSCRIBER_JWT_KEY: '!ChangeThisMercureSubscriberJWTKey!'
             MERCURE_JWT_ISSUER: ${PROJECT_URL}
         volumes:
             - "../..:/var/www:cached"
@@ -88,6 +90,7 @@ services:
             - MERCURE_URL=http://frontend/.well-known/mercure
             - MERCURE_PUBLIC_URL=${PROJECT_URL}/.well-known/mercure
             - MERCURE_PUBLISHER_JWT_KEY=!ChangeThisMercureHubJWTSecretKey!
+            - MERCURE_SUBSCRIBER_JWT_KEY=!ChangeThisMercureSubscriberJWTKey!
             - MERCURE_JWT_ISSUER=${PROJECT_URL}
             - ANTHROPIC_API_KEY
             - OPENAI_API_KEY

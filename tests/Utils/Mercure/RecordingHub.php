@@ -8,36 +8,45 @@ use Symfony\Component\Mercure\ProtocolVersion;
 use Symfony\Component\Mercure\Update;
 
 /**
- * Keeps the updates instead of sending them to a hub.
+ * Keeps the updates instead of sending them to a hub. The subscriber cookie is the real one: the token factory of the
+ * subscribers, the protocol and the cookie name of config/packages/mercure.yaml.
  */
 final class RecordingHub implements HubInterface
 {
     /** @var list<Update> */
     private static array $updates = [];
 
+    public function __construct(
+        private readonly TokenFactoryInterface $subscriberTokenFactory,
+    ) {
+    }
+
     public function getUrl(): string
     {
         return 'http://frontend/.well-known/mercure';
     }
 
+    /**
+     * Of the host of the test client: the subscriber cookie is set for it.
+     */
     public function getPublicUrl(): string
     {
-        return 'https://hop-garden.test/.well-known/mercure';
+        return 'http://localhost/.well-known/mercure';
     }
 
-    public function getFactory(): ?TokenFactoryInterface
+    public function getFactory(): TokenFactoryInterface
     {
-        return null;
+        return $this->subscriberTokenFactory;
     }
 
     public function getProtocolVersion(): ProtocolVersion
     {
-        return ProtocolVersion::cases()[0];
+        return ProtocolVersion::V1;
     }
 
     public function getCookieName(): string
     {
-        return 'mercureAuthorization';
+        return 'mercure_access_token';
     }
 
     public function publish(Update $update): string
@@ -57,13 +66,22 @@ final class RecordingHub implements HubInterface
      */
     public static function published(string $topic): array
     {
-        $data = [];
-        foreach (self::$updates as $update) {
-            if (\in_array($topic, $update->getTopics(), true)) {
-                $data[] = $update->getData();
-            }
-        }
+        return array_map(static fn (Update $update): string => $update->getData(), self::updates($topic));
+    }
 
-        return $data;
+    /**
+     * @return list<Update>
+     */
+    public static function updates(string $topic): array
+    {
+        return array_values(array_filter(self::$updates, static fn (Update $update): bool => \in_array($topic, $update->getTopics(), true)));
+    }
+
+    /**
+     * @return list<string> every topic published to
+     */
+    public static function topics(): array
+    {
+        return array_values(array_unique(array_merge(...array_map(static fn (Update $update): array => $update->getTopics(), self::$updates))));
     }
 }

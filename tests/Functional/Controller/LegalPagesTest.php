@@ -88,14 +88,15 @@ final class LegalPagesTest extends WebTestCase
 
     /**
      * The cookies of the privacy policy are the ones Hop Garden sets: the session for a visitor, the language once
-     * chosen, REMEMBERME when ticked. The double-submit one of the CSRF tokens is set by JavaScript: none here.
+     * chosen, REMEMBERME when ticked, the subscriber cookie of the Mercure hub on a page of the garden. The double-submit
+     * one of the CSRF tokens is set by JavaScript: none here.
      */
     public function testThePrivacyPolicyListsTheRealCookies(): void
     {
         $crawler = $this->client->request('GET', '/privacy');
         $session = $this->client->getRequest()->getSession()->getName();
         self::assertSame(
-            [$session, 'REMEMBERME', UserPreferredLocale::COOKIE, '__Host-csrf-token_…'],
+            [$session, 'REMEMBERME', UserPreferredLocale::COOKIE, 'mercure_access_token', '__Host-csrf-token_…'],
             $crawler->filter('#cookies dt code')->each(static fn (Crawler $name): string => $name->text()),
         );
 
@@ -109,11 +110,14 @@ final class LegalPagesTest extends WebTestCase
         self::assertSame([$session => null, UserPreferredLocale::COOKIE => self::daysUntil('+1 year')], $this->cookies(), 'A language chosen.');
 
         $member = UserFactory::new()->approved()->create();
+        $this->joinTheGardenOfTheTest($member);
         $this->forgetTheFailedLogins();
         $this->client->restart();
         $this->logInWithTheForm($this->client, $member->getEmail());
         self::assertResponseRedirects('/assistant');
         self::assertSame([$session => null], $this->cookies(), 'Logged in.');
+        $this->client->followRedirect();
+        self::assertSame([$session => null, 'mercure_access_token' => null], $this->cookies(), 'A page of the garden: its live updates, until the browser closes.');
 
         $this->client->restart();
         $this->logInWithTheForm($this->client, $member->getEmail(), rememberMe: true);
@@ -121,6 +125,7 @@ final class LegalPagesTest extends WebTestCase
         self::assertSame([$session => null, 'REMEMBERME' => 30], $this->cookies(), 'Remembered.');
 
         $crawler = $this->client->request('GET', '/garden');
+        self::assertSame([$session => null, 'REMEMBERME' => 30, 'mercure_access_token' => null], $this->cookies());
         $this->client->submit($crawler->filter('.account-menu form')->form());
         self::assertSame([$session => null], $this->cookies(), 'Logged out: forgotten.');
     }

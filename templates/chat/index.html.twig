@@ -9,7 +9,7 @@
     {# The answer of the worker comes as Turbo Streams, through Mercure: see App\Chat\AgentRunner #}
     {# A card that tells the agent once tapped (data-chat-follow-up): see chat_controller.js #}
     <section class="chat" data-controller="chat" data-action="turbo:before-stream-render@document->chat#rendering turbo:submit-start->chat#follow turbo:frame-render->chat#tell">
-        {{ turbo_stream_from(topic) }}
+        {{ turbo_stream_from(topic, private: true) }}
 
         <div class="chat-header">
             <twig:PlateHead tab="I" :title="'chat.heading'|trans" :subtitle="'chat.subtitle'|trans"/>

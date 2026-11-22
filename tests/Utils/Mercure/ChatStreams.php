@@ -2,8 +2,6 @@
 
 namespace App\Tests\Utils\Mercure;
 
-use App\Chat\ChatPublisher;
-
 /**
  * What the page of a conversation does with the Turbo Streams of its topic (templates/chat/stream/), one entry per
  * stream: "start" and "done" for the waiting dots, "answer" in a "new" bubble or the "same" one, "tool_call",
@@ -14,10 +12,10 @@ final class ChatStreams
     /**
      * @return list<array<string, mixed>>
      */
-    public static function of(string $conversationId): array
+    public static function of(string $topic): array
     {
         $events = [];
-        foreach (RecordingHub::published(ChatPublisher::topic($conversationId)) as $update) {
+        foreach (RecordingHub::published($topic) as $update) {
             foreach (TurboStream::parseAll($update) as $stream) {
                 $events[] = self::event($stream);
             }

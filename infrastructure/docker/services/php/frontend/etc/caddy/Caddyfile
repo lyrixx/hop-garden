@@ -33,10 +33,11 @@
                 jwt {env.MERCURE_SUBSCRIBER_JWT_KEY} {env.MERCURE_SUBSCRIBER_JWT_ALG}
             }
         }
-        # Allow anonymous subscribers (double-check that it's what you want)
-        anonymous
-        # Enable the subscription API (double-check that it's what you want)
-        subscriptions
+        # The audience of the tokens: the public URL, whatever the proxy in front says of the scheme (Traefik ends the TLS)
+        resource_identifier {$MERCURE_PUBLIC_URL}
+        # Every update is private, and no subscriber is anonymous: the cookie of the application grants a member their
+        # topics (src/Mercure/Topics.php). Keep its name in sync with config/packages/mercure.yaml
+        cookie_name mercure_access_token
         # Extra directives
         {$MERCURE_EXTRA_DIRECTIVES}
     }

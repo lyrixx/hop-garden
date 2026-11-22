@@ -3,9 +3,20 @@ mercure:
         default:
             url: '%env(default::MERCURE_URL)%'
             public_url: '%env(default::MERCURE_PUBLIC_URL)%'
-            jwt:
+            # The subscriber cookie, read under the same name by the hub (Caddyfile): without the "__Secure-" prefix of
+            # the protocol 1.0, which the production image over plain HTTP (castor start -c prod) could not set
+            cookie_name: 'mercure_access_token'
+            # Every update is private (App\Mercure\Topics): the app publishes to any topic, a member subscribes to their
+            # own, with the cookie set by every page (App\Twig\NavigationExtension::grantMercureTopics())
+            publisher:
                 secret: '%env(MERCURE_PUBLISHER_JWT_KEY)%'
-                publish: '*'
+                topics: ['*']
+                claims:
+                    iss: '%env(MERCURE_JWT_ISSUER)%'
+                    sub: 'app'
+                    client_id: 'app'
+            subscriber:
+                secret: '%env(MERCURE_SUBSCRIBER_JWT_KEY)%'
                 claims:
                     iss: '%env(MERCURE_JWT_ISSUER)%'
                     sub: 'app'

@@ -4,6 +4,7 @@ namespace App\Tests\Integration\Chat;
 
 use App\Chat\ChatPublisher;
 use App\Chat\Model\ChatEvent;
+use App\Tests\Utils\Chat\AgentRunsTrait;
 use App\Tests\Utils\Mercure\ChatStreams;
 use App\Tests\Utils\Mercure\RecordingHub;
 use App\Tests\Utils\Mercure\UnreachableHub;
@@ -18,18 +19,19 @@ use Twig\Environment;
  */
 final class ChatPublisherTest extends KernelTestCase
 {
-    public function testAnEventGoesToTheTopicOfItsConversation(): void
+    use AgentRunsTrait;
+
+    public function testAnEventGoesToTheTopicOfItsConversationPrivately(): void
     {
         RecordingHub::reset();
-        $publisher = new ChatPublisher(new RecordingHub(), self::twig(), new Logger('test'));
+        $publisher = new ChatPublisher(self::getContainer()->get('mercure.hub.default'), self::twig(), new Logger('test'));
+        $topic = $this->conversationTopic('0193a5a0-0000-7000-8000-000000000000');
 
-        $publisher->publish('0193a5a0-0000-7000-8000-000000000000', ChatEvent::ToolCall, ['summary' => 'search_plant(query: "hortensia")']);
+        $publisher->publish($topic, ChatEvent::ToolCall, ['summary' => 'search_plant(query: "hortensia")']);
 
-        self::assertSame('chat/0193a5a0-0000-7000-8000-000000000000', ChatPublisher::topic('0193a5a0-0000-7000-8000-000000000000'));
-        self::assertSame(
-            [['type' => 'tool_call', 'summary' => 'search_plant(query: "hortensia")']],
-            ChatStreams::of('0193a5a0-0000-7000-8000-000000000000'),
-        );
+        self::assertSame(\sprintf('https://hop-garden.test/users/%d/conversations/0193a5a0-0000-7000-8000-000000000000', self::defaultGarden()->getOwner()->getId()), $topic, 'Under the URL of the application, by its member.');
+        self::assertSame([['type' => 'tool_call', 'summary' => 'search_plant(query: "hortensia")']], ChatStreams::of($topic));
+        self::assertTrue(RecordingHub::updates($topic)[0]->isPrivate(), 'To the subscribers it is granted to only.');
     }
 
     public function testAHubDownIsAWarningOnly(): void
@@ -37,7 +39,7 @@ final class ChatPublisherTest extends KernelTestCase
         $logs = new TestHandler();
         $publisher = new ChatPublisher(new UnreachableHub(), self::twig(), new Logger('test', [$logs]));
 
-        $publisher->publish('0193a5a0-0000-7000-8000-000000000000', ChatEvent::Done);
+        $publisher->publish('https://hop-garden.test/users/1/conversations/0193a5a0-0000-7000-8000-000000000000', ChatEvent::Done);
 
         self::assertTrue($logs->hasRecordThatContains('Could not push a chat event.', Level::Warning));
         self::assertSame('done', $logs->getRecords()[0]->context['event']);

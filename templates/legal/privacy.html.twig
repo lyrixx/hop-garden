@@ -59,12 +59,14 @@
         <h2>{{ 'legal.privacy.cookies.heading'|trans }}</h2>
         <p>{{ 'legal.privacy.cookies.intro'|trans }}</p>
         {# Every cookie Hop Garden sets: the session (framework.session), the one of remember_me (config/packages/security.yaml),
-           App\Locale\UserPreferredLocale::COOKIE, and the one assets/controllers/csrf_protection_controller.js sets to
-           double-submit a CSRF token. The first three are checked by tests/Functional/Controller/LegalPagesTest.php #}
+           App\Locale\UserPreferredLocale::COOKIE, the subscriber cookie of the Mercure hub (config/packages/mercure.yaml),
+           and the one assets/controllers/csrf_protection_controller.js sets to double-submit a CSRF token. All but the last
+           are checked by tests/Functional/Controller/LegalPagesTest.php #}
         {% set cookies = {
             (app.session.name): 'session',
             REMEMBERME: 'remember_me',
             (constant('App\\Locale\\UserPreferredLocale::COOKIE')): 'locale',
+            mercure_access_token: 'mercure',
             '__Host-csrf-token_…': 'csrf',
         } %}
         <dl class="legal-facts legal-cookies">
