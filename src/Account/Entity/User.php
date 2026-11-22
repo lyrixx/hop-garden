@@ -10,8 +10,8 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
- * Someone with an account: they register, verify their email, then wait until the administrator approves them. Only an
- * approved member gets in.
+ * Someone with an account: they register, verify their email, then wait until the administrator approves them, unless
+ * an invitation to a garden lets them in. Only an approved member gets in.
  */
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 // "user" is a reserved word of PostgreSQL
@@ -107,6 +107,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function approve(\DateTimeImmutable $at): void
     {
         $this->assertWaiting();
+
+        $this->accessStatus = AccessStatus::Approved;
+        $this->approvedAt = $at;
+    }
+
+    /**
+     * Invited into a garden, a new account skips the waiting list: in once its email is verified.
+     */
+    public function admitByInvitation(\DateTimeImmutable $at): void
+    {
+        if (AccessStatus::Pending !== $this->accessStatus) {
+            throw new \LogicException(\sprintf('Only an account without a decision is admitted by an invitation, not one %s.', $this->accessStatus->value));
+        }
 
         $this->accessStatus = AccessStatus::Approved;
         $this->approvedAt = $at;
