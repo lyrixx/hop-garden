@@ -28,10 +28,10 @@ git clone https://github.com/lyrixx/hop-garden.git && cd hop-garden
 echo '127.0.0.1 hop-garden.test' | sudo tee -a /etc/hosts
 echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env.local
 castor start
-castor demo:reset   # optional: a rose and a lemon tree, with their reminders, and 3 spaces
+castor demo:reset   # the demo accounts, a rose and a lemon tree, with their reminders, and 3 spaces
 ```
 
-Open <https://hop-garden.test> and type `hortensia`.
+Open <https://hop-garden.test>, log in as `alice@hop-garden.test` (password `hop-garden-demo`) and type `hortensia`.
 
 That's all: the demo mode is on by default, so Trefle and Open-Meteo answer from the responses
 stored in [`fixtures/http/`](fixtures/http/). Only the LLM key is needed. Hop Garden speaks English and French: see
@@ -79,9 +79,11 @@ A card keeps its outcome: reload the page and it still says *Added* or *Created*
 
 ### In English or in French
 
-Hop Garden speaks English and French. The language is a setting of the application, not of the URL: with a browser in
+Hop Garden speaks English and French. The language is a setting of each member, never of the URL: with a browser in
 French, the pages stay in English until you choose, under a band in French, *Passer en français* or *Rester en
-anglais*. The band does not come back, and the footer switches the language later. `castor demo:reset` forgets it.
+anglais*. The band does not come back, and the footer or *My account* switches the language later. A visitor's choice
+stays in a cookie, and an account keeps the language it registered in. In `castor demo:reset`, Alice speaks English and
+Bob French.
 
 - The assistant answers in the language you write in, and in the one of the interface when a tap on a choice does not
   tell. A tapped card tells it in the language of the interface (*J’ai créé l’espace Balcon.*). The care sheets it
@@ -95,6 +97,36 @@ anglais*. The band does not come back, and the footer switches the language late
 The frost alert fires below the hardiness of the plant plus 2 °C (0 °C for a frost-sensitive plant). A panicled
 hydrangea is hardy to about -25 °C, so the recorded cold snap (down to -12.4 °C) warns about the lemon tree of
 `castor demo:reset`, not about it.
+
+### Accounts and the waiting list
+
+Hop Garden opens to a few gardeners at a time. Everything but the login, the registration and the password reset needs
+an approved account.
+
+1. *Sign up*: email, name, password, and the terms of sale. A link to verify the email follows, valid 48 hours. The
+   page says the same whether the address has an account or not: the email tells its owner.
+2. Once verified, the account waits on the list. The administrator approves or refuses it in the back-office,
+   <https://hop-garden.test/admin>, and the member gets an email in their language: *You can come in*.
+3. *Log in*, with *Remember me* for 30 days. After 5 failed attempts, the login waits 15 minutes. *Forgot your
+   password?* sends a link valid one hour, which verifies the email too.
+4. *My account*: the name and the language, the email (the new one verified first), the password (the current one
+   required), and the deletion of the account.
+
+In dev, every email lands in [Mailpit](https://mailpit.axllent.org), <https://mail.hop-garden.test>. The demo accounts
+of `castor demo:reset`, all with the password `hop-garden-demo`:
+
+| Email | |
+|---|---|
+| `admin@hop-garden.test` | The administrator, of the back-office too |
+| `alice@hop-garden.test` | A member, in English |
+| `bob@hop-garden.test` | A member, in French |
+| `dave@hop-garden.test` | On the waiting list, in French: approve him |
+
+On a new installation, create the administrator:
+
+```bash
+castor app:user:create --email=you@example.com --name=You --password='a long password' --admin
+```
 
 ## Architecture
 
@@ -144,6 +176,10 @@ flowchart LR
   channel and a toast pushed with Mercure. The *Notifications* page lists them under the reminders coming up and the
   frost forecast with the plants at risk: by hand, what `upcoming_reminders` and `get_frost_forecast` give the agent.
 - Everything reads the time from `ClockInterface`: `app:reminders:run --date=2026-12-01` simulates a day.
+- Accounts: Symfony Security (`form_login`, remember me, `login_throttling`), denied by default; a `UserChecker` lets
+  approved members only in, and tells the others why. The links of the emails are signed and dated (`UriSigner`), a
+  password reset token is stored hashed. The back-office is [EasyAdmin](https://symfony.com/bundles/EasyAdminBundle),
+  the emails are Twig templates sent by Symfony Mailer.
 - The stack is based on [jolicode/docker-starter](https://github.com/jolicode/docker-starter): FrankenPHP,
   PostgreSQL, a Messenger worker, a Traefik router for `hop-garden.test` in HTTPS, and a builder container for
   the CLI.
@@ -226,6 +262,8 @@ reads the environment when it starts.
 | `TREFLE_TOKEN` | | Free token from [trefle.io](https://trefle.io), when `APP_DEMO=0`. |
 | `GARDEN_LATITUDE` / `GARDEN_LONGITUDE` | `46.6` / `2.4` (center of France) | Location of the frost forecast. |
 | `GARDEN_TIMEZONE` | `Europe/Paris` | Timezone of the 7:00 check. |
+| `MAILER_DSN` | `null://null`, Mailpit in dev | How the emails of the accounts leave: an SMTP server or a [provider](https://symfony.com/doc/current/mailer.html#using-a-3rd-party-transport). |
+| `MAILER_FROM` | `Hop Garden <hello@hop-garden.test>` | Their sender. |
 
 The answers of the external APIs are cached: 7 days for plants, 1 hour (and the current day) for forecasts.
 
@@ -267,10 +305,12 @@ castor docker:push -c prod --tag="$(git rev-parse --short=7 HEAD)" --tag=latest 
 
 Besides the variables of [Configuration](#configuration), the image needs `APP_SECRET`, `DATABASE_URL`,
 `DEFAULT_URI`, the Mercure ones (`MERCURE_URL`, `MERCURE_PUBLIC_URL`, `MERCURE_JWT_ISSUER`,
-`MERCURE_PUBLISHER_JWT_KEY`, `MERCURE_SUBSCRIBER_JWT_KEY`), `MCP_AGENT_URL` and `MCP_ALLOWED_HOSTS` (the hosts
-of the MCP server: its domain, and the one the worker reaches it by). Two volumes, shared by the web and the
-worker: `public/uploads/` (the photos of the plantings) and `var/share/` (`APP_SHARE_DIR`: the sessions, so the
-conversation of the chat survives a deployment, and the `cache.app` pool).
+`MERCURE_PUBLISHER_JWT_KEY`, `MERCURE_SUBSCRIBER_JWT_KEY`), `MCP_AGENT_URL`, `MCP_ALLOWED_HOSTS` (the hosts
+of the MCP server: its domain, and the one the worker reaches it by), and the mailer ones (`MAILER_DSN`,
+`MAILER_FROM`). Two volumes, shared by the web and the worker: `public/uploads/` (the photos of the plantings) and
+`var/share/` (`APP_SHARE_DIR`: the sessions, so the conversation of the chat survives a deployment, the `cache.app` pool
+and the login throttling). The first administrator, once the migrations ran:
+`bin/console app:user:create --email=... --name=... --password=... --admin`.
 
 ## Credits and licenses
 
@@ -290,11 +330,11 @@ Hop Garden is released under the [MIT license](LICENSE).
 - **LLM-filled care data is reviewed by a human before being saved.** Nothing joins the garden without your
   tap, but the values you validate are only as good as your review.
 - The care data assumes a temperate Western European climate.
-- No authentication: Hop Garden is a single-user application meant to run locally. The MCP endpoints and the
-  Mercure topics are open to whoever reaches the server.
+- Accounts, but one garden: every member sees the same plants, spaces and notifications, until the gardens of the
+  next step. The MCP endpoints and the Mercure topics are open to whoever reaches the server.
 - The responses in `fixtures/http/` are hand-written samples in the format of each API, not real records; their
   Trefle ids are made up. Set `APP_DEMO=0` and `TREFLE_TOKEN` in `.env.local` to use the real services.
 - One garden location for the frost forecast.
-- One language for the whole application, as there are no accounts. A notification keeps the language it was sent in,
-  and the data of `castor demo:reset` is in English.
+- The reminders have no recipient yet: they are written in the language of the application (its settings, English
+  until set). A notification keeps the language it was sent in, and the data of `castor demo:reset` is in English.
 - E-mail notifications are not implemented: notifications stay in the application.

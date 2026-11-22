@@ -24,7 +24,8 @@ castor app:db:migrate                        # Doctrine migrations (alias: casto
 castor app:db:fixtures                       # the demo story, as demo:reset does (alias: castor fixtures)
 castor postgres                              # psql shell on the app database (alias: castor pg)
 castor postgres -- select 1 from foobar      # one-off command database query
-castor demo:reset                            # new database: 2 validated plants, 3 plantings in 3 spaces (one empty)
+castor demo:reset                            # new database: 4 accounts (printed), 2 validated plants, 3 plantings in 3 spaces (one empty)
+castor app:user:create --email=... --name=... --password=... [--admin|--approved]   # an account, e.g. the administrator
 castor demo:frost [--date=YYYY-MM-DD]        # reminder check with the recorded frost forecast
 castor mcp:stdio                             # MCP server over STDIO (Claude Desktop, Claude Code...)
 ```
@@ -81,14 +82,17 @@ Without option, the `default` context applies.
 - Spaces: `App\Garden\Entity\Space` carries the exposure and the soil; a `Planting` has an optional space (`SET NULL`),
   and its neighbours are the other plantings of its space. Pages `/spaces`, `/spaces/new`, `/spaces/{id}` and
   `/spaces/{id}/edit` (`SpaceController`); `RecommendationEngine` reads the exposure of the space
-- Languages: English (default) and French (`App\Locale\Model\SupportedLocale`), a setting, never in the URL. Designed
-  for accounts to come: `App\Locale\PreferredLocale` (`get()`, `set()`, `isChosen()`) is the only way to read or change
-  it, named after its role so that it can move to the user, while the messages a request dispatches (`RunAgent`,
-  `DraftCareSheet`) carry the locale captured when sent, which their handler applies with the `LocaleSwitcher`, and only
-  the reminder check, without recipient, reads `PreferredLocale` in its handler (and in `app:reminders:run`).
-  - Today a row of `App\Settings\Entity\Settings`, read by `App\Locale\RequestLocaleListener` for every request, and
-    emptied by `castor demo:reset`. Until one is chosen, `LocaleBanner` offers the language of the browser; the footer
-    switch (`LocaleSwitch`) posts to `/locale`.
+- Languages: English (default) and French (`App\Locale\Model\SupportedLocale`), a setting, never in the URL.
+  `App\Locale\PreferredLocale` (`get()`, `set()`, `isChosen()`) is the only way to read or change it, while the messages
+  a request dispatches (`RunAgent`, `DraftCareSheet`) carry the locale captured when sent, which their handler applies
+  with the `LocaleSwitcher`, and only the reminder check, without recipient, reads `PreferredLocale` in its handler (and
+  in `app:reminders:run`).
+  - `App\Locale\UserPreferredLocale`: the `preferredLocale` of the member logged in (null until chosen; a registration
+    keeps the language of its page), else the `locale` cookie of a visitor, else the one of the application, a row of
+    `App\Settings\Entity\Settings` that no page writes (the reminder check), emptied by `castor demo:reset`. A choice
+    goes to the account and to the cookie. `App\Locale\RequestLocaleListener` applies it after the firewall (7), which
+    knows the member. Until one is chosen, `LocaleBanner` offers the language of the browser; the footer switch
+    (`LocaleSwitch`) posts to `/locale`, and *My account* has it too.
   - The agent gets the language at the end of its prompt (`App\Chat\InterfaceLanguagePrompt`) and writes its care
     sheets in it. When the interface is not in English, the species search asks the LLM for the Latin names of a name
     Trefle does not know (`App\Garden\LatinNameResolver`, cached per name).
@@ -100,6 +104,23 @@ Without option, the `default` context applies.
 - `APP_DEMO=1` (default, in `.env`; `APP_DEMO=0` in `.env.local` for the real APIs, then restart the workers):
   Trefle and Open-Meteo answer from `fixtures/http/`, the Latin names of the species search from `fixtures/llm/`. Tests
   always run in demo mode (`.env.test`; Symfony does not load `.env.local` in the test env)
+- Accounts (`App\Account\`): `Entity\User` (table `app_user`) registers, verifies its email (a link signed and dated by
+  `UriSigner`, `App\Account\SignedLinks`), then waits on the list until the administrator approves or refuses it in
+  EasyAdmin (`/admin`, `App\Controller\Admin\`, `ROLE_ADMIN`); each decision sends an email in the language of the
+  member. `ROLE_USER` comes with the approval (`User::getRoles()`), and `Security\UserChecker` tells the others why after
+  their password. Password reset: `Entity\PasswordResetRequest`, its token hashed, one hour, one per user. The pages pay
+  no attention to whether an address has an account: the email tells its owner (`AccountMailer::sendAddressInUse()`).
+  Accounts are created by `app:user:create` too (`castor app:user:create`)
+- Security (`config/packages/security.yaml`): `form_login` on `/login`, remember me, `login_throttling` (5 attempts in 15
+  minutes), logout on `/logout`. `access_control` denies by default (`ROLE_USER`): public are `/`, the routes `legal_*`,
+  `/login`, `/register…`, `/reset-password…`, `/locale`, and `/_mcp` (until OAuth) with `/_mcp/agent` (the worker,
+  until a token per run)
+- Mailer: Twig emails in `templates/email/`, translated, sent at once after the flush. In dev, Mailpit catches them
+  (`MAILER_DSN` of `.env.dev`, its inbox on `mail.<root_domain>`, listed by `castor about`); in the tests,
+  `null://null` and the email assertions of Symfony
+- Demo accounts of `castor demo:reset`, password `hop-garden-demo` (`App\Factory\UserFactory::PASSWORD`):
+  `admin@hop-garden.test` (the administrator), `alice@hop-garden.test` (English), `bob@hop-garden.test` (French),
+  `dave@hop-garden.test` (on the waiting list)
 - PostgreSQL 16: user/pass/db = `app`/`app`, DATABASE_URL already configured
 - Traefik router, HTTPS on `<root_domain>` (see `castor.php`)
 - Production: one image, `app` (the "Production stages" of the Dockerfile, `.dockerignore` at the root). A new
@@ -184,3 +205,7 @@ After any PHP/Twig code change: `castor qa:cs --dry-run`,
     trait: no persistence in `tests/Unit`, and DAMA still rolls each test back.
 16. A named service is injected with `#[Target('name')]` (see `debug:autowiring`), `#[Autowire(service:)]` only when no
     target exists.
+17. Private by default: a new route needs `ROLE_USER`, an approved member, unless it joins the public ones of
+    `access_control`. A functional test logs a member in with `App\Tests\Utils\Security\LogInTrait` (`loginUser()`),
+    a live component with `actingAs()`. A page about an address (registration, password reset, email change) answers
+    the same whether it has an account or not.
