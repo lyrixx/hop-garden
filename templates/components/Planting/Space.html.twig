@@ -1,0 +1,37 @@
+{#
+    Where a planting grows, as rows of its table: its space, the exposure and the soil of the space, and its neighbours,
+    the other plants of the space. Without a space, a link to choose one.
+    planting: App\Garden\Model\Planting
+#}
+{% props planting %}
+{% set space = planting.space %}
+<tr>
+    <th scope="row"><span class="pict"><twig:Icon name="grid" :size="17"/></span> Space</th>
+    <td>
+        {%- if space -%}
+            <a href="{{ path('space_show', {id: space.id}) }}">{{ space.name }}</a>
+        {%- else -%}
+            Not in a space yet: <a href="{{ path('garden_edit', {id: planting.id}) }}">choose one</a>, for its exposure, its soil and its neighbours.
+        {%- endif -%}
+    </td>
+</tr>
+{% if space %}
+    <tr>
+        <th scope="row"><span class="pict pict-sun"><twig:Icon :name="space.exposure ? space.exposure.value : 'sun'" :size="17"/></span> Exposure</th>
+        <td>{{ space.exposure ? space.exposure.label : 'Not recorded' }}</td>
+    </tr>
+    <tr>
+        <th scope="row"><span class="pict"><twig:Icon name="sprout" :size="17"/></span> Soil</th>
+        <td>{{ space.soil ? space.soil.label : 'Not recorded' }}</td>
+    </tr>
+    <tr>
+        <th scope="row"><span class="pict"><twig:Icon name="flower" :size="17"/></span> Neighbours</th>
+        <td>
+            {% for neighbour in planting.neighbours %}
+                <a href="{{ path('garden_show', {id: neighbour.id}) }}">{{ neighbour.name }}</a>{{ not loop.last ? ', ' -}}
+            {% else %}
+                None yet in {{ space.name }}
+            {% endfor %}
+        </td>
+    </tr>
+{% endif %}

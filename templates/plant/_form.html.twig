@@ -1,0 +1,26 @@
+{# The form of a care sheet, on its page or in the frame of its card. form: CareSheetType · cancel_url: back to the card #}
+{{ form_start(form, {attr: {class: 'card crowned care-sheet-form'}}) }}
+    {% block heading %}{% endblock %}
+    <div class="form-grid">
+        {{ form_row(form.commonName) }}
+        {{ form_row(form.minTemperatureC) }}
+        {{ form_row(form.exposure) }}
+        {{ form_row(form.watering) }}
+        <div class="form-check">{{ form_widget(form.frostSensitive) }} {{ form_label(form.frostSensitive) }}</div>
+    </div>
+    {% for field in [form.pruningMonths, form.deadheadingMonths, form.cuttingMonths] %}
+        <fieldset class="choices">
+            <legend>{{ field.vars.label }}</legend>
+            {% for month in field %}
+                <label class="choice">{{ form_widget(month) }}<span>{{ month.vars.label|slice(0, 3) }}</span></label>
+            {% endfor %}
+        </fieldset>
+    {% endfor %}
+    {{ form_row(form.pruningAdvice) }}
+    {{ form_row(form.cuttingAdvice) }}
+    {{ form_row(form.notes) }}
+    <div class="actions">
+        <twig:Button href="{{ cancel_url }}" class="button-secondary">Cancel</twig:Button>
+        <twig:Button>{{ plant.validated ? 'Save' : 'Save the draft' }}</twig:Button>
+    </div>
+{{ form_end(form) }}

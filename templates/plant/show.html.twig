@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ plant.commonName }}, the species · Hop Garden{% endblock %}
+
+{# Validated in its frame, the card unlocks its reminders; the rest of the page follows, in place #}
+{% block head %}{{ turbo_refreshes_with('morph', 'preserve') }}{% endblock %}
+
+{% block body %}
+    <nav class="breadcrumb"><span class="page-label page-label-species">Species</span> › <em>{{ plant.scientificName }}</em></nav>
+    <div data-controller="species" data-action="turbo:submit-end->species#submitted">
+        <twig:PlantCard :plant="plant"/>
+    </div>
+
+    <section class="card species-plantings" id="in-your-garden">
+        <h2>In your garden</h2>
+        {% if plantings is empty %}
+            <p class="hint">{{ plant.validated ? 'None of your plants follows this care sheet.' : 'Validate the card: the plant joins your garden.' }}</p>
+        {% else %}
+            <ul class="species-planting-list">
+                {% for planting in plantings %}
+                    <li>
+                        <a class="species-planting" href="{{ path('garden_show', {id: planting.id}) }}">
+                            <span class="plant-card-image"><twig:PlantingPhoto :planting="planting" :size="22"/></span>
+                            <span><span class="page-label page-label-plant">My plant</span> <strong>{{ planting.name }}</strong></span>
+                        </a>
+                        {% if planting.space %}
+                            <a class="tag species-planting-space" href="{{ path('space_show', {id: planting.space.id}) }}"><twig:Icon name="grid" :size="13"/> {{ planting.space.name }}</a>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+            {% if plantings|length > 1 %}<p class="hint">They share this care sheet, and so its reminders.</p>{% endif %}
+        {% endif %}
+    </section>
+{% endblock %}

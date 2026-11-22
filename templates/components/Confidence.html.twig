@@ -1,0 +1,6 @@
+{#
+    How sure the assistant is of a value, as a pastille.
+    confidence: App\Plant\Model\Confidence
+#}
+{%- props confidence -%}
+<span class="confidence confidence-{{ confidence.value }}" title="Confidence of the assistant: {{ confidence.value }}">{{ confidence.value }}</span>

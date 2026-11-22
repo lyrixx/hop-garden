@@ -1,0 +1,127 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ planting.name }} · Hop Garden{% endblock %}
+
+{# Once the care sheet is drafted, the worker updates the page in place, or refreshes it after a failure (a morph): see
+   App\Garden\DraftCareSheetHandler #}
+{% block head %}{{ turbo_refreshes_with('morph', 'preserve') }}{{ turbo_exempts_page_from_cache() }}{% endblock %}
+
+{% block body %}
+    {% set plant = planting.plant %}
+    {% set photo_url = planting_photo_url(planting) %}
+    <nav class="breadcrumb"><span class="page-label page-label-plant">My plant</span> <a href="{{ path('garden') }}">My garden</a> › {{ planting.name }}</nav>
+
+    {# Until its care sheet is validated: the agent drafting it, then the summary of its draft, or a retry #}
+    <div {% if recommendations is null -%}
+        data-controller="drafting"
+        data-drafting-drafting-value="{{ planting.drafting ? 'true' : 'false' }}"
+        data-drafting-status-url-value="{{ path('garden_drafting', {id: planting.id}) }}"
+        data-action="turbo:before-stream-render@document->drafting#watch"
+    {%- endif %}>
+    {# The tool calls of the agent as they come, then the draft, or a refresh: see App\Garden\DraftCareSheetHandler #}
+    {% if topic %}{{ turbo_stream_from(topic) }}{% endif %}
+    <div class="planting-layout">
+        <article class="card crowned planting-card">
+            {% if photo_url %}
+                <figure class="garden-photo"><img src="{{ photo_url }}" alt="{{ planting.name }}"></figure>
+            {% endif %}
+            <header class="card-head">
+                {% if not photo_url %}
+                    <span class="plant-card-image"><twig:PlantingPhoto :planting="planting" :size="34"/></span>
+                {% endif %}
+                <div>
+                    <p class="kicker">No. {{ planting.id }}</p>
+                    <h3>{{ planting.name }}</h3>
+                    {# The Latin name is the species: in its summary once it has a care sheet #}
+                    {% if not plant and planting.scientificName %}<p class="latin" id="planting-{{ planting.id }}-chosen-species"><span class="page-label page-label-species">Species</span> <em>{{ planting.scientificName }}</em></p>{% endif %}
+                </div>
+                {% if plant and plant.validated %}
+                    <twig:Status :validated="true"/>
+                {% else %}
+                    <twig:Status>Care sheet in progress</twig:Status>
+                {% endif %}
+            </header>
+
+            {# Where it grows: its space, with its exposure, its soil and its neighbours #}
+            <table class="care-sheet planting-place">
+                <tbody>
+                    <twig:Planting:Space :planting="planting"/>
+                </tbody>
+            </table>
+
+            {# How it is doing, and the care it got #}
+            <table class="care-sheet planting-care">
+                <tbody>
+                    <tr>
+                        <th scope="row"><span class="pict"><twig:Icon name="bee" :size="17"/></span> Diseases or pests</th>
+                        <td>{{ planting.diseases ?? 'None recorded' }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><span class="pict"><twig:Icon name="secateurs" :size="17"/></span> Care done</th>
+                        <td>
+                            {% for record in planting.careRecords|reverse %}
+                                {{- record.task.label }} on {{ record.doneOn|date('j F Y') }}{{ not loop.last ? ', ' -}}
+                            {% else %}
+                                None recorded
+                            {% endfor %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <footer class="card-foot">
+                <p>In your garden since {{ planting.createdAt|date('j F Y') }}.</p>
+                <div class="actions">
+                    <twig:Button href="{{ path('garden_edit', {id: planting.id}) }}" icon="pencil" class="button-secondary">Edit garden info</twig:Button>
+                </div>
+            </footer>
+        </article>
+
+        <div class="planting-aside">
+        <section class="card recommendations" id="recommendations">
+            <h2>Recommendations</h2>
+            {% if recommendations is not null %}
+                <ul class="recommendation-list">
+                    {% for recommendation in recommendations %}
+                        <twig:Recommendation :recommendation="recommendation"/>
+                    {% endfor %}
+                </ul>
+                <p class="hint garden-source">From the care sheet of <a href="{{ path('plant_show', {id: plant.id}) }}">{{ plant.commonName }}</a>, compared with what you described.</p>
+            {% else %}
+                <div id="planting-{{ planting.id }}-draft-status"><twig:Garden:DraftStatus :planting="planting"/></div>
+                <div class="garden-tool-calls" id="drafting-tool-calls">
+                    {%- for summary in tool_calls %}
+                        <twig:Chat:ToolCall :summary="summary"/>
+                    {%- endfor -%}
+                </div>
+                <div class="garden-failure" data-drafting-target="failure" {{ plant or planting.drafting ? 'hidden' }}>
+                    <p class="warning" data-drafting-target="failureMessage">
+                        {{- planting.hasDraftingFailed() ? 'The assistant ended without drafting a care sheet. What you entered is kept.' : 'No care sheet yet.' -}}
+                    </p>
+                    <form method="post" action="{{ path('garden_draft', {id: planting.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('planting') }}">
+                        <twig:Button icon="sprout" :iconSize="18">Retry</twig:Button>
+                    </form>
+                </div>
+                {% if same_species_plants is not empty %}
+                    <div id="planting-{{ planting.id }}-same-species">
+                    <p class="hint">Or use a care sheet you already validated for <em>{{ planting.scientificName }}</em>:</p>
+                    <div class="actions">
+                        {% for same_species_plant in same_species_plants %}
+                            <form method="post" action="{{ path('garden_link_plant', {id: planting.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('planting') }}">
+                                <input type="hidden" name="plant" value="{{ same_species_plant.id }}">
+                                <twig:Button class="button-secondary">Use the sheet of {{ same_species_plant.commonName }}</twig:Button>
+                            </form>
+                        {% endfor %}
+                    </div>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </section>
+
+        <div id="planting-{{ planting.id }}-species">{% if plant %}<twig:SpeciesSummary :plant="plant"/>{% endif %}</div>
+        </div>
+    </div>
+    </div>
+{% endblock %}

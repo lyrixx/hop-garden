@@ -1,0 +1,78 @@
+{
+  "data": [
+    {
+      "id": 263311,
+      "common_name": "Dog rose",
+      "slug": "rosa-canina",
+      "scientific_name": "Rosa canina",
+      "year": 1753,
+      "bibliography": null,
+      "author": "L.",
+      "status": "accepted",
+      "rank": "species",
+      "family_common_name": "Rose family",
+      "genus_id": null,
+      "image_url": null,
+      "synonyms": [],
+      "genus": "Rosa",
+      "family": "Rosaceae",
+      "links": {
+        "self": "/api/v1/species/rosa-canina",
+        "plant": "/api/v1/plants/rosa-canina",
+        "genus": "/api/v1/genus/rosa"
+      }
+    },
+    {
+      "id": 263362,
+      "common_name": "French rose",
+      "slug": "rosa-gallica",
+      "scientific_name": "Rosa gallica",
+      "year": 1753,
+      "bibliography": null,
+      "author": "L.",
+      "status": "accepted",
+      "rank": "species",
+      "family_common_name": "Rose family",
+      "genus_id": null,
+      "image_url": null,
+      "synonyms": [],
+      "genus": "Rosa",
+      "family": "Rosaceae",
+      "links": {
+        "self": "/api/v1/species/rosa-gallica",
+        "plant": "/api/v1/plants/rosa-gallica",
+        "genus": "/api/v1/genus/rosa"
+      }
+    },
+    {
+      "id": 263448,
+      "common_name": "Rugosa rose",
+      "slug": "rosa-rugosa",
+      "scientific_name": "Rosa rugosa",
+      "year": 1784,
+      "bibliography": null,
+      "author": "Thunb.",
+      "status": "accepted",
+      "rank": "species",
+      "family_common_name": "Rose family",
+      "genus_id": null,
+      "image_url": null,
+      "synonyms": [],
+      "genus": "Rosa",
+      "family": "Rosaceae",
+      "links": {
+        "self": "/api/v1/species/rosa-rugosa",
+        "plant": "/api/v1/plants/rosa-rugosa",
+        "genus": "/api/v1/genus/rosa"
+      }
+    }
+  ],
+  "links": {
+    "self": "/api/v1/plants/search?q=rosa",
+    "first": "/api/v1/plants/search?page=1&q=rosa",
+    "last": "/api/v1/plants/search?page=1&q=rosa"
+  },
+  "meta": {
+    "total": 3
+  }
+}

@@ -1,0 +1,394 @@
+/*
+ * Hop Garden, a garden journal: white rounded cards on a deep green ground of painted leaves.
+ * White text only on the green; inside a card, dark ink, aubergine links and pills, fields in a warm off-white.
+ * Cerulean carries the cold (hardiness, frost) and the user's messages; magenta and pink leaves crown the main card.
+ * The base and the components; the plant card is in plate.css, the garden in garden.css.
+ * Keep the palette in sync with video/src/theme.ts.
+ */
+:root {
+    --forest: #0b5b3a;
+    --forest-light: #0f6b45;
+    --forest-deep: #073d27;
+    --forest-soft: #dcefe3;
+    --anise: #b5d35a;
+    --anise-soft: #eef4c6;
+    --olive: #4f5c0c;
+    --cerulean: #0079a8;
+    --cerulean-deep: #005a7e;
+    --cerulean-soft: #ddeff7;
+    --teal: #0e6f68;
+    --teal-soft: #dcf1ee;
+    --aubergine: #5b2a6e;
+    --aubergine-deep: #44194f;
+    --magenta: #b8195f;
+    --crimson: #8a1538;
+    --pink: #f6c9d6;
+    --pink-soft: #fcebf0;
+    --cream: #f4f1ec;
+    --cream-deep: #e6e0d6;
+    --ink: #1d2a23;
+    --muted: #56625b;
+    --white: #fff;
+    --veil: rgb(4 38 24 / 66%);
+    --shadow: 0 22px 44px -26px rgb(2 30 18 / 70%);
+    --serif: "Literata Variable", Georgia, serif;
+    --sans: "DM Sans Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    /* Room left above a crowned card for its leaves */
+    --crown-room: 112px;
+
+    /* The text on the green ground; a card sets it back to dark */
+    --text: var(--white);
+    --text-soft: rgb(255 255 255 / 86%);
+    --link: var(--white);
+}
+
+* { box-sizing: border-box; }
+
+/* An anchor (the reminders of a plant page) stops below the sticky top bar */
+html { scroll-padding-top: 7rem; }
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+    background: var(--forest);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* The ground: the painted leaves on a green gradient, put behind the page */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: url("../images/leaves/canopy.svg") center bottom / cover no-repeat, linear-gradient(180deg, var(--forest), var(--forest-light));
+    pointer-events: none;
+}
+
+a { color: var(--link); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+h1, h2, h3, h4 { margin: 0; font-family: var(--serif); }
+h1, h2, h3 { font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+h2 { margin-bottom: .75rem; font-size: 1.5rem; }
+em { font-family: var(--serif); }
+
+.icon { flex-shrink: 0; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.kicker { font-family: var(--sans); font-size: .7rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--text-soft); }
+.hint { color: var(--text-soft); }
+.meta { font-size: .82rem; color: var(--text-soft); }
+
+/* A white card on the ground: dark ink again, aubergine links */
+.card {
+    --text: var(--ink);
+    --text-soft: var(--muted);
+    --link: var(--aubergine);
+    border-radius: 24px;
+    background: var(--white);
+    color: var(--text);
+    box-shadow: var(--shadow);
+}
+:where(.card) a:not(.button) { font-weight: 700; text-decoration-color: rgb(91 42 110 / 45%); }
+
+/* The crown: painted leaves rising from behind the top of the main card of a page */
+:where(.crowned) { position: relative; }
+.crowned::before {
+    content: "";
+    position: absolute;
+    bottom: calc(100% - 1px);
+    left: var(--crown-left, 44px);
+    width: var(--crown-width, 300px);
+    height: var(--crown-height, 114px);
+    transform: var(--crown-shift, none);
+    background: url("../images/leaves/crown.svg") center bottom / contain no-repeat;
+    pointer-events: none;
+}
+
+/* A note set bare on the ground, where it may fall on a light leaf */
+.callout { width: fit-content; margin: 0; padding: .55rem 1rem; border-radius: 14px; background: var(--veil); color: var(--white); }
+
+/* A pictogram in its round tinted dot */
+.pict { display: inline-grid; flex-shrink: 0; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--forest-soft); color: var(--forest); vertical-align: middle; }
+.pict-sun { background: var(--anise-soft); color: var(--olive); }
+.pict-frost { background: var(--cerulean-soft); color: var(--cerulean); }
+.pict-water { background: var(--teal-soft); color: var(--teal); }
+
+/* Layout */
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .85rem 2rem;
+    border-bottom: 1px solid rgb(255 255 255 / 10%);
+    background: rgb(11 91 58 / 96%);
+    backdrop-filter: blur(8px);
+}
+.brand { display: flex; align-items: center; gap: .55rem; color: var(--white); font-family: var(--serif); font-size: 1.4rem; font-weight: 800; letter-spacing: -.02em; text-decoration: none; }
+.brand .pict { width: 38px; height: 38px; background: var(--white); color: var(--forest); }
+.nav { display: flex; gap: .35rem; }
+.nav a { display: inline-flex; align-items: center; gap: .45rem; padding: .5rem 1rem; border-radius: 999px; color: var(--white); font-weight: 600; text-decoration: none; }
+.nav a:hover { background: rgb(255 255 255 / 12%); }
+.nav a.active { background: var(--white); color: var(--forest-deep); }
+.nav a.active .icon { color: var(--forest); }
+.badge { padding: 0 .45rem; border-radius: 999px; background: var(--magenta); color: var(--white); font-size: .72rem; font-weight: 700; line-height: 1.5; }
+.main { flex: 1; width: 100%; max-width: 1180px; margin: 0 auto; padding: 2.2rem 1.5rem 3rem; }
+
+/* The footer: a dark band, so that its white text never sits on a light leaf */
+.footer {
+    width: calc(100% - 3rem);
+    max-width: 1132px;
+    margin: 0 auto 1.5rem;
+    padding: 1rem 1.5rem;
+    border-radius: 24px;
+    background: rgb(5 46 30 / 82%);
+    backdrop-filter: blur(8px);
+    color: rgb(255 255 255 / 88%);
+    font-size: .85rem;
+    text-align: center;
+}
+.footer p { margin: .25rem 0; }
+.demo-mode { display: inline-block; margin-top: .3rem; padding: .15rem .7rem; border-radius: 999px; background: var(--anise); color: var(--forest-deep); font-weight: 600; }
+
+/* The head of a page: its plate number in a pill (or the way back), a large title, a line of serif */
+.plate-head { margin-bottom: 1.6rem; }
+.plate-head h1 { font-size: 3rem; line-height: 1.05; }
+.plate-head > p { max-width: 40rem; margin: .6rem 0 0; font-family: var(--serif); font-size: 1.15rem; font-weight: 500; line-height: 1.45; }
+.plate-tab { display: inline-block; margin-bottom: .7rem; padding: .2rem .7rem; border-radius: 999px; background: var(--anise); color: var(--forest-deep); font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.breadcrumb { margin-bottom: 1rem; color: var(--text-soft); font-weight: 500; }
+.breadcrumb a { font-weight: 700; }
+
+/* Buttons: an aubergine pill, a white one beside it in a card, a white one with a shadow on the ground */
+.button {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .7rem 1.4rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--aubergine);
+    color: var(--white);
+    font: inherit;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background .15s, transform .15s;
+}
+.button:hover { background: var(--aubergine-deep); }
+.button:active { transform: translateY(1px); }
+.button:disabled { opacity: .45; cursor: progress; }
+.button-secondary { background: var(--white); color: var(--ink); box-shadow: inset 0 0 0 1.5px rgb(29 42 35 / 26%); }
+.button-secondary:hover { background: var(--cream); }
+.button-light { background: var(--white); color: var(--forest-deep); box-shadow: 0 10px 24px -14px rgb(0 0 0 / 60%); }
+.button-light:hover { background: var(--cream); }
+/* A chevron, when it leads to another page or sends a message */
+.button-next::after, .suggestion::after {
+    content: "";
+    width: .45em;
+    height: .45em;
+    margin: 0 .15em 0 .1em;
+    border: solid currentColor;
+    border-width: 2.5px 2.5px 0 0;
+    transform: rotate(45deg);
+}
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.actions form { margin: 0; }
+
+/* Pills: the tags, the statuses and the confidences share the same three tints */
+.chip { padding: .4rem 1rem; border: 0; border-radius: 999px; background: var(--cream); color: var(--ink); font: inherit; font-weight: 600; cursor: pointer; }
+.chip:hover { background: var(--anise-soft); }
+.tags { display: flex; flex-wrap: wrap; gap: .3rem; }
+.tag { display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .55rem; border-radius: 999px; background: var(--cream); color: var(--muted); font-size: .75rem; font-weight: 600; }
+.tag-frost { background: var(--cerulean-soft); color: var(--cerulean-deep); }
+.tag-pruning, .tag-deadheading, .tag-cutting, .tag-validated, .status-validated { background: var(--forest-soft); color: var(--forest); }
+.tag-pending, .confidence-medium { background: var(--anise-soft); color: var(--olive); }
+.tag-draft, .status-draft, .confidence-low { background: var(--pink-soft); color: var(--crimson); }
+.status { display: inline-flex; align-items: center; gap: .3rem; padding: .35rem .8rem; border-radius: 999px; font-size: .74rem; font-weight: 800; letter-spacing: .03em; white-space: nowrap; }
+.confidence { padding: .15rem .55rem; border-radius: 999px; font-size: .66rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+
+/* Messages */
+.flash { margin-bottom: 1rem; padding: .8rem 1rem; border-radius: 18px; font-weight: 600; box-shadow: var(--shadow), inset 6px 0 0 var(--anise); }
+.flash-warning { box-shadow: var(--shadow), inset 6px 0 0 var(--magenta); }
+.warning, .review-note { margin: 0; padding: .55rem .9rem; border-radius: 14px; font-size: .9rem; font-weight: 600; }
+.warning { background: var(--pink-soft); color: var(--crimson); }
+.review-note { background: var(--anise-soft); color: var(--ink); }
+
+/* Chat: the head centred on the green, the user in cerulean, the assistant on white */
+/* --chat-form-bottom: the room under the stuck form, kept under the end of the chat by chat#scroll too */
+.chat { --chat-form-bottom: 1.2rem; position: relative; scroll-margin-bottom: var(--chat-form-bottom); }
+.chat-header { margin-bottom: 1rem; text-align: center; }
+.chat-header .plate-head > p { margin-inline: auto; }
+.chat-header form { position: absolute; top: 0; right: 0; }
+.chat-log { display: flex; flex-direction: column; gap: .8rem; padding-bottom: 1rem; }
+.chat-empty { display: flex; flex-direction: column; align-items: center; gap: 1.1rem; padding-bottom: .5rem; }
+.bubble { max-width: 75%; padding: .8rem 1.15rem; border-radius: 22px; overflow-wrap: anywhere; }
+.bubble p { margin: 0 0 .4rem; }
+.bubble p:last-child, .bubble ul:last-child, .bubble ol:last-child { margin-bottom: 0; }
+.bubble ul, .bubble ol { margin: .2rem 0 .4rem; padding-left: 1.3rem; }
+.bubble-user { align-self: flex-end; border-bottom-right-radius: 6px; background: var(--cerulean); font-weight: 500; white-space: pre-wrap; }
+.bubble-assistant { --link: var(--aubergine); align-self: flex-start; border-bottom-left-radius: 6px; background: var(--white); color: var(--ink); box-shadow: var(--shadow); }
+.bubble-error { align-self: flex-start; background: var(--pink-soft); color: var(--crimson); font-weight: 500; }
+.tool-call { display: flex; align-self: flex-start; align-items: center; gap: .5rem; max-width: 100%; font-size: .8rem; }
+.tool-call code { padding: .25rem .8rem; border-radius: 999px; background: var(--veil); color: #eef4dc; font-family: var(--mono); overflow-wrap: anywhere; }
+.tool-call-label { padding: .15rem .55rem; border-radius: 999px; background: var(--anise); color: var(--forest-deep); font-size: .68rem; font-weight: 800; letter-spacing: .08em; }
+.chat-card { align-self: stretch; }
+.chat.is-busy .chat-log::after {
+    content: "";
+    align-self: flex-start;
+    width: 2.8rem;
+    height: 1.2rem;
+    background: radial-gradient(circle, var(--anise) 30%, transparent 33%) 0 50% / .9rem .9rem repeat-x;
+    animation: thinking 1.1s infinite ease-in-out;
+}
+@keyframes thinking { 50% { opacity: .3; } }
+.chat-form { position: sticky; bottom: var(--chat-form-bottom); display: flex; gap: .5rem; padding: .5rem; border-radius: 999px; background: var(--white); box-shadow: 0 22px 44px -18px rgb(2 30 18 / 80%); }
+.chat-form input[type="text"] { flex: 1; min-width: 0; padding: .7rem 1.15rem; border: 0; border-radius: 999px; outline: none; background: var(--cream); color: var(--ink); font: inherit; }
+
+/* The suggestions of the empty chat: white pills, each with its small figure */
+.suggestions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .7rem; }
+.suggestions-label { padding: .3rem .75rem; border-radius: 999px; background: var(--veil); font-size: .7rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.suggestion {
+    display: inline-flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .35rem 1.1rem .35rem .35rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--white);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 1.02rem;
+    font-weight: 600;
+    box-shadow: 0 12px 26px -16px rgb(0 0 0 / 70%);
+    cursor: pointer;
+    transition: transform .15s;
+}
+.suggestion:hover { transform: translateY(-2px); }
+.suggestion-figure { display: grid; place-items: center; width: 38px; height: 38px; overflow: hidden; border-radius: 50%; background: var(--cream); color: var(--forest); }
+.suggestion-figure img { display: block; width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
+
+/* A plate of the library in the margin of a page, crowned */
+.with-specimen { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 2.5rem; align-items: start; }
+.specimen {
+    --crown-left: 50%;
+    --crown-width: 220px;
+    --crown-height: 84px;
+    --crown-shift: translateX(-50%);
+    position: sticky;
+    top: 10rem;
+    margin: 110px 0 0;
+    padding: 18px 18px 14px;
+    text-align: center;
+}
+.specimen img { display: block; width: 100%; height: auto; mix-blend-mode: multiply; }
+.specimen figcaption { margin-top: .4rem; font-family: var(--serif); font-size: .72rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.specimen .fig { margin-right: .3rem; color: var(--aubergine); font-size: .85rem; font-style: italic; letter-spacing: 0; text-transform: none; }
+
+/* Notifications */
+.notification-list { display: flex; flex-direction: column; gap: .8rem; margin: 0; padding: 0; list-style: none; }
+.notification { position: relative; display: flex; align-items: flex-start; gap: .9rem; padding: 1.1rem 2.4rem 1.1rem 1.3rem; }
+.notification > div { flex: 1; }
+.notification p { margin: .3rem 0 0; }
+.notification.is-unread::after { content: ""; position: absolute; top: 1.1rem; right: 1.2rem; width: .6rem; height: .6rem; border-radius: 50%; background: var(--magenta); }
+.notification-frost.is-unread::after { background: var(--cerulean); }
+
+/* Toasts: templates/components/Notification/Toast.html.twig, assets/controllers/toast_controller.js */
+.toasts { position: fixed; top: 5.4rem; right: 1rem; z-index: 10; display: flex; flex-direction: column; gap: .6rem; width: min(370px, calc(100vw - 2rem)); }
+.toast {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: .8rem;
+    padding: .95rem 2.2rem .95rem .95rem;
+    box-shadow: 0 0 0 1px rgb(29 42 35 / 6%), 0 26px 50px -20px rgb(2 30 18 / 75%);
+    animation: toast-in .3s cubic-bezier(.2, .9, .3, 1.2);
+    transition: opacity .5s, transform .5s;
+}
+.toast .pict { width: 40px; height: 40px; }
+.toast strong { display: block; font-family: var(--serif); font-size: 1.05rem; font-weight: 700; }
+.toast p { margin: .2rem 0 .4rem; }
+.toast-frost { box-shadow: 0 0 0 2px var(--cerulean), 0 26px 50px -20px rgb(2 30 18 / 75%); }
+.toast-frost strong { color: var(--cerulean); }
+.toast.is-leaving { opacity: 0; transform: translateX(1rem); }
+.toast-close { position: absolute; top: .45rem; right: .7rem; border: 0; background: none; color: var(--muted); font-size: 1.3rem; line-height: 1; cursor: pointer; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(-.6rem) scale(.97); } }
+
+/* Forms: a white card, fields filled with a warm off-white, choices as pills */
+.care-sheet-form { display: flex; flex-direction: column; gap: 1.3rem; margin-top: 110px; padding: 2rem 2.2rem; border-radius: 32px; }
+:where(.care-sheet-form) label { display: block; margin-bottom: .3rem; font-size: .9rem; font-weight: 600; }
+.care-sheet-form :is(input[type="text"], input[type="number"], input[type="date"], input[type="file"], select, textarea) {
+    width: 100%;
+    padding: .7rem .95rem;
+    border: 1.5px solid transparent;
+    border-radius: 14px;
+    background: var(--cream);
+    color: var(--ink);
+    font: inherit;
+}
+.care-sheet-form :is(input, select, textarea):focus { border-color: var(--cerulean); outline: none; background: var(--white); box-shadow: 0 0 0 4px rgb(0 121 168 / 16%); }
+.care-sheet-form textarea { min-height: 4.5rem; }
+.care-sheet-form input[type="file"]::file-selector-button { margin-right: .9rem; padding: .35rem .9rem; border: 0; border-radius: 999px; background: var(--white); color: var(--ink); font: inherit; font-weight: 600; box-shadow: inset 0 0 0 1.5px rgb(29 42 35 / 26%); cursor: pointer; }
+.care-sheet-form ul { margin: .3rem 0 0; padding: 0; list-style: none; color: var(--crimson); font-size: .85rem; font-weight: 600; }
+.care-sheet-form .actions { justify-content: flex-end; padding-top: .4rem; }
+.help-text { margin-top: .3rem; font-size: .82rem; color: var(--muted); }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; align-items: end; }
+.form-check { display: flex; align-items: center; gap: .45rem; }
+.form-check label { margin: 0; }
+fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+legend { margin-bottom: .5rem; padding: 0; font-family: var(--serif); font-size: 1.05rem; font-weight: 700; }
+.choices { display: flex; flex-wrap: wrap; gap: .4rem; }
+.choices > :is(.help-text, .hint) { flex-basis: 100%; margin: .2rem 0 0; font-size: .82rem; }
+.choice { display: inline-flex; align-items: center; gap: .3rem; margin: 0; padding: .35rem .8rem; border-radius: 999px; background: var(--cream); cursor: pointer; }
+.choice:has(input:checked) { background: var(--forest); color: var(--white); }
+.choice input { margin: 0; accent-color: var(--anise); }
+
+@media (max-width: 900px) {
+    .chat-header form { position: static; margin-bottom: 1rem; }
+    .with-specimen { grid-template-columns: minmax(0, 1fr); }
+    .specimen { display: none; }
+}
+
+@media (max-width: 640px) {
+    .topbar { flex-wrap: wrap; gap: .5rem; padding: .6rem 1rem; }
+    .brand { font-size: 1.2rem; }
+    .brand .pict { width: 32px; height: 32px; }
+    .nav { justify-content: space-between; width: 100%; gap: .2rem; }
+    .nav a { gap: .35rem; padding: .35rem .7rem; font-size: .9rem; }
+    .main { padding: 1.5rem 1rem 2.5rem; }
+    .footer { width: calc(100% - 2rem); padding: .9rem 1rem; }
+    .plate-head h1 { font-size: 2.2rem; }
+    .plate-head > p { font-size: 1.05rem; }
+    .toasts { top: 7.4rem; }
+    .bubble { max-width: 90%; }
+    .care-sheet-form { padding: 1.5rem 1.2rem; border-radius: 26px; }
+}
+
+/* Turbo: its frames and stream sources take no room, the page lays out as without them */
+turbo-frame { display: contents; }
+turbo-mercure-stream-source { display: none; }
+.turbo-progress-bar { height: 3px; background: linear-gradient(90deg, var(--anise), var(--cerulean)); }
+
+/* What comes live: a line of the chat, an MCP tool call, the draft card */
+@media (prefers-reduced-motion: no-preference) {
+    .is-arriving { animation: arrive .4s cubic-bezier(.2, .8, .3, 1) both; }
+    .chat-card.is-arriving { animation-duration: .6s; }
+
+    /* Between the pages, a cross-fade under a top bar that stays */
+    .topbar { view-transition-name: topbar; }
+    ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .22s; }
+    /* A draft card validated in place: its status grows into "In your garden" */
+    ::view-transition-group(plant-status) { animation-duration: .45s; }
+}
+@keyframes arrive { from { opacity: 0; transform: translateY(.5rem); } }
+@media (prefers-reduced-motion: reduce) {
+    .toast, .chat.is-busy .chat-log::after { animation: none; }
+    ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+    .toast { transition: none; }
+}

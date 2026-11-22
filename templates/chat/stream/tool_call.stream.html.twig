@@ -1,0 +1,2 @@
+{# summary · In the chat, or on the page of a planting whose care sheet the agent drafts (templates/garden/show.html.twig) #}
+<turbo-stream action="append" targets="#chat-log, #drafting-tool-calls"><template><twig:Chat:ToolCall :summary="summary" :arriving="true"/></template></turbo-stream>

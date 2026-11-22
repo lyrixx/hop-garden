@@ -1,0 +1,7 @@
+{# The care sheet of a planting is drafted: its page shows where it stands and the summary of the draft, in place, and
+   no longer offers the care sheets of the same species; the species moves from its head to the summary.
+   planting: App\Garden\Model\Planting, linked to the draft #}
+<turbo-stream action="update" target="planting-{{ planting.id }}-draft-status"><template><twig:Garden:DraftStatus :planting="planting"/></template></turbo-stream>
+<turbo-stream action="update" target="planting-{{ planting.id }}-species"><template><twig:SpeciesSummary :plant="planting.plant"/></template></turbo-stream>
+<turbo-stream action="remove" target="planting-{{ planting.id }}-same-species"></turbo-stream>
+<turbo-stream action="remove" target="planting-{{ planting.id }}-chosen-species"></turbo-stream>

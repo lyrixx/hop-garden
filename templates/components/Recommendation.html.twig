@@ -1,0 +1,15 @@
+{#
+    A recommendation for a planting: what the care sheet advises, compared with what the user described.
+    recommendation: App\Garden\Recommendation\Model\Recommendation
+#}
+{% props recommendation %}
+<li class="recommendation recommendation-{{ recommendation.level.value }}">
+    <span class="pict {{ {exposure: 'pict-sun', watering: 'pict-water', frost: 'pict-frost'}[recommendation.subject.value] ?? '' }}"><twig:Icon :name="recommendation.subject.pictogram" :size="18"/></span>
+    <div>
+        <p class="recommendation-heading">
+            <strong>{{ recommendation.subject.label }}</strong>
+            <span class="tag">{{ recommendation.level.label }}</span>
+        </p>
+        <p>{{ recommendation.message }}</p>
+    </div>
+</li>

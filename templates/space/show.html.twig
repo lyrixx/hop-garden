@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ space.name }} · Hop Garden{% endblock %}
+
+{% block body %}
+    <nav class="breadcrumb"><a href="{{ path('spaces') }}">My spaces</a> / {{ space.name }}</nav>
+
+    <article class="card crowned planting-card space-card">
+        <header class="card-head">
+            <span class="plant-card-image"><twig:Icon name="grid" :size="34"/></span>
+            <div>
+                <p class="kicker">No. {{ space.id }}</p>
+                <h3>{{ space.name }}</h3>
+            </div>
+        </header>
+
+        <table class="care-sheet">
+            <tbody>
+                <tr>
+                    <th scope="row"><span class="pict pict-sun"><twig:Icon :name="space.exposure ? space.exposure.value : 'sun'" :size="17"/></span> Exposure</th>
+                    <td>{{ space.exposure ? space.exposure.label : 'Not recorded' }}</td>
+                </tr>
+                <tr>
+                    <th scope="row"><span class="pict"><twig:Icon name="sprout" :size="17"/></span> Soil</th>
+                    <td>{{ space.soil ? space.soil.label : 'Not recorded' }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <footer class="card-foot">
+            <p>Added on {{ space.createdAt|date('j F Y') }}.</p>
+            <div class="actions">
+                <twig:Button href="{{ path('space_edit', {id: space.id}) }}" icon="pencil" class="button-secondary">Edit the space</twig:Button>
+            </div>
+        </footer>
+    </article>
+
+    <section class="space-plants">
+        <h2>Growing there</h2>
+        {% if space.plantings is empty %}
+            <p class="callout">No plant in {{ space.name }} yet. Choose this space in the garden info of a plant, or <a href="{{ path('garden_new') }}">add a plant</a>.</p>
+        {% else %}
+            <ul class="plant-grid">
+                {% for planting in space.plantings %}
+                    <li><twig:PlantTile :planting="planting"/></li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+{% endblock %}

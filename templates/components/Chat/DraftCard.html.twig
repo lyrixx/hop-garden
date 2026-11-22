@@ -1,0 +1,17 @@
+{#
+    The draft card of a plant the agent proposed.
+    plant: ?App\Plant\Model\Plant, in the history, null once deleted · plantId: ?int, live, from the worker, which has
+    no session to sign the form of the card: the browser loads it in its frame
+#}
+{%- props plant = null, plantId = null -%}
+<div class="chat-card{{ plantId is not null ? ' is-arriving' }}">
+    {%- if plantId is not null -%}
+        <turbo-frame id="plant-card-{{ plantId }}-frame" src="{{ path('plant_card', {id: plantId}) }}" data-action="turbo:frame-load->chat#scroll:once">
+            <p class="callout">Loading the draft…</p>
+        </turbo-frame>
+    {%- elseif plant -%}
+        <twig:PlantCard :plant="plant"/>
+    {%- else -%}
+        <p class="callout">This draft no longer exists.</p>
+    {%- endif -%}
+</div>

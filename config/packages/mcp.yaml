@@ -1,0 +1,42 @@
+mcp:
+    servers:
+        # For external MCP clients (Claude Desktop, Claude Code, Cursor...): HTTP on /_mcp, and STDIO with "bin/console mcp:server"
+        default:
+            name: 'hop-garden'
+            description: 'Manage the plants of a garden: identify plants, draft their care sheets, set pruning and frost reminders.'
+            instructions: |
+                Hop Garden manages the plants of the user's garden.
+                To add a plant: search_plant, complete the care sheet with your knowledge, then propose_plant.
+                propose_plant only creates a draft: the plant joins the garden once the user validates it, in the web UI
+                or by confirming it explicitly to you (confirm_plant). Never validate on your own.
+            transports:
+                stdio: true
+                http: true
+            http:
+                path: /_mcp
+                allowed_hosts: '%env(csv:MCP_ALLOWED_HOSTS)%'
+            registry:
+                tools: ['App\Mcp\Tool\', 'App\Mcp\Confirmation\']
+                prompts: ['App\Mcp\Prompt\']
+                resources: ['App\Mcp\Resource\']
+                resource_templates: ['App\Mcp\Resource\']
+
+        # For the chat agent of the web UI: the same tools, but no confirm_plant. Only the user validates, with the card.
+        agent:
+            name: 'hop-garden-agent'
+            transports:
+                stdio: false
+                http: true
+            http:
+                path: /_mcp/agent
+                allowed_hosts: '%env(csv:MCP_ALLOWED_HOSTS)%'
+            registry:
+                tools: ['App\Mcp\Tool\']
+
+when@test:
+    mcp:
+        clients:
+            chat:
+                servers:
+                    hopgarden:
+                        http_client: 'App\Tests\Mcp\KernelHttpClient'

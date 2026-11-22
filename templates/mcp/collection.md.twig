@@ -1,0 +1,9 @@
+{% autoescape false %}
+# Validated plants of the garden
+
+{% for plant in plants %}
+- **{{ plant.commonName }}** (*{{ plant.scientificName }}*, {{ plant.family }}) — reminders: {{ plant.enabledReminderTypes|map(t => t.label)|join(', ')|default('none') }} — `hopgarden://plants/{{ plant.id }}` — {{ normalizer.urlOf(plant) }}
+{% else %}
+No validated plant in the garden yet.
+{% endfor %}
+{% endautoescape %}

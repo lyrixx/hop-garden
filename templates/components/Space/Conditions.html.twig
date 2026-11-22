@@ -1,0 +1,10 @@
+{#
+    The exposure and the soil of a space, as tags.
+    space: App\Garden\Model\Space
+#}
+{% props space %}
+<span class="tags">
+    {%- if space.exposure %}<span class="tag tag-exposure"><twig:Icon :name="space.exposure.value" :size="13"/> {{ space.exposure.label }}</span>{% endif -%}
+    {%- if space.soil %}<span class="tag tag-soil"><twig:Icon name="sprout" :size="13"/> {{ space.soil.label }}</span>{% endif -%}
+    {%- if not space.exposure and not space.soil %}<span class="tag">Exposure and soil not recorded</span>{% endif -%}
+</span>

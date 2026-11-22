@@ -1,0 +1,17 @@
+{#
+    A space of the garden, as a tile: its name, its exposure and soil, then the plants growing there.
+    space: App\Garden\Model\Space
+#}
+{% props space %}
+<a class="card plant-tile space-tile" href="{{ path('space_show', {id: space.id}) }}">
+    <span class="specimen-no">No. {{ space.id }}</span>
+    <strong>{{ space.name }}</strong>
+    <twig:Space:Conditions :space="space"/>
+    <span class="space-tile-plants">
+        {%- for planting in space.plantings -%}
+            {{ planting.name }}{{ not loop.last ? ', ' }}
+        {%- else -%}
+            No plant yet
+        {%- endfor -%}
+    </span>
+</a>

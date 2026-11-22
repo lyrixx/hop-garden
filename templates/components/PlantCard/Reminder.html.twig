@@ -1,0 +1,21 @@
+{#
+    The reminder of a part of the plant, on the card of a validated plant. The switch flips in its Turbo Frame, taken
+    from the card the form redirects to.
+    plant: App\Plant\Model\Plant · type: App\Reminder\Model\ReminderType
+#}
+{% props plant, type %}
+{% set enabled = plant.hasEnabledReminder(type) %}
+{% set months = type.monthsIn(plant.careSheet) %}
+<turbo-frame id="plant-{{ plant.id }}-reminder-{{ type.value }}">
+<form class="plate-reminder {{ enabled ? 'is-enabled' }}" method="post" action="{{ path('plant_reminder', {id: plant.id, type: type.value}) }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('plant') }}">
+    <input type="hidden" name="enabled" value="{{ enabled ? 0 : 1 }}">
+    <button type="submit" class="toggle {{ enabled ? 'is-on' }}" role="switch" aria-checked="{{ enabled ? 'true' : 'false' }}" {{ type.calendar and months is empty and not enabled ? 'disabled' }}>
+        <span class="visually-hidden">{{ enabled ? 'Disable' : 'Enable' }} {{ type.label|lower }}</span>
+    </button>
+    <span class="plate-reminder-text">
+        {{- component('Icon', {name: 'bell', size: 14}) }}
+        {% if type.calendar %}{{ months is empty ? 'No month to remind' : 'Reminder on the 1st of ' ~ months|map(m => month_name(m)|slice(0, 3))|join(', ') }}{% else %}Alert below {{ frost_threshold(plant.careSheet) }} °C in the forecast{% endif -%}
+    </span>
+</form>
+</turbo-frame>

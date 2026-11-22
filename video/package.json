@@ -1,0 +1,23 @@
+{
+    "name": "hop-garden-video",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "capture": "node capture.mjs",
+        "render": "remotion render HopGarden out/hop-garden.mp4",
+        "studio": "remotion studio"
+    },
+    "dependencies": {
+        "@remotion/cli": "4.0.545",
+        "@remotion/google-fonts": "4.0.545",
+        "@remotion/media-parser": "4.0.545",
+        "playwright": "1.63.0",
+        "react": "19.1.1",
+        "react-dom": "19.1.1",
+        "remotion": "4.0.545"
+    },
+    "devDependencies": {
+        "@types/react": "19.1.12",
+        "typescript": "5.9.3"
+    }
+}

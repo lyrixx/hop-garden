@@ -1,0 +1,34 @@
+{
+  "data": [
+    {
+      "id": 191047,
+      "common_name": "Bigleaf hydrangea",
+      "slug": "hydrangea-macrophylla",
+      "scientific_name": "Hydrangea macrophylla",
+      "year": 1830,
+      "bibliography": null,
+      "author": "(Thunb.) Ser.",
+      "status": "accepted",
+      "rank": "species",
+      "family_common_name": "Hydrangea family",
+      "genus_id": null,
+      "image_url": null,
+      "synonyms": [],
+      "genus": "Hydrangea",
+      "family": "Hydrangeaceae",
+      "links": {
+        "self": "/api/v1/species/hydrangea-macrophylla",
+        "plant": "/api/v1/plants/hydrangea-macrophylla",
+        "genus": "/api/v1/genus/hydrangea"
+      }
+    }
+  ],
+  "links": {
+    "self": "/api/v1/plants/search?q=hydrangea+macrophylla",
+    "first": "/api/v1/plants/search?page=1&q=hydrangea+macrophylla",
+    "last": "/api/v1/plants/search?page=1&q=hydrangea+macrophylla"
+  },
+  "meta": {
+    "total": 1
+  }
+}

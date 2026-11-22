@@ -1,0 +1,12 @@
+{# The form of the care sheet in the frame of its card, wherever the card shows: Save and Cancel bring the card back #}
+<turbo-frame id="plant-card-{{ plant.id }}-frame">
+    {% embed 'plant/_form.html.twig' with {cancel_url: path('plant_card', {id: plant.id})} %}
+        {% block heading %}
+            <header class="care-sheet-form-head">
+                <p class="kicker">Tab. {{ plant.id }}<span>{{ plant.family }}</span></p>
+                <h3>{{ plant.validated ? 'Edit' : 'Review' }} <em>{{ plant.scientificName }}</em></h3>
+                <p class="hint">A value you change counts as verified (high confidence).{% if not plant.validated %} Nothing joins your garden until you validate the draft.{% endif %}</p>
+            </header>
+        {% endblock %}
+    {% endembed %}
+</turbo-frame>

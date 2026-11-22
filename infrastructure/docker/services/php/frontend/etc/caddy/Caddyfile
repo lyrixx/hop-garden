@@ -1,0 +1,43 @@
+{
+    frankenphp
+    auto_https off
+    {$CADDY_GLOBAL_OPTIONS}
+
+    log {
+        output stdout
+        format json
+    }
+}
+
+# docker-compose.yml lists the addresses of the dev container, the production image serves every Host
+# on :8080 (Dockerfile)
+{$SERVER_NAME} {
+    encode zstd gzip
+
+    root /var/www/public
+    php_server
+
+    mercure {
+        # Transport to use (default to Bolt)
+        transport bolt {
+            path /data/mercure.db
+        }
+        # Trusted issuer: access tokens must carry it in their iss claim
+        issuer {$MERCURE_JWT_ISSUER} {
+            # Publisher JWT key
+            publisher {
+                jwt {env.MERCURE_PUBLISHER_JWT_KEY} {env.MERCURE_PUBLISHER_JWT_ALG}
+            }
+            # Subscriber JWT key
+            subscriber {
+                jwt {env.MERCURE_SUBSCRIBER_JWT_KEY} {env.MERCURE_SUBSCRIBER_JWT_ALG}
+            }
+        }
+        # Allow anonymous subscribers (double-check that it's what you want)
+        anonymous
+        # Enable the subscription API (double-check that it's what you want)
+        subscriptions
+        # Extra directives
+        {$MERCURE_EXTRA_DIRECTIVES}
+    }
+}

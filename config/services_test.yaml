@@ -1,0 +1,21 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    # No LLM in the tests: the model decisions are scripted, everything else runs
+    app.ai.platform:
+        class: Symfony\AI\Platform\PlatformInterface
+        factory: ['App\Tests\Chat\ScriptedGardener', 'createPlatform']
+
+    # The agent reaches the MCP server over HTTP, handled by the kernel in process
+    App\Tests\Mcp\KernelHttpClient:
+        arguments: ['@kernel']
+
+    App\Tests\Http\UnexpectedRequestGuard: ~
+
+    mercure.hub.default:
+        class: App\Tests\Mercure\RecordingHub
+        public: true
+        # Where UX Turbo finds the hubs of its stream sources
+        tags: ['mercure.hub']

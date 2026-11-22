@@ -1,0 +1,29 @@
+framework:
+    http_client:
+        default_options:
+            timeout: 10
+            max_duration: 30
+        scoped_clients:
+            open_meteo.client:
+                base_uri: 'https://api.open-meteo.com'
+            trefle.client:
+                base_uri: 'https://trefle.io'
+
+services:
+    # In demo mode, the API clients answer from fixtures/http/ (see App\DataSource\Demo\RecordedResponses)
+    app.open_meteo.client.demo_aware:
+        decorates: open_meteo.client
+        class: Symfony\Contracts\HttpClient\HttpClientInterface
+        factory: ['@App\DataSource\Demo\DemoHttpClientFactory', 'create']
+        arguments: ['@.inner', 'https://api.open-meteo.com']
+    app.trefle.client.demo_aware:
+        decorates: trefle.client
+        class: Symfony\Contracts\HttpClient\HttpClientInterface
+        factory: ['@App\DataSource\Demo\DemoHttpClientFactory', 'create']
+        arguments: ['@.inner', 'https://trefle.io']
+
+when@test:
+    framework:
+        http_client:
+            # No network in the tests: a request nothing simulates fails the test
+            mock_response_factory: App\Tests\Http\UnexpectedRequestGuard

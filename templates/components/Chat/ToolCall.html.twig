@@ -1,0 +1,6 @@
+{#
+    An MCP tool call of the agent, in demo mode only (App\Chat\ToolCallDisplay).
+    summary: string, the tool and its arguments · arriving: bool, shown as it comes, live
+#}
+{%- props summary, arriving = false -%}
+<div class="tool-call{{ arriving ? ' is-arriving' }}"><span class="tool-call-label">MCP</span><code>{{ summary }}</code></div>

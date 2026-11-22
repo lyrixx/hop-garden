@@ -1,0 +1,40 @@
+parameters:
+    level: 9
+    paths:
+        - src
+        - public
+        - castor.php
+    scanFiles:
+        - .castor.stub.php
+    # Shared with jolicode/docker-starter: known, not analysed
+    scanDirectories:
+        - .castor
+    tmpDir: tools/phpstan/var
+    inferPrivatePropertyTypeFromConstructor: true
+
+    symfony:
+        containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
+
+    ignoreErrors:
+        # Doctrine assigns the id
+        -
+            identifier: property.unusedType
+            message: '#^Property App\\(Garden|Plant|Reminder)\\Model\\\w+::\$id \(int\|null\) is never assigned int#'
+
+    typeAliases:
+        ContextData: '''
+            array{
+                project_name: string,
+                root_domain: string,
+                extra_domains: string[],
+                php_version: string,
+                docker_compose_files: list<string>,
+                docker_compose_run_environment: array<string, string>,
+                docker_compose_run_service: string,
+                macos: bool,
+                power_shell: bool,
+                user_id: int,
+                root_dir: string,
+                registry?: ?string,
+            }
+        '''

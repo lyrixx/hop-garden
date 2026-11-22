@@ -1,0 +1,156 @@
+/*
+ * The plates: the plant card (templates/components/PlantCard.html.twig, templates/components/PlantCard/) and the blank plate of the empty chat.
+ * Uses the tokens and classes of app.css.
+ */
+
+/* The head and the foot of a card about a plant, shared with the planting of the garden */
+/* The status goes under the name when the card gets narrow */
+.card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+.card-head > div { flex: 1 1 220px; min-width: 0; }
+.card-head .kicker { margin: 0 0 .35rem; color: var(--aubergine); }
+.card-head .kicker span { margin-left: .7rem; color: var(--muted); }
+.card-head h3 { font-size: 2.7rem; line-height: 1.02; letter-spacing: -.03em; }
+.card-head h3 a { color: inherit; text-decoration: none; }
+.card-head h3 a:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+.card-head .status { align-self: flex-start; }
+.latin { margin: .3rem 0 0; color: var(--muted); font-size: 1.2rem; }
+.card-foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 32px; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--cream-deep); color: var(--muted); font-size: .8rem; }
+.card-foot > p { margin: 0; }
+.card-foot > .actions { flex-wrap: nowrap; }
+.card-foot > .actions :is(.button, .hint) { white-space: nowrap; }
+
+/* The square picture of a plant: its photo, the image of its species or the hop */
+.plant-card-image { display: grid; flex-shrink: 0; place-items: center; width: 64px; height: 64px; overflow: hidden; border-radius: 18px; background: var(--cream); color: var(--forest); }
+.plant-card-image img { width: 100%; height: 100%; object-fit: cover; }
+
+/* The plant card: its name set large above its plate, one small card per part of the plant */
+.plant-card {
+    display: grid;
+    grid-template-columns: minmax(0, 290px) minmax(0, 1fr);
+    grid-template-areas: "head head" "plate parts" "foot foot";
+    column-gap: 32px;
+    margin-top: var(--crown-room);
+    padding: 32px 36px 28px;
+    border-radius: 32px;
+}
+.plant-card > .card-head { grid-area: head; padding-bottom: 22px; }
+.plant-card > .card-foot { grid-area: foot; }
+.plant-card-plate { grid-area: plate; align-self: start; margin: 0; padding: 18px; border-radius: 24px; background: var(--cream); }
+.plant-card-plate img { display: block; width: 100%; height: auto; max-height: 470px; object-fit: contain; mix-blend-mode: multiply; }
+.plant-card-parts { display: grid; grid-area: parts; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-content: start; }
+.plant-card-part { display: flex; flex-direction: column; padding: 14px 16px 12px; border-radius: 20px; background: var(--cream); }
+.plant-card-part h4 { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-weight: 400; }
+.plant-card-part h4 .pict { width: 28px; height: 28px; background: var(--white); }
+.plant-card-part h4 em { font-size: 1.1rem; font-weight: 600; }
+.plant-card-part h4 .kicker { margin-left: auto; }
+
+/* One value per line: its label, the confidence of the assistant on the right when it needs a review, the value below */
+.care-sheet { width: 100%; border-collapse: collapse; }
+.plant-card-part :is(.care-sheet, tbody) { display: block; }
+.plant-card-part .care-sheet { margin-bottom: 8px; }
+.plant-card-part tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; padding: 7px 8px; border-radius: 12px; }
+.plant-card-part tr + tr { margin-top: 2px; }
+.plant-card-part tr.needs-review { background: var(--anise-soft); }
+.plant-card-part :is(th, td) { padding: 0; }
+.plant-card-part th { grid-column: 1; color: var(--muted); font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-align: left; text-transform: uppercase; }
+.plant-card-part th + td { grid-column: 1 / -1; font-size: .98rem; font-weight: 600; }
+.plant-card-part :is(.row-pruning_advice, .row-cutting_advice) th + td { font-family: var(--serif); font-size: .95rem; font-weight: 400; line-height: 1.4; }
+.confidence-cell { grid-column: 2; grid-row: 1; }
+
+/* The months of a care, as a row of dots */
+.month-ruler { display: flex; gap: 3px; margin: 3px 0 4px; }
+.month-ruler span { width: 17px; height: 17px; border-radius: 50%; background: var(--cream-deep); color: #7c837f; font-size: 9px; font-weight: 700; line-height: 17px; text-align: center; }
+.month-ruler span.is-on { background: var(--forest); color: var(--white); }
+.month-ruler-text { display: block; color: var(--muted); font-size: 12px; }
+
+/* The reminder of a part, on the plant page */
+.plate-reminder { display: flex; align-items: center; gap: 8px; margin: auto 0 0; padding: 9px 0 0 6px; border-top: 1px dashed var(--cream-deep); color: var(--muted); font-size: 12px; }
+.plate-reminder-text { display: inline-flex; align-items: center; gap: 4px; }
+.plate-reminder.is-enabled .plate-reminder-text { color: var(--ink); font-weight: 600; }
+.toggle { position: relative; flex-shrink: 0; width: 34px; height: 20px; border: 0; border-radius: 999px; background: var(--cream-deep); cursor: pointer; transition: background .15s; }
+.toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--white); box-shadow: 0 1px 2px rgb(0 0 0 / 25%); transition: transform .15s; }
+.toggle.is-on { background: var(--forest); }
+.toggle.is-on::after { transform: translateX(14px); }
+.toggle:disabled { opacity: .4; cursor: not-allowed; }
+
+/* The hardiness on a cerulean band: the temperatures, the cold the plant bears and the frost alert threshold */
+.plant-card-hardiness { display: flex; flex-direction: column; padding: 14px 18px 12px; border-radius: 20px; background: var(--cerulean); color: var(--white); }
+.plant-card-hardiness h4 { font-size: 1.1rem; font-weight: 700; }
+.hardiness-scale { margin: auto 0; }
+.hardiness-track { position: relative; height: 10px; margin: 30px 4px 32px; border-radius: 999px; background: repeating-linear-gradient(-45deg, rgb(255 255 255 / 25%) 0 2px, transparent 2px 6px); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 75%); }
+.hardiness-hardy { position: absolute; top: 0; right: 0; bottom: 0; border-radius: 0 999px 999px 0; background: linear-gradient(90deg, #a9def2, var(--white) 60%, #f3ea94); }
+.hardiness-tick { position: absolute; top: 100%; width: 1px; height: 5px; background: var(--white); }
+.hardiness-tick > span { position: absolute; top: 7px; left: 0; transform: translateX(-50%); font-size: 10px; font-weight: 600; white-space: nowrap; }
+.hardiness-tick.is-zero { top: -5px; height: 20px; }
+.hardiness-tick.is-zero > span { top: 27px; }
+.hardiness-mark { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--white); }
+.hardiness-mark > span { position: absolute; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.hardiness-coldest > span { bottom: calc(100% + 4px); }
+.hardiness-threshold { width: 4px; margin-left: -2px; background: var(--pink); }
+.hardiness-threshold > span { top: calc(100% + 16px); font-size: 10px; font-weight: 600; }
+.hardiness-caption { margin: 0; font-size: 10px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+
+/* The foot: the review note, the sources and the credit of the figure, then the actions */
+.plate-colophon { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.plate-colophon p { margin: 0; }
+.plate-colophon > :is(.warning, .review-note) { margin-bottom: 4px; }
+.notes { color: var(--ink); font-family: var(--serif); font-size: .95rem; font-style: italic; }
+
+/* The blank plate of the empty chat: the figures of a plant, waiting for one */
+.blank-plate {
+    --crown-width: 230px;
+    --crown-height: 88px;
+    --picture-height: min(calc(100vh - 575px), 380px);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 60px;
+    width: 100%;
+    margin-top: 86px;
+    padding: 24px 40px;
+    border-radius: 32px;
+}
+.plate-legend { display: flex; flex-direction: column; gap: 16px; margin: 0; padding: 0; list-style: none; }
+.plate-fig h4 { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-weight: 400; }
+.plate-fig h4 em { font-size: 1.1rem; font-weight: 600; }
+.plate-fig h4 .kicker { margin-left: auto; }
+.plate-number { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--aubergine); color: var(--white); font-size: .75rem; font-weight: 700; line-height: 1; }
+.blank-fields { display: flex; flex-direction: column; gap: 3px; margin: 0; padding: 0 0 0 32px; list-style: none; }
+.blank-fields li { display: flex; gap: 8px; color: var(--muted); font-size: .84rem; }
+.blank-fields li::after { content: ""; flex: 1; border-bottom: 2px dotted var(--cream-deep); transform: translateY(-5px); }
+
+/* The drawing, its anchors, its leader lines and the figure numbers in the margins (templates/components/PlatePicture.html.twig) */
+.plate-figure { margin: 0; }
+.plate-picture { position: relative; height: var(--picture-height); margin: 0 auto; }
+.plate-picture > img { display: block; width: 100%; height: 100%; }
+.plate-leaders { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.plate-leaders line { stroke: var(--aubergine); stroke-dasharray: 3 3; stroke-width: .8; }
+.plate-anchor { position: absolute; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: var(--aubergine); box-shadow: 0 0 0 2px var(--white); }
+.plate-mark { position: absolute; transform: translate(-50%, -50%); }
+.plate-mark-left { left: -5%; }
+.plate-mark-right { left: 105%; }
+
+@media (min-width: 901px) {
+    /*
+     * The plate stays in view while the parts scroll by, never past them. Chromium bounds a sticky grid item by its grid
+     * container, not its area: the figure spans the height of the parts and its content sticks inside it. The cream box
+     * is a ::before, not the background of the image, so that the image still multiplies its white paper with it.
+     */
+    .plant-card-plate { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; align-self: stretch; padding: 0; background: none; }
+    .plant-card-plate::before { content: ""; border-radius: 24px; background: var(--cream); }
+    .plant-card-plate::before, .plant-card-plate img { position: sticky; top: 90px; grid-area: 1 / 1; }
+    .plant-card-plate img { max-height: calc(470px + 2 * 18px); padding: 18px; }
+}
+
+@media (max-width: 900px) {
+    .plant-card { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "plate" "parts" "foot"; padding: 24px 20px; }
+    .plant-card-plate { max-width: 300px; margin-bottom: 16px; }
+    .plant-card-parts { grid-template-columns: minmax(0, 1fr); }
+    .card-foot { flex-direction: column; align-items: flex-start; }
+    .blank-plate { grid-template-columns: minmax(0, 1fr); row-gap: 20px; padding: 22px; }
+}
+
+@media (max-width: 640px) {
+    .card-head h3 { font-size: 2.1rem; }
+    .card-foot > .actions { flex-wrap: wrap; }
+}

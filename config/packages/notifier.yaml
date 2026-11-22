@@ -1,0 +1,8 @@
+framework:
+    notifier:
+        channel_policy:
+            # "in_app" is App\Reminder\Notifier\InAppChannel: stored in database and pushed as a toast via Mercure
+            urgent: ['in_app']
+            high: ['in_app']
+            medium: ['in_app']
+            low: ['in_app']

@@ -1,0 +1,31 @@
+{% autoescape false %}
+{% set sheet = plant.careSheet %}
+# {{ plant.commonName }} — *{{ plant.scientificName }}*
+
+- Family: {{ plant.family }}
+- Status: {{ plant.status.value }}{% if not plant.validated %} (the user has not validated it yet){% endif %}
+
+- Page: {{ url }}
+{% if plant.notes %}
+- Notes: {{ plant.notes }}
+{% endif %}
+
+## Care sheet
+
+| Field | Value | Confidence |
+|---|---|---|
+{% for row in care_sheet_rows(sheet) %}
+| {{ row.field.label }} | {{ row.value|replace({'|': '/'}) }} | {{ row.confidence.value }} |
+{% endfor %}
+
+## Reminders
+
+{{ plant.enabledReminderTypes|map(t => t.label)|join(', ')|default('None enabled.') }}
+
+## Sources
+
+{% for source in sheet.sources %}
+- {{ source.name }}{% if source.url %}: {{ source.url }}{% endif %}
+
+{% endfor %}
+{% endautoescape %}

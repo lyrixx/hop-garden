@@ -1,0 +1,23 @@
+{#
+    A plant of the garden, as a tile: its photo, its name, its species, then where its care sheet stands and its
+    reminders.
+    planting: App\Garden\Model\Planting
+#}
+{% props planting %}
+{% set plant = planting.plant %}
+<a class="card plant-tile" href="{{ path('garden_show', {id: planting.id}) }}">
+    <span class="specimen-no">No. {{ planting.id }}</span>
+    <span class="plant-card-image"><twig:PlantingPhoto :planting="planting"/></span>
+    <strong>{{ planting.name }}</strong>
+    {% if planting.scientificName %}<em>{{ planting.scientificName }}</em>{% endif %}
+    <span class="tags">
+        {% if plant is null %}
+            <span class="tag tag-pending">Care sheet in progress</span>
+        {% elseif not plant.validated %}
+            <span class="tag tag-draft">Draft to validate</span>
+        {% else %}
+            <span class="tag tag-validated"><twig:Icon name="check" :size="13"/> Care sheet</span>
+            {% for type in plant.enabledReminderTypes %}<span class="tag tag-{{ type.value }}"><twig:Icon :name="type.pictogram" :size="13"/> {{ type.label }}</span>{% else %}<span class="tag">No reminder</span>{% endfor %}
+        {% endif %}
+    </span>
+</a>

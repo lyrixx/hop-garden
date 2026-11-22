@@ -1,0 +1,15 @@
+{#
+    A button, or a link that looks like one. The content is its label; the other attributes (class: its variant, such
+    as button-secondary, button-light or button-next; data-*) go on the element.
+    href: ?string, a link when set · icon: ?string, an Icon before the label · iconSize: int, in px · type: string, of
+    the button
+#}
+{%- props href = null, icon = null, iconSize = 16, type = 'submit' -%}
+{%- set label -%}
+    {% if icon %}<twig:Icon :name="icon" :size="iconSize"/> {% endif %}{% block content %}{% endblock %}
+{%- endset -%}
+{%- if href is not null -%}
+    <a{{ attributes.defaults({class: 'button', href: href}) }}>{{ label }}</a>
+{%- else -%}
+    <button{{ attributes.defaults({type: type, class: 'button'}) }}>{{ label }}</button>
+{%- endif %}

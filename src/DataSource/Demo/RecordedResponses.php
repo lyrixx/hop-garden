@@ -1,0 +1,87 @@
+<?php
+
+namespace App\DataSource\Demo;
+
+use Psr\Clock\ClockInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Component\String\Slugger\AsciiSlugger;
+
+/**
+ * Serves the responses stored in fixtures/http/ in place of Trefle and Open-Meteo.
+ */
+final readonly class RecordedResponses
+{
+    public function __construct(
+        #[Autowire('%kernel.project_dir%/fixtures/http')]
+        private string $fixturesDir,
+        private ClockInterface $clock,
+    ) {
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function __invoke(string $method, string $url, array $options): MockResponse
+    {
+        $parts = parse_url($url);
+        $host = $parts['host'] ?? '';
+        $path = $parts['path'] ?? '/';
+        parse_str($parts['query'] ?? '', $query);
+
+        return match (true) {
+            'trefle.io' === $host && '/api/v1/plants/search' === $path => $this->trefleSearch($this->stringParameter($query, 'q')),
+            'api.open-meteo.com' === $host && '/v1/forecast' === $path => $this->openMeteoForecast((int) $this->stringParameter($query, 'forecast_days')),
+            default => throw new \LogicException(\sprintf('No recorded response for "%s %s".', $method, $url)),
+        };
+    }
+
+    private function trefleSearch(string $query): MockResponse
+    {
+        /** @var array<string, string> $aliases */
+        $aliases = json_decode((string) file_get_contents($this->fixturesDir . '/trefle/aliases.json'), true, flags: JSON_THROW_ON_ERROR);
+        $name = $aliases[$this->slug($query)] ?? null;
+
+        return $this->json(null !== $name ? "trefle/search/{$name}.json" : 'trefle/search/_empty.json');
+    }
+
+    /**
+     * The recorded forecast is moved to start today, so the demo always warns about the coming days.
+     */
+    private function openMeteoForecast(int $days): MockResponse
+    {
+        /** @var array{daily: array{time: list<string>, temperature_2m_min: list<float>}} $forecast */
+        $forecast = json_decode((string) file_get_contents($this->fixturesDir . '/open-meteo/forecast-frost.json'), true, flags: JSON_THROW_ON_ERROR);
+
+        $minimums = \array_slice($forecast['daily']['temperature_2m_min'], 0, max(1, $days));
+        $today = $this->clock->now()->setTime(0, 0);
+
+        $forecast['daily']['temperature_2m_min'] = $minimums;
+        $forecast['daily']['time'] = array_map(
+            static fn (int $offset): string => $today->modify("+{$offset} days")->format('Y-m-d'),
+            array_keys($minimums),
+        );
+
+        return new MockResponse(json_encode($forecast, JSON_THROW_ON_ERROR), ['response_headers' => ['content-type' => 'application/json']]);
+    }
+
+    private function json(string $file): MockResponse
+    {
+        return new MockResponse((string) file_get_contents($this->fixturesDir . '/' . $file), ['response_headers' => ['content-type' => 'application/json']]);
+    }
+
+    private function slug(string $value): string
+    {
+        return (new AsciiSlugger())->slug($value)->lower()->toString();
+    }
+
+    /**
+     * @param array<mixed> $query
+     */
+    private function stringParameter(array $query, string $name): string
+    {
+        $value = $query[$name] ?? '';
+
+        return \is_string($value) ? $value : '';
+    }
+}

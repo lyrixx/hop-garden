@@ -1,0 +1,15 @@
+{#
+    A hand-coloured plate of the Biodiversity Heritage Library (public domain), paper whitened, colours lifted, on a
+    card in the margin of a page.
+    plate: string, one of the keys below · fig: int, its figure number
+#}
+{% props plate, fig = 1 %}
+{% set plates = {
+    'gonystylus-miquelianus': 'Gonystylus miquelianus',
+    'tecoma-ceramensis': 'Tecoma ceramensis',
+    'wormia-subsessilis': 'Wormia subsessilis',
+} %}
+<figure class="card crowned specimen">
+    <img src="{{ asset('images/plates/' ~ plate ~ '.webp') }}" alt="{{ plates[plate] }}, hand-coloured plate (Biodiversity Heritage Library)" loading="lazy">
+    <figcaption><span class="fig">Fig. {{ fig }}</span> {{ plates[plate] }}</figcaption>
+</figure>

@@ -1,0 +1,12 @@
+{#
+    The photo of a planting; without one, a picto. Never the image of its species: a photo is my plant, the plate is its
+    species.
+    planting: App\Garden\Model\Planting · size: int, of the picto, in px
+#}
+{% props planting, size = 30 %}
+{% set photo_url = planting_photo_url(planting) %}
+{% if photo_url %}
+    <img src="{{ photo_url }}" alt="{{ planting.name }}" loading="lazy">
+{% else %}
+    <twig:Icon name="hop" :size="size"/>
+{% endif %}

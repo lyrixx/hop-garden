@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% block title %}Hop Garden{% endblock %}</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><circle cx=%2212%22 cy=%2212%22 r=%2212%22 fill=%22%230b5b3a%22/><path d=%22M12 5.5c-3.2 0-5 2.6-5 6.2 0 4.6 2.4 8.3 5 9.8 2.6-1.5 5-5.2 5-9.8 0-3.6-1.8-6.2-5-6.2z%22 fill=%22%23fff%22/></svg>">
+        {# Turbo Drive: a cross-fade between the pages, where the browser can #}
+        <meta name="view-transition" content="same-origin">
+        {% block head %}{% endblock %}
+        {% block importmap %}{{ importmap('app') }}{% endblock %}
+    </head>
+    <body>
+        <header class="topbar">
+            <a class="brand" href="{{ path('chat') }}">
+                <span class="pict"><twig:Icon name="hop" :size="24"/></span>
+                <span>Hop Garden</span>
+            </a>
+            <nav class="nav">
+                {% set route = app.current_route %}
+                <a href="{{ path('chat') }}" class="{{ route == 'chat' ? 'active' }}"><twig:Icon name="chat" :size="18"/> Assistant</a>
+                <a href="{{ path('garden') }}" class="{{ route starts with 'garden' or route starts with 'plant' ? 'active' }}"><twig:Icon name="sprout" :size="18"/> My garden</a>
+                <a href="{{ path('spaces') }}" class="{{ route starts with 'space' ? 'active' }}"><twig:Icon name="grid" :size="18"/> My spaces</a>
+                <a href="{{ path('notifications') }}" class="{{ route == 'notifications' ? 'active' }}">
+                    <twig:Icon name="bell" :size="18"/> Notifications
+                    <twig:Notification:Badge :unread="unread_notification_count()"/>
+                </a>
+            </nav>
+        </header>
+
+        {# Reminders pushed by the worker show up as toasts, on every page. Both survive a Turbo Drive visit: the toasts
+           on screen stay, and the stream is not closed and opened again #}
+        <div class="toasts" id="toasts" data-turbo-permanent aria-live="polite"></div>
+        <div id="notifications-stream" data-turbo-permanent hidden>{{ turbo_stream_from('notifications') }}</div>
+
+        <main class="main">
+            {% for type, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="card flash flash-{{ type }}">{{ message }}</div>
+                {% endfor %}
+            {% endfor %}
+
+            {% block body %}{% endblock %}
+        </main>
+
+        <footer class="footer">
+            <p>
+                Plant data: <a href="https://trefle.io">Trefle</a>.
+                <a href="https://open-meteo.com/">Weather data by Open-Meteo.com</a>, under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
+                Care data filled by an LLM is reviewed by a human before being saved.
+            </p>
+            <p>Plates: <a href="https://www.flickr.com/photos/biodivlibrary/">Biodiversity Heritage Library</a>, public domain.</p>
+            {% if app_demo %}<p><span class="demo-mode">Demo mode: Trefle and Open-Meteo answer from recorded responses.</span></p>{% endif %}
+        </footer>
+    </body>
+</html>

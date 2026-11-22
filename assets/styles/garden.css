@@ -1,0 +1,107 @@
+/* The garden: its plants, the page of a planting, its form and the drafting of its care sheet. Uses the tokens and classes of app.css and plate.css */
+
+/* The list: the drafts of the chat on top, then a white tile per planting */
+.drafts { margin-bottom: 1.75rem; }
+.plant-list { display: flex; flex-direction: column; gap: .4rem; margin: 0; padding: 1.1rem 1.5rem; list-style: none; }
+.plant-list li { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+.specimen-no { color: var(--aubergine); font-family: var(--serif); font-size: .9rem; font-style: italic; }
+.plant-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 1.1rem; margin: 0; padding: 0; list-style: none; }
+.plant-tile { position: relative; display: flex; flex-direction: column; gap: .15rem; height: 100%; padding: 1.1rem 1.15rem 1.15rem; color: var(--text); text-decoration: none; transition: transform .15s, box-shadow .15s; }
+.plant-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow), inset 0 0 0 2px var(--aubergine); }
+.plant-tile strong { font-family: var(--serif); font-size: 1.25rem; font-weight: 700; letter-spacing: -.01em; line-height: 1.2; }
+.plant-tile em { color: var(--muted); }
+.plant-tile .specimen-no { position: absolute; top: .8rem; right: 1rem; }
+.plant-tile .plant-card-image { width: 60px; height: 60px; margin-bottom: .5rem; }
+.plant-tile .tags { margin-top: .5rem; }
+
+/* The page of a planting: what the user described, next to the recommendations */
+.planting-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 1.25rem; align-items: start; margin-top: var(--crown-room); }
+.planting-card { padding: 28px 30px 24px; border-radius: 32px; }
+.garden-photo { aspect-ratio: 16 / 9; margin: 0 0 1.2rem; overflow: hidden; border-radius: 22px; background: var(--cream); }
+.garden-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.planting-card .care-sheet { margin-top: 1.2rem; font-size: .95rem; }
+.planting-card .care-sheet :is(th, td) { padding: .5rem; border-bottom: 1px solid var(--cream); text-align: left; }
+.planting-card .care-sheet tr:last-child > * { border-bottom: 0; }
+.planting-card .care-sheet th { width: 1%; padding-right: 1.5rem; font-weight: 600; white-space: nowrap; }
+.planting-card .care-sheet th .pict { width: 28px; height: 28px; margin-right: .5rem; }
+.recommendations { padding: 1.5rem 1.6rem; }
+.recommendation-list { margin: 0; padding: 0; list-style: none; }
+.recommendation { display: flex; align-items: flex-start; gap: .75rem; padding: .7rem 0; border-bottom: 1px solid var(--cream); }
+.recommendation:last-child { border-bottom: 0; }
+.recommendation > div { flex: 1; }
+.recommendation p { margin: 0; }
+.recommendation-heading { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .15rem; }
+.recommendation-heading + p { color: var(--muted); font-size: .9rem; }
+.recommendation-warning .tag { background: var(--pink-soft); color: var(--crimson); }
+.recommendation-action .tag { background: var(--anise-soft); color: var(--olive); }
+.recommendation-ok .tag { background: var(--forest-soft); color: var(--forest); }
+.garden-source { margin: .6rem 0 0; font-size: .85rem; }
+
+/* The drafting of the care sheet */
+.garden-pending { padding: .7rem .9rem; border-radius: 14px; background: var(--cerulean-soft); color: var(--cerulean-deep); font-weight: 500; }
+.garden-tool-calls { display: flex; flex-direction: column; gap: .45rem; margin: .7rem 0; }
+.garden-tool-calls:empty { display: none; }
+.garden-failure .warning { margin: .7rem 0; }
+
+/* My plant or a species: the label at the head of each page, the photo for my plant, the plate for its species */
+.page-label { display: inline-flex; align-items: center; margin-right: .5rem; padding: .2rem .65rem; border-radius: 999px; font-family: var(--sans); font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; vertical-align: middle; }
+.page-label-plant { background: var(--forest-soft); color: var(--forest); }
+.page-label-species { background: var(--cerulean-soft); color: var(--cerulean-deep); }
+
+/* The species of my plant, in short, under the recommendations */
+.planting-aside { display: flex; flex-direction: column; gap: 1.25rem; }
+.planting-aside > :empty { display: none; }
+.species-summary { display: flex; flex-direction: column; gap: .8rem; padding: 1.3rem 1.5rem; }
+.species-summary-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.species-summary-name { display: flex; align-items: center; gap: .9rem; color: inherit; text-decoration: none; }
+.species-summary-name > span { display: flex; flex-direction: column; gap: .1rem; }
+.species-summary-name strong { font-size: 1.1rem; }
+.species-summary-plate { flex-shrink: 0; width: 72px; height: 96px; object-fit: contain; border-radius: 10px; background: var(--cream); }
+.species-facts { display: flex; flex-direction: column; gap: .3rem; margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: .88rem; }
+.species-facts li { display: flex; align-items: center; gap: .4rem; }
+.species-reminders { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; margin: 0; }
+.species-reminders .kicker { margin-right: .2rem; }
+
+/* My plants of a species, on its page */
+.species-plantings { margin-top: 1.25rem; padding: 1.3rem 1.6rem; }
+.species-plantings h2 { margin-top: 0; }
+.species-planting-list { display: flex; flex-wrap: wrap; gap: .75rem; margin: 0; padding: 0; list-style: none; }
+.species-planting { display: flex; align-items: center; gap: .7rem; padding: .5rem .9rem .5rem .5rem; border-radius: 18px; background: var(--cream); color: inherit; text-decoration: none; }
+.species-planting .plant-card-image { width: 44px; height: 44px; border-radius: 12px; }
+.species-planting-list li { display: flex; align-items: center; gap: .45rem; }
+.species-planting-space { text-decoration: none; }
+
+/* The care sheet edited in the frame of its card */
+.care-sheet-form-head h3 { margin: .2rem 0; }
+.care-sheet-form-head .kicker { margin: 0; color: var(--aubergine); }
+.care-sheet-form-head .kicker span { margin-left: .7rem; color: var(--muted); }
+.care-sheet-form-head .hint { margin: 0; font-size: .9rem; }
+
+/* The form */
+.garden-care { display: flex; flex-wrap: wrap; gap: .75rem; }
+.garden-care > .hint { flex-basis: 100%; margin: 0; font-size: .85rem; }
+.garden-care-field { flex: 1 1 150px; }
+.garden-species-chosen:not([hidden]) { display: flex; align-items: center; gap: .6rem; margin: .55rem 0 0; }
+.garden-species-chosen em { font-size: 1.05rem; }
+.garden-species-chosen .chip { padding: .15rem .75rem; font-size: .82rem; }
+.garden-species-candidates { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .55rem; }
+.garden-species-candidates:empty { display: none; }
+.garden-species-candidates .hint { margin: 0; font-size: .88rem; }
+.garden-species-candidates .chip { font-weight: 500; }
+.garden-species-label { flex-basis: 100%; margin: 0; }
+
+@media (max-width: 900px) {
+    .planting-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 640px) {
+    .planting-card { padding: 22px 18px 20px; border-radius: 26px; }
+    .planting-card .care-sheet th { padding-right: .8rem; }
+}
+
+/* The spaces: templates/space/, templates/components/SpaceTile.html.twig and Space/ */
+.space-tile .tags { margin: .4rem 0 .2rem; }
+.space-tile-plants { color: var(--muted); font-size: .9rem; }
+.space-card { max-width: 640px; margin-top: var(--crown-room); }
+.space-plants { margin-top: 2rem; }
+.garden-space-new { margin: .3rem 0 0; font-size: .88rem; font-weight: 600; }

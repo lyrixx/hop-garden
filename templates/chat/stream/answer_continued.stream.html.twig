@@ -1,0 +1,2 @@
+{# answer: App\Chat\Model\StreamedAnswer, already in its bubble #}
+<turbo-stream action="update" target="{{ answer.id }}"><template>{{ answer.text|chat_markdown }}</template></turbo-stream>

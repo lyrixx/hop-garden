@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My spaces · Hop Garden{% endblock %}
+
+{% block body %}
+<div class="with-specimen">
+<div>
+    <twig:PlateHead tab="III" title="Your spaces" subtitle="The spots of your garden: each gives its exposure and its soil to the plants growing there, and makes them neighbours."/>
+    <p><twig:Button href="{{ path('space_new') }}" icon="grid" :iconSize="18" class="button-light button-next">Add a space</twig:Button></p>
+
+    {% if spaces is empty %}
+        <p class="callout">No space yet. <a href="{{ path('space_new') }}">Add your first one</a>: the balcony, the north bed, the vegetable patch…</p>
+    {% else %}
+        <ul class="plant-grid">
+            {% for space in spaces %}
+                <li><twig:SpaceTile :space="space"/></li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+<twig:Specimen plate="tecoma-ceramensis"/>
+</div>
+{% endblock %}
