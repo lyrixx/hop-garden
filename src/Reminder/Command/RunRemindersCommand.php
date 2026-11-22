@@ -2,7 +2,8 @@
 
 namespace App\Reminder\Command;
 
-use App\Locale\PreferredLocale;
+use App\Garden\Entity\Garden;
+use App\Garden\GardenRepository;
 use App\Reminder\ReminderChecker;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
@@ -11,52 +12,64 @@ use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\Translation\LocaleSwitcher;
 
-#[AsCommand(name: 'app:reminders:run', description: 'Checks the reminders now, as the scheduler does every day at 7:00')]
+/**
+ * Whatever the hour, and whether the garden was checked today already: the notifications of a reminder are sent once
+ * anyway (once a month for the calendar, once per cold episode for the frost).
+ */
+#[AsCommand(name: 'app:reminders:run', description: 'Checks the reminders of every garden now, as the scheduler does every day from 7:00')]
 final readonly class RunRemindersCommand
 {
     public function __construct(
+        private GardenRepository $gardenRepository,
         private ReminderChecker $reminderChecker,
         private EntityManagerInterface $entityManager,
         private ClockInterface $clock,
-        #[Autowire(env: 'GARDEN_TIMEZONE')]
-        private string $gardenTimezone,
-        private LocaleSwitcher $localeSwitcher,
-        private PreferredLocale $preferredLocale,
     ) {
     }
 
     public function __invoke(
         SymfonyStyle $io,
-        #[Option(description: 'Day to simulate (YYYY-MM-DD), checked as if it were 7:00 that day')]
+        #[Option(description: 'Day to simulate (YYYY-MM-DD), checked as if it were 7:00 that day in the timezone of each garden')]
         ?string $date = null,
+        #[Option(description: 'The id of the only garden to check')]
+        ?int $garden = null,
     ): int {
-        $now = $this->clock->now();
+        if (null !== $date && false === \DateTimeImmutable::createFromFormat('!Y-m-d', $date)) {
+            $io->error(\sprintf('Invalid date "%s", expected YYYY-MM-DD.', $date));
 
-        if (null !== $date) {
-            $simulated = \DateTimeImmutable::createFromFormat('!Y-m-d H:i', $date . ' 07:00', new \DateTimeZone($this->gardenTimezone));
-            if (false === $simulated || $simulated->format('Y-m-d') !== $date) {
-                $io->error(\sprintf('Invalid date "%s", expected YYYY-MM-DD.', $date));
-
-                return 2;
-            }
-
-            // Every service reading the clock (forecast, recorded responses...) now lives on that day
-            Clock::set(new MockClock($simulated));
-            $now = $simulated;
+            return 2;
         }
 
-        // As the scheduler does: see CheckRemindersHandler
-        $sent = $this->localeSwitcher->runWithLocale($this->preferredLocale->get()->value, function () use ($now): int {
-            $sent = $this->reminderChecker->check($now);
+        $gardens = array_values(array_filter($this->gardenRepository->findAllWithMembers(), static fn (Garden $candidate): bool => null === $garden || $candidate->getId() === $garden));
+        if (null !== $garden && [] === $gardens) {
+            $io->error(\sprintf('No garden with id %d.', $garden));
+
+            return 2;
+        }
+
+        $due = 0;
+        foreach ($gardens as $checked) {
+            $now = $this->clock->now();
+            if (null !== $date) {
+                $simulated = \DateTimeImmutable::createFromFormat('!Y-m-d H:i', $date . ' 07:00', $checked->getLocation()->getTimezone());
+                if (false === $simulated || $simulated->format('Y-m-d') !== $date) {
+                    $io->error(\sprintf('Invalid date "%s", expected YYYY-MM-DD.', $date));
+
+                    return 2;
+                }
+
+                // Every service reading the clock (forecast, recorded responses...) now lives on that day, in the timezone
+                // of the server, as the clock of the scheduler
+                $now = $simulated->setTimezone(new \DateTimeZone(date_default_timezone_get()));
+                Clock::set(new MockClock($now));
+            }
+
+            $due += $this->reminderChecker->check($checked, $now);
             $this->entityManager->flush();
+        }
 
-            return $sent;
-        });
-
-        $io->success(\sprintf('%d notification(s) sent for %s.', $sent, $now->format('l j F Y')));
+        $io->success(\sprintf('%d reminder(s) due in %d garden(s), sent to each of their members.', $due, \count($gardens)));
 
         return 0;
     }

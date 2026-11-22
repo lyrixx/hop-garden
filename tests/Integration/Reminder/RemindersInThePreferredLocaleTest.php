@@ -5,13 +5,15 @@ namespace App\Tests\Integration\Reminder;
 use App\Factory\CareSheetFactory;
 use App\Factory\PlantFactory;
 use App\Factory\PlantingFactory;
+use App\Garden\Entity\Garden;
 use App\Locale\Model\SupportedLocale;
+use App\Mercure\Topics;
 use App\Reminder\Message\CheckRemindersMessage;
 use App\Reminder\Model\ReminderType;
 use App\Reminder\NotificationRepository;
-use App\Reminder\Notifier\NotificationToastPublisher;
 use App\Settings\Entity\Settings;
 use App\Settings\SettingsRepository;
+use App\Story\DefaultGardenStory;
 use App\Tests\Utils\Mercure\RecordingHub;
 use App\Tests\Utils\Mercure\TurboStream;
 use Doctrine\ORM\EntityManagerInterface;
@@ -23,8 +25,9 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * The reminder check has no recipient: it notifies in the language of the application, and pushes its toasts in it.
- * The recorded forecast of the demo mode starts on the day of the clock: -3.2 °C, -8.5 °C, -12.4 °C.
+ * A member who never chose their language gets their reminders in the one of the application, and their toasts too:
+ * the owner of the garden of the test (each member in theirs: ReminderCheckerTest). The recorded forecast of the demo
+ * mode starts on the day of the clock: -3.2 °C, -8.5 °C, -12.4 °C.
  */
 final class RemindersInThePreferredLocaleTest extends KernelTestCase
 {
@@ -43,7 +46,7 @@ final class RemindersInThePreferredLocaleTest extends KernelTestCase
             ->create(['commonName' => 'Citronnier', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -3, 'frostSensitive' => true, 'pruningMonths' => [12]])])
         ;
         PlantingFactory::new()->of($lemonTree)->create();
-        // The language of the application: no member is logged in to the scheduler
+        // The language of the application: the owner of the garden chose none
         $settings = new Settings();
         $settings->choosePreferredLocale(SupportedLocale::French);
         self::getContainer()->get(SettingsRepository::class)->add($settings);
@@ -52,6 +55,7 @@ final class RemindersInThePreferredLocaleTest extends KernelTestCase
 
     public function testTheSchedulerNotifiesInThePreferredLocale(): void
     {
+        self::assertNull(self::garden()->getOwner()->getPreferredLocale());
         self::mockTime('2026-12-01 07:00');
 
         self::getContainer()->get(MessageBusInterface::class)->dispatch(new CheckRemindersMessage());
@@ -62,7 +66,7 @@ final class RemindersInThePreferredLocaleTest extends KernelTestCase
             'Its own words, the advice of the care sheet as written.',
         );
 
-        $toasts = array_map(static fn (string $update): array => TurboStream::parseAll($update), RecordingHub::published(NotificationToastPublisher::TOPIC));
+        $toasts = array_map(static fn (string $update): array => TurboStream::parseAll($update), RecordingHub::published(self::getContainer()->get(Topics::class)->notifications(self::garden()->getOwner(), self::garden())));
         self::assertCount(2, $toasts);
         $frost = array_values(array_filter($toasts, static fn (array $streams): bool => 'Alerte gel' === $streams[0]->element()->filter('strong')->text()))[0][0]->element();
         self::assertSame(self::FROST_IN_FRENCH, $frost->filter('p')->text());
@@ -79,7 +83,7 @@ final class RemindersInThePreferredLocaleTest extends KernelTestCase
 
         $tester->assertCommandIsSuccessful();
         self::assertContains(self::FROST_IN_FRENCH, $this->messages());
-        self::assertStringContainsString('Alerte gel', implode("\n", RecordingHub::published(NotificationToastPublisher::TOPIC)));
+        self::assertStringContainsString('Alerte gel', implode("\n", RecordingHub::published(self::getContainer()->get(Topics::class)->notifications(self::garden()->getOwner(), self::garden()))));
     }
 
     /**
@@ -89,6 +93,16 @@ final class RemindersInThePreferredLocaleTest extends KernelTestCase
     {
         self::getContainer()->get(EntityManagerInterface::class)->clear();
 
-        return array_map(static fn ($notification): string => $notification->getMessage(), self::getContainer()->get(NotificationRepository::class)->findLatest());
+        $garden = self::getContainer()->get(EntityManagerInterface::class)->find(Garden::class, self::garden()->getId()) ?? self::fail();
+
+        return array_map(static fn ($notification): string => $notification->getMessage(), self::getContainer()->get(NotificationRepository::class)->findLatest($garden->getOwner(), $garden));
+    }
+
+    private static function garden(): Garden
+    {
+        $garden = DefaultGardenStory::get('garden');
+        self::assertInstanceOf(Garden::class, $garden);
+
+        return $garden;
     }
 }

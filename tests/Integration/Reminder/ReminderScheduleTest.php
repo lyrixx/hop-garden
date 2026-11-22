@@ -4,21 +4,17 @@ namespace App\Tests\Integration\Reminder;
 
 use App\Reminder\Message\CheckRemindersMessage;
 use App\Reminder\Scheduler\ReminderSchedule;
-use App\Tests\Utils\Env\EnvVarsTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Scheduler\Generator\MessageContext;
 use Symfony\Component\Scheduler\RecurringMessage;
-use Symfony\Component\Scheduler\Trigger\TriggerInterface;
 
 /**
- * The first run of the schedule is today at 7:00, read from the real clock: the runs are checked from it, never
- * against a fixed date.
+ * Every hour, on the hour: each garden is checked from 7:00 in its own timezone (ReminderCheckerTest), whatever the
+ * timezone of the server. Read from the real clock: the runs are checked from it, never against a fixed date.
  */
 final class ReminderScheduleTest extends KernelTestCase
 {
-    use EnvVarsTrait;
-
-    public function testTheRemindersAreCheckedEveryDayAt7InTheTimezoneOfTheGarden(): void
+    public function testTheRemindersAreCheckedEveryHourOnTheHour(): void
     {
         self::bootKernel();
         $schedule = self::getContainer()->get(ReminderSchedule::class)->getSchedule();
@@ -29,11 +25,16 @@ final class ReminderScheduleTest extends KernelTestCase
         $messages = self::messagesOf($recurringMessages[0]);
         self::assertCount(1, $messages);
         self::assertInstanceOf(CheckRemindersMessage::class, $messages[0]);
-        self::assertSame('every 1 day', (string) $trigger);
+        self::assertSame('every 1 hour', (string) $trigger);
 
-        $firstRun = $trigger->getNextRunDate(new \DateTimeImmutable('2000-01-01')) ?? self::fail('The schedule never runs.');
-        self::assertSame('07:00 Europe/Paris', $firstRun->format('H:i e'));
-        self::assertEveryDayAt7($trigger, $firstRun);
+        $run = $trigger->getNextRunDate(new \DateTimeImmutable('2000-01-01')) ?? self::fail('The schedule never runs.');
+        // Over the changes of daylight saving time of the gardens too: hours of UTC
+        for ($hour = 1; $hour <= 24 * 400; ++$hour) {
+            $next = $trigger->getNextRunDate($run) ?? self::fail('The schedule stopped.');
+            self::assertSame($run->modify('+1 hour')->format('Y-m-d H:i'), $next->format('Y-m-d H:i'));
+            self::assertSame('00', $next->format('i'), 'On the hour.');
+            $run = $next;
+        }
     }
 
     public function testAMissedRunIsCaughtUpOnce(): void
@@ -43,31 +44,6 @@ final class ReminderScheduleTest extends KernelTestCase
 
         self::assertNotNull($schedule->getState(), 'The last run is remembered.');
         self::assertTrue($schedule->shouldProcessOnlyLastMissedRun(), 'A worker down for days checks once on restart.');
-    }
-
-    public function testTheTimezoneComesFromTheGardenTimezoneEnvVar(): void
-    {
-        $this->setEnvVar('GARDEN_TIMEZONE', 'America/New_York');
-        self::bootKernel();
-
-        $trigger = self::getContainer()->get(ReminderSchedule::class)->getSchedule()->getRecurringMessages()[0]->getTrigger();
-
-        $firstRun = $trigger->getNextRunDate(new \DateTimeImmutable('2000-01-01')) ?? self::fail('The schedule never runs.');
-        self::assertSame('07:00 America/New_York', $firstRun->format('H:i e'));
-        self::assertEveryDayAt7($trigger, $firstRun);
-    }
-
-    /**
-     * Over more than a year: both changes of daylight saving time keep 7:00, local time.
-     */
-    private static function assertEveryDayAt7(TriggerInterface $trigger, \DateTimeImmutable $firstRun): void
-    {
-        $run = $firstRun;
-        for ($day = 1; $day <= 400; ++$day) {
-            $next = $trigger->getNextRunDate($run) ?? self::fail('The schedule stopped.');
-            self::assertSame($run->modify('+1 day')->format('Y-m-d') . ' 07:00', $next->format('Y-m-d H:i'));
-            $run = $next;
-        }
     }
 
     /**

@@ -15,7 +15,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
  * The language of the member logged in, in their account; of a visitor, in a cookie; else the one of the application,
- * in its settings: what a visitor gets until they choose, and the reminder check of the scheduler, which has neither.
+ * in its settings: what a visitor gets until they choose, and a member who never chose (the reminders sent to them).
  */
 #[AsEventListener(event: KernelEvents::RESPONSE, method: 'writeCookie')]
 final readonly class UserPreferredLocale implements PreferredLocale
@@ -37,8 +37,12 @@ final readonly class UserPreferredLocale implements PreferredLocale
     {
         return $this->user()?->getPreferredLocale()
             ?? $this->visitorLocale()
-            ?? $this->settingsRepository->findTheSettings()?->getPreferredLocale()
-            ?? SupportedLocale::DEFAULT;
+            ?? $this->applicationLocale();
+    }
+
+    public function of(User $user): SupportedLocale
+    {
+        return $user->getPreferredLocale() ?? $this->applicationLocale();
     }
 
     /**
@@ -63,6 +67,11 @@ final readonly class UserPreferredLocale implements PreferredLocale
         }
 
         $event->getResponse()->headers->setCookie(Cookie::create(self::COOKIE, $locale->value, $this->clock->now()->modify('+1 year')));
+    }
+
+    private function applicationLocale(): SupportedLocale
+    {
+        return $this->settingsRepository->findTheSettings()?->getPreferredLocale() ?? SupportedLocale::DEFAULT;
     }
 
     private function user(): ?User
