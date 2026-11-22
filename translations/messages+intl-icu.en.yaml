@@ -331,11 +331,21 @@ legal:
             text: "The controller of your data is the publisher of Hop Garden, named in the {link}legal notice{link_end}. For any question about your data, write to:"
             to_complete: "the contact email address for personal data, and the data protection officer if there is one"
         cookies:
-            form: "When you send some forms, a technical cookie also protects the sending, and is removed right after."
+            csrf:
+                how_long: "deleted by the answer, right away."
+                what: "When you send a form, such as the login: it protects the sending against forged requests. The page sets it as you send."
             heading: "Cookies"
-            language: "Your choice of language is kept on the server, not in a cookie."
-            none: "No cookie for audience measurement or advertising, and no resource loaded from another site: the fonts are served by Hop Garden. These cookies are strictly necessary to the service and need no consent: there is no cookie banner."
-            session: "Hop Garden uses the session cookie ({name}): it keeps your session, such as your conversation with the assistant, and protects the forms against forged requests. It is deleted when you close your browser, and the session ends after 12 hours without a visit."
+            how_long: "How long:"
+            intro: "Hop Garden sets these cookies only, all strictly necessary to the service: they need no consent, and there is no cookie banner. No cookie for audience measurement or advertising, and no resource loaded from another site: the fonts are served by Hop Garden."
+            locale:
+                how_long: "1 year."
+                what: "The language you choose, in the top bar, the footer or the banner: the pages you see logged out keep it. Logged in, your account keeps it too."
+            remember_me:
+                how_long: "30 days, or until you log out. A new password ends it."
+                what: "Only if you tick “Remember me for 30 days” when you log in: it logs you in again once your session has ended."
+            session:
+                how_long: "until you close your browser. The session itself ends after 12 hours without a visit."
+                what: "Your session, from your first visit: it keeps you logged in and your conversation with the assistant, and protects the forms against forged requests."
         data:
             account: "Your account: your email address, your display name, your password (stored hashed, never in clear) and your language."
             conversations: "Your conversations with the assistant: your messages and its answers are stored, and sent to the provider of the language model that writes the answers. To answer, the assistant reads your garden (care sheets, plants, spaces), and what it reads goes to the same provider. The name of a species you look up may be sent to it too, to find its Latin name or draft its care sheet."
@@ -357,7 +367,7 @@ legal:
         recipients:
             heading: "Who receives your data"
             text: "Your data only goes to the processors Hop Garden needs to run, and to Trefle and Open-Meteo as described above."
-            to_complete: "the list of the processors, their country, and the safeguards for a transfer outside the European Union. For example: the host of the application and its database; the provider of the language model (Anthropic or OpenAI, depending on the configuration); the email service, once Hop Garden sends emails."
+            to_complete: "the list of the processors, their country, and the safeguards for a transfer outside the European Union. For example: the host of the application and its database; the provider of the language model (Anthropic or OpenAI, depending on the configuration); the email service."
             transfers: "The provider of the language model may process the conversations outside the European Union."
         retention:
             account:

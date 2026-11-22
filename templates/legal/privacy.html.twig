@@ -57,12 +57,24 @@
 
     <section id="cookies">
         <h2>{{ 'legal.privacy.cookies.heading'|trans }}</h2>
-        {# The cookie of the session; the second one is set by assets/controllers/csrf_protection_controller.js, and the
-           language is App\Locale\PreferredLocale. Checked by tests/Functional/Controller/LegalPagesTest.php #}
-        <p>{{ 'legal.privacy.cookies.session'|trans({name: app.session.name}) }}</p>
-        <p>{{ 'legal.privacy.cookies.form'|trans }}</p>
-        <p>{{ 'legal.privacy.cookies.language'|trans }}</p>
-        <p>{{ 'legal.privacy.cookies.none'|trans }}</p>
+        <p>{{ 'legal.privacy.cookies.intro'|trans }}</p>
+        {# Every cookie Hop Garden sets: the session (framework.session), the one of remember_me (config/packages/security.yaml),
+           App\Locale\UserPreferredLocale::COOKIE, and the one assets/controllers/csrf_protection_controller.js sets to
+           double-submit a CSRF token. The first three are checked by tests/Functional/Controller/LegalPagesTest.php #}
+        {% set cookies = {
+            (app.session.name): 'session',
+            REMEMBERME: 'remember_me',
+            (constant('App\\Locale\\UserPreferredLocale::COOKIE')): 'locale',
+            '__Host-csrf-token_…': 'csrf',
+        } %}
+        <dl class="legal-facts legal-cookies">
+            {% for name, key in cookies %}
+                <div>
+                    <dt><code>{{ name }}</code></dt>
+                    <dd>{{ ('legal.privacy.cookies.' ~ key ~ '.what')|trans }} <span class="legal-cookie-life">{{ 'legal.privacy.cookies.how_long'|trans }} {{ ('legal.privacy.cookies.' ~ key ~ '.how_long')|trans }}</span></dd>
+                </div>
+            {% endfor %}
+        </dl>
     </section>
 
     <section>

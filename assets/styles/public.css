@@ -71,6 +71,9 @@
 .legal-facts > div { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: .2rem 1rem; align-items: baseline; }
 .legal-facts dt { color: var(--muted); font-weight: 600; }
 .legal-facts dd { margin: 0; }
+.legal-cookies > div { grid-template-columns: 13rem minmax(0, 1fr); }
+.legal-cookies code { overflow-wrap: anywhere; }
+.legal-cookie-life { display: block; color: var(--muted); font-size: .92rem; }
 
 /* What the publisher still has to write: magenta and dashed, impossible to miss */
 .to-complete {

@@ -331,11 +331,21 @@ legal:
             text: "Le responsable du traitement de vos données est l’éditeur de Hop Garden, désigné dans les {link}mentions légales{link_end}. Pour toute question sur vos données, écrivez à :"
             to_complete: "l’adresse email de contact pour les données personnelles, et le délégué à la protection des données s’il y en a un"
         cookies:
-            form: "À l’envoi de certains formulaires, un cookie technique protège aussi l’envoi, puis il est supprimé aussitôt."
+            csrf:
+                how_long: "supprimé par la réponse, aussitôt."
+                what: "À l’envoi d’un formulaire, comme celui de connexion : il protège l’envoi contre les requêtes falsifiées. La page le pose au moment de l’envoi."
             heading: "Cookies"
-            language: "Votre choix de langue est conservé sur le serveur, pas dans un cookie."
-            none: "Aucun cookie de mesure d’audience ni de publicité, et aucune ressource chargée depuis un autre site : les polices sont servies par Hop Garden. Ces cookies sont strictement nécessaires au service et dispensés de consentement : il n’y a pas de bannière cookies."
-            session: "Hop Garden utilise le cookie de session ({name}) : il garde votre session, comme votre conversation avec l’assistant, et protège les formulaires contre les requêtes falsifiées. Il disparaît à la fermeture du navigateur, et la session prend fin après 12 heures sans visite."
+            how_long: "Durée :"
+            intro: "Hop Garden ne pose que ces cookies, tous strictement nécessaires au service : ils sont dispensés de consentement, et il n’y a pas de bannière cookies. Aucun cookie de mesure d’audience ni de publicité, et aucune ressource chargée depuis un autre site : les polices sont servies par Hop Garden."
+            locale:
+                how_long: "1 an."
+                what: "La langue que vous choisissez, dans la barre du haut, le pied de page ou le bandeau : les pages que vous voyez déconnecté la gardent. Connecté, votre compte la garde aussi."
+            remember_me:
+                how_long: "30 jours, ou jusqu’à votre déconnexion. Un nouveau mot de passe y met fin."
+                what: "Seulement si vous cochez « Se souvenir de moi pendant 30 jours » à la connexion : il vous reconnecte une fois votre session terminée."
+            session:
+                how_long: "jusqu’à la fermeture du navigateur. La session elle-même prend fin après 12 heures sans visite."
+                what: "Votre session, dès votre première visite : elle vous garde connecté, garde votre conversation avec l’assistant, et protège les formulaires contre les requêtes falsifiées."
         data:
             account: "Votre compte : votre adresse email, votre nom affiché, votre mot de passe (enregistré haché, jamais en clair) et votre langue."
             conversations: "Vos conversations avec l’assistant : vos messages et ses réponses sont enregistrés, et envoyés au fournisseur du modèle de langage qui rédige les réponses. Pour répondre, l’assistant lit votre jardin (fiches, plantes, espaces), et ce qu’il lit part chez le même fournisseur. Le nom d’une espèce que vous cherchez peut aussi lui être envoyé, pour trouver son nom latin ou rédiger sa fiche."
@@ -357,7 +367,7 @@ legal:
         recipients:
             heading: "Qui reçoit vos données"
             text: "Vos données ne vont qu’aux sous-traitants dont Hop Garden a besoin pour fonctionner, et à Trefle et Open-Meteo comme décrit plus haut."
-            to_complete: "la liste des sous-traitants, leur pays, et les garanties pour un transfert hors de l’Union européenne. Par exemple : l’hébergeur de l’application et de sa base de données ; le fournisseur du modèle de langage (Anthropic ou OpenAI, selon la configuration) ; le service d’envoi des emails, quand Hop Garden en enverra."
+            to_complete: "la liste des sous-traitants, leur pays, et les garanties pour un transfert hors de l’Union européenne. Par exemple : l’hébergeur de l’application et de sa base de données ; le fournisseur du modèle de langage (Anthropic ou OpenAI, selon la configuration) ; le service d’envoi des emails."
             transfers: "Le fournisseur du modèle de langage peut traiter les conversations hors de l’Union européenne."
         retention:
             account:

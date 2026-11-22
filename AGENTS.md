@@ -82,8 +82,10 @@ Without option, the `default` context applies.
   the application or the notification stream. A blank of the publisher on a legal page is a `Legal:ToComplete`, never a
   made-up value. The footer of `base.html.twig` links the legal pages on every page (`Legal:Links`, at the foot of the
   back-office too: `templates/admin/layout.html.twig`). The application starts at `/assistant` (route `chat`), where a
-  login leads, and `/?message=` redirects there. The privacy policy says the session cookie is the only one, and
-  `LegalPagesTest::testThePrivacyPolicyNamesTheOnlyCookie()` checks it: a new cookie (remember me...) goes in the policy.
+  login leads, and `/?message=` redirects there. The privacy policy lists every cookie, all strictly necessary (no
+  banner): the session, `REMEMBERME`, `locale` and the double-submit one of the CSRF tokens.
+  `LegalPagesTest::testThePrivacyPolicyListsTheRealCookies()` checks the first three against what a visitor and a member
+  get: a new cookie goes in the policy.
   The captures of `assets/images/home/` (a draft care sheet, the reminder board) exist in each language: retake both
   when the card or the board changes
 - Species: `/plants` lists every species (validated first) with my plants of each, in one query
