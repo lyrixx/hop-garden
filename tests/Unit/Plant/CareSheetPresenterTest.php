@@ -2,6 +2,7 @@
 
 namespace App\Tests\Unit\Plant;
 
+use App\Factory\CareSheetFactory;
 use App\Locale\IntlFormatter;
 use App\Plant\CareSheetPresenter;
 use App\Plant\Entity\CareSheet;
@@ -11,7 +12,6 @@ use App\Plant\Model\Confidence;
 use App\Plant\Model\Exposure;
 use App\Plant\Model\Source;
 use App\Plant\Model\Watering;
-use App\Tests\Utils\Factory\PlantFactory;
 use App\Tests\Utils\Translation\Translators;
 use PHPUnit\Framework\TestCase;
 
@@ -19,7 +19,7 @@ final class CareSheetPresenterTest extends TestCase
 {
     public function testOneRowPerFieldWithItsConfidence(): void
     {
-        $rows = self::presenter()->rows(PlantFactory::careSheet(pruningMonths: [3, 11], deadheadingMonths: [], exposure: Exposure::PartShade, watering: Watering::High));
+        $rows = self::presenter()->rows(CareSheetFactory::createOne(['pruningMonths' => [3, 11], 'deadheadingMonths' => [], 'exposure' => Exposure::PartShade, 'watering' => Watering::High]));
 
         self::assertSame(
             [
@@ -51,7 +51,7 @@ final class CareSheetPresenterTest extends TestCase
 
     public function testInFrench(): void
     {
-        $rows = self::presenter('fr')->rows(PlantFactory::careSheet(pruningMonths: [3, 11], exposure: Exposure::PartShade, watering: Watering::High));
+        $rows = self::presenter('fr')->rows(CareSheetFactory::createOne(['pruningMonths' => [3, 11], 'exposure' => Exposure::PartShade, 'watering' => Watering::High]));
 
         self::assertSame(
             ["-15\u{a0}°C", 'Non', 'Mi-ombre', 'Abondant', 'mars, novembre'],

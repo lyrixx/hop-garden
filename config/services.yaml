@@ -18,10 +18,13 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
-        # Data objects: entities, enums, value objects and DTO are not services
         exclude:
+            # Data objects: entities, enums, value objects and DTO are not services
             - '../src/**/Entity/'
             - '../src/**/Model/'
+            # Foundry, a dev dependency: the story is a service in dev and test only (config/packages/zenstruck_foundry.yaml)
+            - '../src/Factory/'
+            - '../src/Story/'
 
     app.ai.platform:
         class: Symfony\AI\Platform\PlatformInterface

@@ -4,11 +4,12 @@ namespace App\Tests\Unit\Reminder;
 
 use App\DataSource\OpenMeteo\Model\DailyMinimum;
 use App\DataSource\OpenMeteo\Model\FrostForecast;
+use App\Factory\CareSheetFactory;
+use App\Factory\PlantFactory;
 use App\Plant\Entity\Plant;
 use App\Reminder\FrostRiskEvaluator;
 use App\Reminder\Model\ForecastDay;
 use App\Reminder\Model\ReminderType;
-use App\Tests\Utils\Factory\PlantFactory;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 
@@ -21,7 +22,7 @@ final class FrostRiskEvaluatorTest extends TestCase
     #[TestWith([5, true, 7.0])]
     public function testTheThresholdKeepsAMarginAboveTheHardiness(int $minTemperatureC, bool $frostSensitive, float $expected): void
     {
-        $careSheet = PlantFactory::careSheet(minTemperatureC: $minTemperatureC, frostSensitive: $frostSensitive);
+        $careSheet = CareSheetFactory::createOne(['minTemperatureC' => $minTemperatureC, 'frostSensitive' => $frostSensitive]);
 
         self::assertSame($expected, (new FrostRiskEvaluator())->thresholdOf($careSheet));
     }
@@ -30,14 +31,14 @@ final class FrostRiskEvaluatorTest extends TestCase
     {
         $forecast = self::forecast(['2026-12-01' => -13.0, '2026-12-02' => -2.0]);
 
-        self::assertNull((new FrostRiskEvaluator())->evaluate(PlantFactory::careSheet(minTemperatureC: -15), $forecast), 'Colder than the threshold only.');
+        self::assertNull((new FrostRiskEvaluator())->evaluate(CareSheetFactory::createOne(['minTemperatureC' => -15]), $forecast), 'Colder than the threshold only.');
     }
 
     public function testTheFrostDaysInDateOrder(): void
     {
         $forecast = self::forecast(['2026-12-03' => -12.4, '2026-12-01' => -3.2, '2026-12-02' => 1.5]);
 
-        $risk = (new FrostRiskEvaluator())->evaluate(PlantFactory::careSheet(minTemperatureC: -3, frostSensitive: true), $forecast);
+        $risk = (new FrostRiskEvaluator())->evaluate(CareSheetFactory::createOne(['minTemperatureC' => -3, 'frostSensitive' => true]), $forecast);
 
         self::assertNotNull($risk);
         self::assertSame(0.0, $risk->thresholdC);
@@ -50,7 +51,7 @@ final class FrostRiskEvaluatorTest extends TestCase
     {
         $forecast = self::forecast(['2026-12-01' => -3.2, '2026-12-02' => -12.4, '2026-12-03' => -12.4]);
 
-        $risk = (new FrostRiskEvaluator())->evaluate(PlantFactory::careSheet(minTemperatureC: -3, frostSensitive: true), $forecast);
+        $risk = (new FrostRiskEvaluator())->evaluate(CareSheetFactory::createOne(['minTemperatureC' => -3, 'frostSensitive' => true]), $forecast);
 
         self::assertSame('2026-12-02', $risk?->coldestDay()->date->format('Y-m-d'), 'The first of the coldest.');
     }
@@ -58,8 +59,8 @@ final class FrostRiskEvaluatorTest extends TestCase
     public function testTheUpcomingFrostsAreTheFrostRemindersAtRisk(): void
     {
         $forecast = self::forecast(['2026-12-02' => 1.5, '2026-12-03' => -3.2]);
-        $lemonTree = PlantFactory::validated('Lemon tree', PlantFactory::careSheet(minTemperatureC: -3, frostSensitive: true));
-        $rose = PlantFactory::validated('Rose', PlantFactory::careSheet(minTemperatureC: -20));
+        $lemonTree = PlantFactory::new()->validated()->create(['commonName' => 'Lemon tree', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -3, 'frostSensitive' => true])]);
+        $rose = PlantFactory::new()->validated()->create(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -20])]);
         $reminders = [$lemonTree->enableReminder(ReminderType::Pruning), $lemonTree->enableReminder(ReminderType::Frost), $rose->enableReminder(ReminderType::Frost)];
 
         $upcoming = (new FrostRiskEvaluator())->upcoming($reminders, $forecast);
@@ -73,8 +74,8 @@ final class FrostRiskEvaluatorTest extends TestCase
     public function testThePlantsAtRiskOfEachDay(): void
     {
         $forecast = self::forecast(['2026-12-01' => -3.2, '2026-12-02' => -8.5, '2026-12-03' => 2.0]);
-        $lemonTree = PlantFactory::validated('Lemon tree', PlantFactory::careSheet(minTemperatureC: -3, frostSensitive: true));
-        $hydrangea = PlantFactory::validated(careSheet: PlantFactory::careSheet(minTemperatureC: -10));
+        $lemonTree = PlantFactory::new()->validated()->create(['commonName' => 'Lemon tree', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -3, 'frostSensitive' => true])]);
+        $hydrangea = PlantFactory::new()->validated()->create(['careSheet' => CareSheetFactory::new(['minTemperatureC' => -10])]);
 
         $days = (new FrostRiskEvaluator())->plantsAtRiskByDay([$hydrangea, $lemonTree], $forecast);
 

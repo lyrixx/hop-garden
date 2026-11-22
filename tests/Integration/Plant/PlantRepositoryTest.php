@@ -2,14 +2,15 @@
 
 namespace App\Tests\Integration\Plant;
 
+use App\Factory\PlantFactory;
+use App\Factory\PlantingFactory;
+use App\Factory\SpaceFactory;
 use App\Garden\Entity\Planting;
-use App\Garden\Entity\Space;
 use App\Plant\Entity\Plant;
 use App\Plant\Exception\PlantNotFoundException;
 use App\Plant\Model\PlantWithPlantings;
 use App\Plant\PlantRepository;
 use App\Reminder\Model\ReminderType;
-use App\Tests\Utils\Factory\PlantFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -35,23 +36,19 @@ final class PlantRepositoryTest extends KernelTestCase
 
     public function testTheDraftsOfTheChatNewestFirst(): void
     {
-        $older = Plant::propose('Older draft', 'Rosa canina', 'Rosaceae', PlantFactory::careSheet(), new \DateTimeImmutable('2026-11-01 10:00'));
-        $newer = Plant::propose('Newer draft', 'Rosa gallica', 'Rosaceae', PlantFactory::careSheet(), new \DateTimeImmutable('2026-11-02 10:00'));
-        $ofAPlanting = PlantFactory::draft('Draft of a planting');
-        $planting = new Planting('Hydrangea by the shed', null, null, new \DateTimeImmutable('2026-11-01'));
-        $planting->linkTo($ofAPlanting);
-        $this->save($older, $newer, $ofAPlanting, PlantFactory::validated('Validated'));
-        $this->entityManager->persist($planting);
-        $this->entityManager->flush();
+        PlantFactory::createOne(['commonName' => 'Older draft', 'createdAt' => new \DateTimeImmutable('2026-11-01 10:00')]);
+        PlantFactory::createOne(['commonName' => 'Newer draft', 'createdAt' => new \DateTimeImmutable('2026-11-02 10:00')]);
+        PlantingFactory::new()->linkedTo(PlantFactory::new(['commonName' => 'Draft of a planting']))->create();
+        PlantFactory::new()->validated()->create(['commonName' => 'Validated']);
 
         self::assertSame(['Newer draft', 'Older draft'], self::names($this->plantRepository->findDraftsWithoutPlanting()));
     }
 
     public function testTheValidatedPlantsByNameWithTheirReminders(): void
     {
-        $sage = PlantFactory::validated('Sage');
-        $sage->enableReminder(ReminderType::Cutting);
-        $this->save($sage, PlantFactory::validated('Lavender'), PlantFactory::draft('Box'));
+        PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Cutting)->create(['commonName' => 'Sage']);
+        PlantFactory::new()->validated()->create(['commonName' => 'Lavender']);
+        PlantFactory::createOne(['commonName' => 'Box']);
         $this->entityManager->clear();
 
         $plants = $this->plantRepository->findValidated();
@@ -62,12 +59,11 @@ final class PlantRepositoryTest extends KernelTestCase
 
     public function testTheValidatedPlantsOfASpeciesWhateverItsCase(): void
     {
-        $this->save(
-            PlantFactory::validated('Bigleaf hydrangea'),
-            PlantFactory::validated('Hortensia'),
-            PlantFactory::draft('Draft hydrangea'),
-            Plant::propose('Panicled hydrangea', 'Hydrangea paniculata', 'Hydrangeaceae', PlantFactory::careSheet(), new \DateTimeImmutable('2026-11-01')),
-        );
+        $macrophylla = PlantFactory::new(['scientificName' => 'Hydrangea macrophylla']);
+        $macrophylla->validated()->create(['commonName' => 'Bigleaf hydrangea']);
+        $macrophylla->validated()->create(['commonName' => 'Hortensia']);
+        $macrophylla->create(['commonName' => 'Draft hydrangea']);
+        PlantFactory::createOne(['commonName' => 'Panicled hydrangea', 'scientificName' => 'Hydrangea paniculata']);
 
         self::assertSame(['Bigleaf hydrangea', 'Hortensia'], self::names($this->plantRepository->findValidatedBySpecies('hydrangea MACROPHYLLA')));
         self::assertSame([], $this->plantRepository->findValidatedBySpecies('Hydrangea paniculata'), 'A draft only.');
@@ -76,20 +72,16 @@ final class PlantRepositoryTest extends KernelTestCase
 
     public function testEverySpeciesValidatedFirstWithMyPlantsAndTheirSpace(): void
     {
-        $rose = PlantFactory::validated('Rose');
-        $lavender = PlantFactory::validated('Lavender');
-        $box = PlantFactory::draft('Box');
-        $alone = PlantFactory::validated('Alone');
-        $this->save($rose, $box, $lavender, $alone);
-        $northBed = new Space('North bed', null, null, new \DateTimeImmutable('2026-11-01'));
-        $this->entityManager->persist($northBed);
-        foreach ([['Rose on the trellis', $rose, $northBed], ['Rose by the gate', $rose, null], ['Box by the door', $box, null], ['Lavender pot', $lavender, null]] as [$name, $plant, $space]) {
-            $planting = new Planting($name, $space, null, new \DateTimeImmutable('2026-11-01'));
-            $planting->linkTo($plant);
-            $this->entityManager->persist($planting);
-        }
-        $this->entityManager->persist(new Planting('Without care sheet', null, null, new \DateTimeImmutable('2026-11-01')));
-        $this->entityManager->flush();
+        $rose = PlantFactory::new()->validated()->create(['commonName' => 'Rose']);
+        $lavender = PlantFactory::new()->validated()->create(['commonName' => 'Lavender']);
+        $box = PlantFactory::createOne(['commonName' => 'Box']);
+        PlantFactory::new()->validated()->create(['commonName' => 'Alone']);
+        $northBed = SpaceFactory::createOne(['name' => 'North bed']);
+        PlantingFactory::new()->inSpace($northBed)->linkedTo($rose)->create(['name' => 'Rose on the trellis']);
+        PlantingFactory::new()->linkedTo($rose)->create(['name' => 'Rose by the gate']);
+        PlantingFactory::new()->linkedTo($box)->create(['name' => 'Box by the door']);
+        PlantingFactory::new()->linkedTo($lavender)->create(['name' => 'Lavender pot']);
+        PlantingFactory::createOne(['name' => 'Without care sheet']);
         $this->entityManager->clear();
 
         $entries = $this->plantRepository->findAllWithPlantings();
@@ -112,23 +104,14 @@ final class PlantRepositoryTest extends KernelTestCase
 
     public function testTheCareSheetOfASpeciesByItsTrefleIdOrItsName(): void
     {
-        $draft = Plant::propose('Draft hydrangea', 'Hydrangea paniculata', 'Hydrangeaceae', PlantFactory::careSheet(), new \DateTimeImmutable('2026-11-01'));
-        $validated = Plant::propose('Panicled hydrangea', 'Hydrangea paniculata', 'Hydrangeaceae', PlantFactory::careSheet(), new \DateTimeImmutable('2026-11-02'), 191052);
-        $validated->validate(new \DateTimeImmutable('2026-11-02'));
-        $this->save($draft, $validated, PlantFactory::draft());
+        PlantFactory::createOne(['commonName' => 'Draft hydrangea', 'scientificName' => 'Hydrangea paniculata']);
+        PlantFactory::new()->validated()->create(['commonName' => 'Panicled hydrangea', 'scientificName' => 'Hydrangea paniculata', 'createdAt' => new \DateTimeImmutable('2026-11-02'), 'trefleId' => 191052]);
+        PlantFactory::createOne();
 
         self::assertSame('Panicled hydrangea', $this->plantRepository->findOneBySpecies(191052, 'Hydrangea paniculata')?->getCommonName(), 'The validated one first.');
         self::assertSame('Bigleaf hydrangea', $this->plantRepository->findOneBySpecies(191047, 'HYDRANGEA macrophylla')?->getCommonName(), 'A draft without Trefle id, by its name.');
         self::assertSame('Panicled hydrangea', $this->plantRepository->findOneBySpecies(191052, 'Another name')?->getCommonName(), 'By its Trefle id.');
         self::assertNull($this->plantRepository->findOneBySpecies(263311, 'Rosa canina'));
-    }
-
-    private function save(Plant ...$plants): void
-    {
-        foreach ($plants as $plant) {
-            $this->plantRepository->add($plant);
-        }
-        $this->entityManager->flush();
     }
 
     /**

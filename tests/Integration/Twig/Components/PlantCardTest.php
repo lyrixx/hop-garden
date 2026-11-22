@@ -2,14 +2,14 @@
 
 namespace App\Tests\Integration\Twig\Components;
 
+use App\Factory\CareSheetFactory;
+use App\Factory\PlantFactory;
+use App\Factory\PlantingFactory;
 use App\Plant\Entity\CareSheet;
 use App\Plant\Entity\Plant;
 use App\Plant\Model\CareSheetField;
 use App\Plant\Model\Source;
 use App\Reminder\Model\ReminderType;
-use App\Tests\Utils\Factory\PlantFactory;
-use App\Tests\Utils\Factory\PlantingFactory;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\Request;
@@ -34,7 +34,7 @@ final class PlantCardTest extends KernelTestCase
 
     public function testADraftIsValidatedInItsFrame(): void
     {
-        $plant = $this->save(PlantFactory::draft());
+        $plant = PlantFactory::createOne();
 
         $crawler = $this->card($plant);
 
@@ -54,7 +54,7 @@ final class PlantCardTest extends KernelTestCase
 
     public function testADraftCreatedByHandAsksToFillItIn(): void
     {
-        $crawler = $this->card($this->save(PlantFactory::draft(careSheet: CareSheet::blank([new Source(Source::TREFLE)]))));
+        $crawler = $this->card(PlantFactory::createOne(['careSheet' => CareSheet::blank([new Source(Source::TREFLE)])]));
 
         self::assertSame('Fill in the highlighted values, then validate. A value left as is stays highlighted, even when it is right.', $crawler->filter('.review-note')->text(), 'The assistant has nothing to do with it.');
         self::assertCount(\count(CareSheetField::cases()), $crawler->filter('tr.needs-review'), 'Every value to fill in.');
@@ -62,7 +62,7 @@ final class PlantCardTest extends KernelTestCase
 
     public function testTheValuesToVerifySayHowSureTheAssistantIs(): void
     {
-        $crawler = $this->card($this->save(PlantFactory::draft()));
+        $crawler = $this->card(PlantFactory::createOne());
 
         self::assertSame(['Hardiness'], $crawler->filter('tr.needs-review th')->each(static fn (Crawler $th): string => $th->text()), 'The only value of low confidence.');
         self::assertSame('low', $crawler->filter('tr.row-min_temperature_c .confidence.confidence-low')->text());
@@ -72,7 +72,7 @@ final class PlantCardTest extends KernelTestCase
 
     public function testEachPartOfThePlantShowsTheCareItGoverns(): void
     {
-        $crawler = $this->card($this->save(PlantFactory::validated(careSheet: PlantFactory::careSheet(pruningMonths: [2, 3]))));
+        $crawler = $this->card(PlantFactory::new()->validated()->create(['careSheet' => CareSheetFactory::new(['pruningMonths' => [2, 3]])]));
 
         self::assertSame(['Gemma', 'Folium', 'Caulis', 'Flos', 'Surculus'], $crawler->filter('.plant-card-part h4 em')->each(static fn (Crawler $em): string => $em->text()));
         self::assertSame(['icon-snowflake', 'icon-sun', 'icon-secateurs', 'icon-flower', 'icon-sprout'], $crawler->filter('.plant-card-part h4 .pict svg')->each(static fn (Crawler $svg): string => explode(' ', (string) $svg->attr('class'))[1]));
@@ -83,7 +83,7 @@ final class PlantCardTest extends KernelTestCase
 
     public function testTheHardinessScaleRunsFromTheColdestToTheFrostAlert(): void
     {
-        $crawler = $this->card($this->save(PlantFactory::validated(careSheet: PlantFactory::careSheet(minTemperatureC: -15))));
+        $crawler = $this->card(PlantFactory::new()->validated()->create(['careSheet' => CareSheetFactory::new(['minTemperatureC' => -15])]));
 
         $scale = $crawler->filter('.plant-card-hardiness .hardiness-scale');
         self::assertSame('Hardy down to -15 °C, frost alert below -13 °C', $scale->attr('aria-label'));
@@ -95,9 +95,7 @@ final class PlantCardTest extends KernelTestCase
 
     public function testAValidatedCardSetsItsRemindersInTheirFrames(): void
     {
-        $plant = $this->save(PlantFactory::validated(careSheet: PlantFactory::careSheet(pruningMonths: [3], deadheadingMonths: [], cuttingMonths: [6])));
-        $plant->enableReminder(ReminderType::Pruning);
-        self::getContainer()->get(EntityManagerInterface::class)->flush();
+        $plant = PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning)->create(['careSheet' => CareSheetFactory::new(['pruningMonths' => [3], 'deadheadingMonths' => [], 'cuttingMonths' => [6]])]);
 
         $crawler = $this->card($plant);
 
@@ -117,13 +115,10 @@ final class PlantCardTest extends KernelTestCase
 
     public function testAValidatedCardLeadsToMyPlant(): void
     {
-        $plant = $this->save(PlantFactory::validated());
+        $plant = PlantFactory::new()->validated()->create();
         self::assertCount(0, $this->card($plant)->filter('a:contains("See my plant")'), 'No plant of the garden follows it yet.');
 
-        $planting = PlantingFactory::of($plant);
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($planting);
-        $entityManager->flush();
+        $planting = PlantingFactory::new()->of($plant)->create();
 
         $crawler = $this->card($plant);
         self::assertSame('In your garden', trim($crawler->filter('.card-head .status.status-validated')->text()));
@@ -136,14 +131,5 @@ final class PlantCardTest extends KernelTestCase
     private function card(Plant $plant): Crawler
     {
         return $this->renderTwigComponent('PlantCard', ['plant' => $plant])->crawler();
-    }
-
-    private function save(Plant $plant): Plant
-    {
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($plant);
-        $entityManager->flush();
-
-        return $plant;
     }
 }

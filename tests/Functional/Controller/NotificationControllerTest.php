@@ -4,13 +4,13 @@ namespace App\Tests\Functional\Controller;
 
 use App\DataSource\DataSourceCache;
 use App\DataSource\OpenMeteo\OpenMeteoClient;
-use App\Garden\Entity\Planting;
-use App\Plant\Entity\Plant;
-use App\Reminder\Entity\Notification;
+use App\Factory\CareSheetFactory;
+use App\Factory\NotificationFactory;
+use App\Factory\PlantFactory;
+use App\Factory\PlantingFactory;
+use App\Factory\ReminderFactory;
 use App\Reminder\Model\ReminderType;
 use App\Reminder\NotificationRepository;
-use App\Tests\Utils\Factory\PlantFactory;
-use App\Tests\Utils\Factory\PlantingFactory;
 use App\Tests\Utils\Http\UnavailableDataSources;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\NullLogger;
@@ -58,17 +58,19 @@ final class NotificationControllerTest extends WebTestCase
     public function testComingUpListsTheEnabledRemindersByDate(): void
     {
         self::mockTime('2026-11-22 09:30');
-        $rose = PlantFactory::validated('Rose', PlantFactory::careSheet(minTemperatureC: -20, pruningMonths: [2], deadheadingMonths: [7], cuttingMonths: [12]));
-        $rose->enableReminder(ReminderType::Pruning);
-        $rose->enableReminder(ReminderType::Cutting);
-        $rose->enableReminder(ReminderType::Deadheading);
-        $rose->enableReminder(ReminderType::Frost);
-        $lemonTree = PlantFactory::validated('Lemon tree', PlantFactory::careSheet(minTemperatureC: -3, frostSensitive: true, pruningMonths: [12]));
-        $lemonTree->enableReminder(ReminderType::Frost);
-        $lemonTree->enableReminder(ReminderType::Pruning);
-        $lemonTree->disableReminder(ReminderType::Pruning);
-        $roseByTheGate = $this->save($rose, 1)[0];
-        $this->save($lemonTree, 2);
+        $rose = PlantFactory::new()
+            ->validated()
+            ->withEnabledReminders(ReminderType::Pruning, ReminderType::Cutting, ReminderType::Deadheading, ReminderType::Frost)
+            ->create(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -20, 'pruningMonths' => [2], 'deadheadingMonths' => [7], 'cuttingMonths' => [12]])])
+        ;
+        $lemonTree = PlantFactory::new()
+            ->validated()
+            ->withEnabledReminders(ReminderType::Frost)
+            ->create(['commonName' => 'Lemon tree', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -3, 'frostSensitive' => true, 'pruningMonths' => [12]])])
+        ;
+        ReminderFactory::new()->disabled()->create(['plant' => $lemonTree, 'type' => ReminderType::Pruning]);
+        $roseByTheGate = PlantingFactory::new()->of($rose)->create();
+        PlantingFactory::new()->of($lemonTree)->many(2)->create();
 
         $crawler = $this->client->request('GET', '/notifications');
 
@@ -93,7 +95,7 @@ final class NotificationControllerTest extends WebTestCase
     public function testComingUpIsEmptyWithoutAnEnabledReminder(): void
     {
         self::mockTime('2026-11-22 09:30');
-        $this->save(PlantFactory::validated('Rose', PlantFactory::careSheet(pruningMonths: [12])), 1);
+        PlantingFactory::new()->of(PlantFactory::new()->validated()->create(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['pruningMonths' => [12]])]))->create();
 
         $this->client->request('GET', '/notifications');
 
@@ -105,12 +107,11 @@ final class NotificationControllerTest extends WebTestCase
     public function testTheFrostForecastListsThePlantsAtRiskEachDay(): void
     {
         self::mockTime('2026-11-22 09:30');
-        $hydrangea = PlantFactory::validated(careSheet: PlantFactory::careSheet(minTemperatureC: -10));
-        $lemonTree = PlantFactory::validated('Lemon tree', PlantFactory::careSheet(minTemperatureC: -3, frostSensitive: true));
-        $hydrangeaInTheShade = $this->save($hydrangea, 1)[0];
-        $this->save($lemonTree, 0);
-        $this->save(PlantFactory::validated('Rose', PlantFactory::careSheet(minTemperatureC: -20)), 1);
-        $this->save(PlantFactory::draft('Olive tree', PlantFactory::careSheet(minTemperatureC: -8)), 0);
+        $hydrangea = PlantFactory::new()->validated()->create(['careSheet' => CareSheetFactory::new(['minTemperatureC' => -10])]);
+        $lemonTree = PlantFactory::new()->validated()->create(['commonName' => 'Lemon tree', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -3, 'frostSensitive' => true])]);
+        $hydrangeaInTheShade = PlantingFactory::new()->of($hydrangea)->create();
+        PlantingFactory::new()->of(PlantFactory::new()->validated()->create(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -20])]))->create();
+        PlantFactory::createOne(['commonName' => 'Olive tree', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -8])]);
 
         $crawler = $this->client->request('GET', '/notifications');
 
@@ -138,9 +139,8 @@ final class NotificationControllerTest extends WebTestCase
     {
         self::mockTime('2026-11-22 09:30');
         self::forecast(['2026-11-22' => 4.5, '2026-11-23' => 0.0, '2026-11-24' => 6.1]);
-        $lemonTree = PlantFactory::validated('Lemon tree', PlantFactory::careSheet(minTemperatureC: -3, frostSensitive: true));
-        $lemonTree->enableReminder(ReminderType::Frost);
-        $this->save($lemonTree, 1);
+        $lemonTree = PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Frost)->create(['commonName' => 'Lemon tree', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -3, 'frostSensitive' => true])]);
+        PlantingFactory::new()->of($lemonTree)->create();
 
         $crawler = $this->client->request('GET', '/notifications');
 
@@ -162,10 +162,8 @@ final class NotificationControllerTest extends WebTestCase
     {
         self::mockTime('2026-11-22 09:30');
         UnavailableDataSources::openMeteo(self::getContainer());
-        $rose = PlantFactory::validated('Rose', PlantFactory::careSheet(pruningMonths: [12]));
-        $rose->enableReminder(ReminderType::Pruning);
-        $rose->enableReminder(ReminderType::Frost);
-        $this->save($rose, 1);
+        $rose = PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning, ReminderType::Frost)->create(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['pruningMonths' => [12]])]);
+        PlantingFactory::new()->of($rose)->create();
 
         $crawler = $this->client->request('GET', '/notifications');
 
@@ -179,18 +177,18 @@ final class NotificationControllerTest extends WebTestCase
     public function testTheNotificationsAreListedThenMarkedRead(): void
     {
         self::mockTime('2026-12-01 09:30');
-        $rose = PlantFactory::validated('Rose');
-        $pruning = $rose->enableReminder(ReminderType::Pruning);
-        $frost = $rose->enableReminder(ReminderType::Frost);
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($rose);
-        $gate = PlantingFactory::of($rose);
-        $entityManager->persist($gate);
-        $read = new Notification($pruning, 'Time to prune Rose.', new \DateTimeImmutable('2026-11-01 07:00'));
-        $read->markRead(new \DateTimeImmutable('2026-11-01 08:00'));
-        $entityManager->persist($read);
-        $entityManager->persist(new Notification($frost, 'Frost expected on Tuesday 1 December (-3.2 °C): cover Rose.', new \DateTimeImmutable('2026-12-01 07:00')));
-        $entityManager->flush();
+        $rose = PlantFactory::new()->validated()->create(['commonName' => 'Rose']);
+        $gate = PlantingFactory::new()->of($rose)->create();
+        NotificationFactory::new()->read(new \DateTimeImmutable('2026-11-01 08:00'))->create([
+            'reminder' => ReminderFactory::new(['plant' => $rose, 'type' => ReminderType::Pruning]),
+            'message' => 'Time to prune Rose.',
+            'createdAt' => new \DateTimeImmutable('2026-11-01 07:00'),
+        ]);
+        NotificationFactory::createOne([
+            'reminder' => ReminderFactory::new(['plant' => $rose, 'type' => ReminderType::Frost]),
+            'message' => 'Frost expected on Tuesday 1 December (-3.2 °C): cover Rose.',
+            'createdAt' => new \DateTimeImmutable('2026-12-01 07:00'),
+        ]);
 
         $this->client->request('GET', '/garden');
         self::assertSelectorTextSame('.nav .badge', '1');
@@ -215,23 +213,6 @@ final class NotificationControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/notifications');
         self::assertCount(0, $crawler->filter('.notification.is-unread'));
         self::assertSelectorExists('.nav .badge[hidden]');
-    }
-
-    /**
-     * @return list<Planting> the plants of the garden following its care sheet
-     */
-    private function save(Plant $plant, int $plantings): array
-    {
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($plant);
-        $saved = [];
-        for ($i = 0; $i < $plantings; ++$i) {
-            $saved[] = $planting = PlantingFactory::of($plant);
-            $entityManager->persist($planting);
-        }
-        $entityManager->flush();
-
-        return $saved;
     }
 
     /**

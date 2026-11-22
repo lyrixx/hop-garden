@@ -2,16 +2,18 @@
 
 namespace App\Tests\Unit\Reminder;
 
+use App\Factory\CareSheetFactory;
+use App\Factory\PlantFactory;
+use App\Factory\ReminderFactory;
 use App\Reminder\Entity\Reminder;
 use App\Reminder\Model\ReminderType;
-use App\Tests\Utils\Factory\PlantFactory;
 use PHPUnit\Framework\TestCase;
 
 final class ReminderTest extends TestCase
 {
     public function testANewReminderIsOff(): void
     {
-        $reminder = new Reminder(PlantFactory::validated(), ReminderType::Pruning);
+        $reminder = new Reminder(PlantFactory::new()->validated()->create(), ReminderType::Pruning);
 
         self::assertFalse($reminder->isEnabled());
         self::assertNull($reminder->getLastTriggeredAt());
@@ -25,7 +27,7 @@ final class ReminderTest extends TestCase
 
     public function testACalendarReminderRemembersTheMonthItWasTriggeredIn(): void
     {
-        $reminder = new Reminder(PlantFactory::validated(), ReminderType::Pruning);
+        $reminder = ReminderFactory::createOne(['type' => ReminderType::Pruning]);
         self::assertFalse($reminder->wasTriggeredInMonthOf(new \DateTimeImmutable('2026-03-01')));
 
         $reminder->markTriggered(new \DateTimeImmutable('2026-03-01 07:00'));
@@ -37,7 +39,7 @@ final class ReminderTest extends TestCase
 
     public function testTheFirstFrostEpisodeIsANewOne(): void
     {
-        $reminder = new Reminder(PlantFactory::validated(), ReminderType::Frost);
+        $reminder = ReminderFactory::createOne(['type' => ReminderType::Frost]);
 
         self::assertTrue($reminder->recordFrostEpisode(new \DateTimeImmutable('2026-12-01 06:00'), new \DateTimeImmutable('2026-12-03 06:00'), new \DateTimeImmutable('2026-12-01 07:00')));
 
@@ -47,7 +49,7 @@ final class ReminderTest extends TestCase
 
     public function testFrostDaysWithinTheAnnouncedEpisodeDoNotShortenIt(): void
     {
-        $reminder = new Reminder(PlantFactory::validated(), ReminderType::Frost);
+        $reminder = ReminderFactory::createOne(['type' => ReminderType::Frost]);
         $reminder->recordFrostEpisode(new \DateTimeImmutable('2026-12-01'), new \DateTimeImmutable('2026-12-05'), new \DateTimeImmutable('2026-12-01 07:00'));
 
         self::assertFalse($reminder->recordFrostEpisode(new \DateTimeImmutable('2026-12-02'), new \DateTimeImmutable('2026-12-03'), new \DateTimeImmutable('2026-12-02 07:00')));
@@ -58,7 +60,7 @@ final class ReminderTest extends TestCase
 
     public function testAFrostDayRightAfterTheEpisodeExtendsIt(): void
     {
-        $reminder = new Reminder(PlantFactory::validated(), ReminderType::Frost);
+        $reminder = ReminderFactory::createOne(['type' => ReminderType::Frost]);
         $reminder->recordFrostEpisode(new \DateTimeImmutable('2026-12-01'), new \DateTimeImmutable('2026-12-03'), new \DateTimeImmutable('2026-12-01 07:00'));
 
         self::assertFalse($reminder->recordFrostEpisode(new \DateTimeImmutable('2026-12-04'), new \DateTimeImmutable('2026-12-06'), new \DateTimeImmutable('2026-12-04 07:00')));
@@ -67,7 +69,7 @@ final class ReminderTest extends TestCase
 
     public function testADayWithoutFrostStartsANewEpisode(): void
     {
-        $reminder = new Reminder(PlantFactory::validated(), ReminderType::Frost);
+        $reminder = ReminderFactory::createOne(['type' => ReminderType::Frost]);
         $reminder->recordFrostEpisode(new \DateTimeImmutable('2026-12-01'), new \DateTimeImmutable('2026-12-03'), new \DateTimeImmutable('2026-12-01 07:00'));
 
         self::assertTrue($reminder->recordFrostEpisode(new \DateTimeImmutable('2026-12-05'), new \DateTimeImmutable('2026-12-05'), new \DateTimeImmutable('2026-12-05 07:00')));
@@ -78,7 +80,7 @@ final class ReminderTest extends TestCase
 
     public function testTheTypeTellsWhichMonthsOfTheCareSheetApply(): void
     {
-        $careSheet = PlantFactory::careSheet(pruningMonths: [2, 3], deadheadingMonths: [7], cuttingMonths: [9]);
+        $careSheet = CareSheetFactory::createOne(['pruningMonths' => [2, 3], 'deadheadingMonths' => [7], 'cuttingMonths' => [9]]);
 
         self::assertSame([2, 3], ReminderType::Pruning->monthsIn($careSheet));
         self::assertSame([7], ReminderType::Deadheading->monthsIn($careSheet));

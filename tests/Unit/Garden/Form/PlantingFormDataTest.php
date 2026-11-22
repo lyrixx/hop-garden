@@ -2,12 +2,10 @@
 
 namespace App\Tests\Unit\Garden\Form;
 
-use App\Garden\Entity\Planting;
-use App\Garden\Entity\Space;
+use App\Factory\PlantingFactory;
+use App\Factory\SpaceFactory;
 use App\Garden\Form\Model\PlantingFormData;
 use App\Garden\Model\CareTask;
-use App\Garden\Model\Soil;
-use App\Plant\Model\Exposure;
 use PHPUnit\Framework\TestCase;
 
 final class PlantingFormDataTest extends TestCase
@@ -18,7 +16,7 @@ final class PlantingFormDataTest extends TestCase
         $data->name = '  Hortensia du portail ';
         $data->trefleId = 191052;
         $data->scientificName = ' Hydrangea paniculata ';
-        $data->space = $northBed = self::space('North bed');
+        $data->space = $northBed = SpaceFactory::createOne(['name' => 'North bed']);
         $data->diseases = '   ';
         $data->careRecords = [CareTask::Pruning->value => new \DateTimeImmutable('2026-03-10'), CareTask::Watering->value => null];
 
@@ -52,10 +50,13 @@ final class PlantingFormDataTest extends TestCase
 
     public function testTheEditFormStartsFromThePlanting(): void
     {
-        $northBed = self::space('North bed');
-        $planting = new Planting('Hydrangea', $northBed, 'Aphids.', new \DateTimeImmutable('2026-11-01'), 191047, 'Hydrangea macrophylla');
-        $planting->recordCare(CareTask::Watering, new \DateTimeImmutable('2026-11-10'));
-        $planting->recordCare(CareTask::Watering, new \DateTimeImmutable('2026-11-15'));
+        $northBed = SpaceFactory::createOne(['name' => 'North bed']);
+        $planting = PlantingFactory::new()
+            ->inSpace($northBed)
+            ->withCareRecord(CareTask::Watering, new \DateTimeImmutable('2026-11-10'))
+            ->withCareRecord(CareTask::Watering, new \DateTimeImmutable('2026-11-15'))
+            ->create(['name' => 'Hydrangea', 'diseases' => 'Aphids.', 'trefleId' => 191047, 'scientificName' => 'Hydrangea macrophylla'])
+        ;
 
         $data = PlantingFormData::fromPlanting($planting);
 
@@ -70,12 +71,11 @@ final class PlantingFormDataTest extends TestCase
 
     public function testAnEditRecordsTheNewCareAndMovesThePlantingToAnotherSpace(): void
     {
-        $northBed = self::space('North bed');
-        $balcony = self::space('Balcony');
-        $lavender = new Planting('Lavender', $northBed, null, new \DateTimeImmutable('2026-11-01'));
-        $sage = new Planting('Sage', $balcony, null, new \DateTimeImmutable('2026-11-01'));
-        $planting = new Planting('Hydrangea', $northBed, null, new \DateTimeImmutable('2026-11-01'));
-        $planting->recordCare(CareTask::Watering, new \DateTimeImmutable('2026-11-10'));
+        $northBed = SpaceFactory::createOne(['name' => 'North bed']);
+        $balcony = SpaceFactory::createOne(['name' => 'Balcony']);
+        $lavender = PlantingFactory::new()->inSpace($northBed)->create(['name' => 'Lavender']);
+        $sage = PlantingFactory::new()->inSpace($balcony)->create(['name' => 'Sage']);
+        $planting = PlantingFactory::new()->inSpace($northBed)->withCareRecord(CareTask::Watering, new \DateTimeImmutable('2026-11-10'))->create(['name' => 'Hydrangea']);
 
         $data = PlantingFormData::fromPlanting($planting);
         $data->name = ' Hydrangea by the shed ';
@@ -94,8 +94,8 @@ final class PlantingFormDataTest extends TestCase
 
     public function testAPlantingMayLeaveItsSpace(): void
     {
-        $northBed = self::space('North bed');
-        $planting = new Planting('Hydrangea', $northBed, null, new \DateTimeImmutable('2026-11-01'));
+        $northBed = SpaceFactory::createOne(['name' => 'North bed']);
+        $planting = PlantingFactory::new()->inSpace($northBed)->create(['name' => 'Hydrangea']);
 
         $data = PlantingFormData::fromPlanting($planting);
         $data->space = null;
@@ -103,10 +103,5 @@ final class PlantingFormDataTest extends TestCase
 
         self::assertNull($planting->getSpace());
         self::assertSame([], $northBed->getPlantings());
-    }
-
-    private static function space(string $name): Space
-    {
-        return new Space($name, Exposure::Shade, Soil::Clay, new \DateTimeImmutable('2026-11-01'));
     }
 }

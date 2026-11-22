@@ -2,14 +2,15 @@
 
 namespace App\Tests\Functional\Locale;
 
-use App\Garden\Entity\Space;
+use App\Factory\CareSheetFactory;
+use App\Factory\PlantFactory;
+use App\Factory\PlantingFactory;
+use App\Factory\SpaceFactory;
 use App\Garden\Model\Soil;
 use App\Locale\Model\SupportedLocale;
 use App\Locale\PreferredLocale;
 use App\Plant\Model\Exposure;
 use App\Reminder\Model\ReminderType;
-use App\Tests\Utils\Factory\PlantFactory;
-use App\Tests\Utils\Factory\PlantingFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\TestWith;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -133,17 +134,12 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
     public function testThePagesInFrench(): void
     {
         self::mockTime('2026-11-22 09:30');
-        $rose = PlantFactory::validated('Rosier grimpant', PlantFactory::careSheet(minTemperatureC: -15, pruningMonths: [2, 3], exposure: Exposure::Sun));
-        $rose->enableReminder(ReminderType::Pruning);
-        $draft = PlantFactory::draft('Hortensia');
-        $space = new Space('Terrasse', Exposure::PartShade, Soil::Loamy, new \DateTimeImmutable('2026-11-01'));
-        $planting = PlantingFactory::of($rose, $space);
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        foreach ([$rose, $draft, $space, $planting] as $entity) {
-            $entityManager->persist($entity);
-        }
+        $rose = PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning)->create(['commonName' => 'Rosier grimpant', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -15, 'pruningMonths' => [2, 3], 'exposure' => Exposure::Sun])]);
+        $draft = PlantFactory::createOne(['commonName' => 'Hortensia']);
+        $space = SpaceFactory::createOne(['name' => 'Terrasse', 'exposure' => Exposure::PartShade, 'soil' => Soil::Loamy]);
+        $planting = PlantingFactory::new()->of($rose)->inSpace($space)->create();
         self::getContainer()->get(PreferredLocale::class)->set(SupportedLocale::French);
-        $entityManager->flush();
+        self::getContainer()->get(EntityManagerInterface::class)->flush();
 
         $pages = [
             '/' => 'Votre assistant de jardinage',

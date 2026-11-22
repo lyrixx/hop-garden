@@ -2,13 +2,12 @@
 
 namespace App\Tests\Integration\Garden;
 
+use App\Factory\PlantFactory;
+use App\Factory\PlantingFactory;
+use App\Factory\SpaceFactory;
 use App\Garden\Entity\Planting;
-use App\Garden\Entity\Space;
 use App\Garden\PlantingRepository;
-use App\Plant\Model\Exposure;
 use App\Reminder\Model\ReminderType;
-use App\Tests\Utils\Factory\PlantFactory;
-use App\Tests\Utils\Factory\PlantingFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -26,10 +25,10 @@ final class PlantingRepositoryTest extends KernelTestCase
 
     public function testTheNeighboursAreReadFromTheSpace(): void
     {
-        $northBed = new Space('North bed', Exposure::Shade, null, new \DateTimeImmutable('2026-11-01'));
-        $this->entityManager->persist($northBed);
-        $rose = self::planting('Rose', $northBed);
-        $this->save($rose, self::planting('Lavender', $northBed), self::planting('Sage'));
+        $northBed = SpaceFactory::createOne(['name' => 'North bed']);
+        $rose = PlantingFactory::new()->inSpace($northBed)->create(['name' => 'Rose']);
+        PlantingFactory::new()->inSpace($northBed)->create(['name' => 'Lavender']);
+        PlantingFactory::createOne(['name' => 'Sage']);
         $this->entityManager->clear();
 
         $rose = $this->plantingRepository->find($rose->getId()) ?? self::fail();
@@ -40,10 +39,8 @@ final class PlantingRepositoryTest extends KernelTestCase
 
     public function testADeletedSpaceLeavesItsPlantingsWithoutASpace(): void
     {
-        $northBed = new Space('North bed', Exposure::Shade, null, new \DateTimeImmutable('2026-11-01'));
-        $this->entityManager->persist($northBed);
-        $rose = self::planting('Rose', $northBed);
-        $this->save($rose);
+        $northBed = SpaceFactory::createOne();
+        $rose = PlantingFactory::new()->inSpace($northBed)->create();
 
         $this->entityManager->getConnection()->executeStatement('DELETE FROM space WHERE id = ?', [$northBed->getId()]);
         $this->entityManager->clear();
@@ -53,30 +50,16 @@ final class PlantingRepositoryTest extends KernelTestCase
 
     public function testTheGardenByNameWithTheRemindersOfItsCareSheets(): void
     {
-        $rose = PlantFactory::validated('Climbing rose');
-        $rose->enableReminder(ReminderType::Pruning);
-        $this->entityManager->persist($rose);
-        $climbing = PlantingFactory::of($rose);
-        $this->save(self::planting('sage'), $climbing, self::planting('Lavender'));
+        $rose = PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning)->create(['commonName' => 'Climbing rose']);
+        PlantingFactory::createOne(['name' => 'sage']);
+        PlantingFactory::new()->of($rose)->create();
+        PlantingFactory::createOne(['name' => 'Lavender']);
         $this->entityManager->clear();
 
         $plantings = $this->plantingRepository->findAllByName();
 
         self::assertSame(['Climbing rose', 'Lavender', 'sage'], self::names($plantings));
         self::assertSame([ReminderType::Pruning], $plantings[0]->getPlant()?->getEnabledReminderTypes());
-    }
-
-    private function save(Planting ...$plantings): void
-    {
-        foreach ($plantings as $planting) {
-            $this->plantingRepository->add($planting);
-        }
-        $this->entityManager->flush();
-    }
-
-    private static function planting(string $name, ?Space $space = null): Planting
-    {
-        return new Planting($name, $space, null, new \DateTimeImmutable('2026-11-01'));
     }
 
     /**

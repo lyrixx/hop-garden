@@ -2,14 +2,14 @@
 
 namespace App\Tests\Integration\Mcp;
 
+use App\Factory\CareSheetFactory;
+use App\Factory\PlantFactory;
 use App\Garden\PlantingRepository;
-use App\Plant\Entity\Plant;
 use App\Plant\Model\CareSheetField;
 use App\Plant\Model\Confidence;
 use App\Plant\Model\PlantStatus;
 use App\Plant\PlantRepository;
 use App\Reminder\Model\ReminderType;
-use App\Tests\Utils\Factory\PlantFactory;
 use App\Tests\Utils\Http\UnavailableDataSources;
 use App\Tests\Utils\Mcp\McpTestCase;
 use Doctrine\ORM\EntityManagerInterface;
@@ -46,7 +46,7 @@ final class PlantToolsTest extends McpTestCase
 
     public function testGetPlant(): void
     {
-        $plant = $this->save(PlantFactory::draft());
+        $plant = PlantFactory::createOne();
 
         $result = $this->callTool('get_plant', ['id' => $plant->getId()]);
 
@@ -63,10 +63,8 @@ final class PlantToolsTest extends McpTestCase
 
     public function testListCollectionOnlyListsValidatedPlants(): void
     {
-        $this->save(PlantFactory::draft('Draft hydrangea'));
-        $validated = PlantFactory::validated('Lavender');
-        $validated->enableReminder(ReminderType::Pruning);
-        $this->save($validated);
+        PlantFactory::createOne(['commonName' => 'Draft hydrangea']);
+        $validated = PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning)->create(['commonName' => 'Lavender']);
 
         $result = $this->callTool('list_collection');
 
@@ -76,7 +74,7 @@ final class PlantToolsTest extends McpTestCase
 
     public function testEnableAndDisableReminder(): void
     {
-        $plant = $this->save(PlantFactory::validated());
+        $plant = PlantFactory::new()->validated()->create();
 
         $result = $this->callTool('enable_reminder', ['plant_id' => $plant->getId(), 'type' => 'frost']);
         self::assertSame(['frost'], $result['enabled_reminders']);
@@ -90,7 +88,7 @@ final class PlantToolsTest extends McpTestCase
 
     public function testRemindersAreRefusedForADraft(): void
     {
-        $plant = $this->save(PlantFactory::draft());
+        $plant = PlantFactory::createOne();
 
         self::assertStringContainsString('must validate it', $this->callToolExpectingError('enable_reminder', ['plant_id' => $plant->getId(), 'type' => 'pruning']));
         self::assertStringContainsString('must validate it', $this->callToolExpectingError('disable_reminder', ['plant_id' => $plant->getId(), 'type' => 'pruning']));
@@ -99,11 +97,7 @@ final class PlantToolsTest extends McpTestCase
     public function testUpcomingReminders(): void
     {
         self::mockTime('2026-02-10 07:00');
-        $plant = PlantFactory::validated(careSheet: PlantFactory::careSheet(minTemperatureC: -10, pruningMonths: [3], cuttingMonths: [9]));
-        $plant->enableReminder(ReminderType::Pruning);
-        $plant->enableReminder(ReminderType::Cutting);
-        $plant->enableReminder(ReminderType::Frost);
-        $this->save($plant);
+        $plant = PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning, ReminderType::Cutting, ReminderType::Frost)->create(['careSheet' => CareSheetFactory::new(['minTemperatureC' => -10, 'pruningMonths' => [3], 'cuttingMonths' => [9]])]);
 
         $result = $this->callTool('upcoming_reminders', ['days' => 30]);
 
@@ -115,7 +109,7 @@ final class PlantToolsTest extends McpTestCase
 
     public function testConfirmPlantValidatesADraft(): void
     {
-        $plant = $this->save(PlantFactory::draft());
+        $plant = PlantFactory::createOne();
 
         $result = $this->callTool('confirm_plant', ['id' => $plant->getId()]);
 
@@ -196,7 +190,7 @@ final class PlantToolsTest extends McpTestCase
 
     public function testAnUnknownReminderType(): void
     {
-        $plant = $this->save(PlantFactory::validated());
+        $plant = PlantFactory::new()->validated()->create();
 
         $this->expectException(RequestException::class);
 
@@ -211,9 +205,7 @@ final class PlantToolsTest extends McpTestCase
     public function testUpcomingRemindersWithoutForecast(): void
     {
         UnavailableDataSources::openMeteo(self::getContainer());
-        $plant = PlantFactory::validated(careSheet: PlantFactory::careSheet(frostSensitive: true));
-        $plant->enableReminder(ReminderType::Frost);
-        $this->save($plant);
+        $plant = PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Frost)->create(['careSheet' => CareSheetFactory::new(['frostSensitive' => true])]);
 
         self::assertSame(['plants_at_risk' => [], 'forecast_available' => false], $this->callTool('upcoming_reminders')['frost']);
     }
@@ -267,15 +259,6 @@ final class PlantToolsTest extends McpTestCase
                 ],
             ],
         ];
-    }
-
-    private function save(Plant $plant): Plant
-    {
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($plant);
-        $entityManager->flush();
-
-        return $plant;
     }
 
     private function plants(): PlantRepository

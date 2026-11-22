@@ -3,6 +3,8 @@
 namespace App\Tests\Unit\Reminder;
 
 use App\DataSource\OpenMeteo\Model\DailyMinimum;
+use App\Factory\CareSheetFactory;
+use App\Factory\PlantFactory;
 use App\Locale\IntlFormatter;
 use App\Plant\Entity\CareSheet;
 use App\Plant\Model\Exposure;
@@ -12,7 +14,6 @@ use App\Reminder\Entity\Reminder;
 use App\Reminder\Model\FrostRisk;
 use App\Reminder\Model\ReminderType;
 use App\Reminder\ReminderMessages;
-use App\Tests\Utils\Factory\PlantFactory;
 use App\Tests\Utils\Translation\Translators;
 use PHPUnit\Framework\TestCase;
 
@@ -30,7 +31,7 @@ final class ReminderMessagesTest extends TestCase
     public function testWithoutAdviceTheMessageEndsCleanly(): void
     {
         $careSheet = new CareSheet(-15, false, Exposure::Sun, Watering::Medium, [3], [], [6], '', '', [], [new Source(Source::LLM_KNOWLEDGE)]);
-        $plant = PlantFactory::validated('Rose', $careSheet);
+        $plant = PlantFactory::new()->validated()->create(['commonName' => 'Rose', 'careSheet' => $careSheet]);
 
         self::assertSame('Time to prune Rose.', self::messages()->forCalendar($plant->enableReminder(ReminderType::Pruning)));
     }
@@ -82,7 +83,7 @@ final class ReminderMessagesTest extends TestCase
 
     private static function reminder(ReminderType $type, bool $frostSensitive = false): Reminder
     {
-        return PlantFactory::validated('Rose', PlantFactory::careSheet(frostSensitive: $frostSensitive))->enableReminder($type);
+        return PlantFactory::new()->validated()->create(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['frostSensitive' => $frostSensitive])])->enableReminder($type);
     }
 
     /**

@@ -2,11 +2,12 @@
 
 namespace App\Tests\Integration\Reminder;
 
+use App\Factory\PlantFactory;
+use App\Factory\ReminderFactory;
 use App\Plant\Model\PlantStatus;
 use App\Reminder\Entity\Reminder;
 use App\Reminder\Model\ReminderType;
 use App\Reminder\ReminderRepository;
-use App\Tests\Utils\Factory\PlantFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -22,12 +23,11 @@ final class ReminderRepositoryTest extends KernelTestCase
 
     public function testTheEnabledRemindersOfTheValidatedPlants(): void
     {
-        $this->reminder('Sage', ReminderType::Frost);
-        $this->reminder('Lavender', ReminderType::Pruning);
-        $this->reminder('Lavender', ReminderType::Frost);
-        $this->reminder('Box', ReminderType::Pruning)->disable();
-        $draftReminder = $this->reminder('Draft', ReminderType::Pruning);
-        $this->entityManager->flush();
+        self::reminder('Sage', ReminderType::Frost)->create();
+        self::reminder('Lavender', ReminderType::Pruning)->create();
+        self::reminder('Lavender', ReminderType::Frost)->create();
+        self::reminder('Box', ReminderType::Pruning)->disabled()->create();
+        $draftReminder = self::reminder('Draft', ReminderType::Pruning)->create();
         // A plant back to draft by hand in the database
         $this->entityManager->getConnection()->executeStatement('UPDATE plant SET status = ? WHERE id = ?', [PlantStatus::Draft->value, $draftReminder->getPlant()->getId()]);
         $this->entityManager->clear();
@@ -40,13 +40,8 @@ final class ReminderRepositoryTest extends KernelTestCase
         );
     }
 
-    private function reminder(string $plantName, ReminderType $type): Reminder
+    private static function reminder(string $plantName, ReminderType $type): ReminderFactory
     {
-        $plant = PlantFactory::validated($plantName);
-        $reminder = $plant->enableReminder($type);
-        $this->entityManager->persist($plant);
-        $this->entityManager->flush();
-
-        return $reminder;
+        return ReminderFactory::new(['plant' => PlantFactory::new()->validated()->with(['commonName' => $plantName]), 'type' => $type]);
     }
 }

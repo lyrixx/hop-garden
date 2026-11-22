@@ -2,11 +2,11 @@
 
 namespace App\Tests\Functional\Mcp;
 
+use App\Factory\PlantFactory;
 use App\Garden\Entity\Planting;
 use App\Garden\PlantingRepository;
 use App\Plant\PlantRepository;
 use App\Tests\Integration\Mcp\PlantToolsTest;
-use App\Tests\Utils\Factory\PlantFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\TestWith;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -66,10 +66,7 @@ final class McpEndpointTest extends WebTestCase
 
     public function testTheServerOfTheAgentCannotConfirmAPlant(): void
     {
-        $plant = PlantFactory::draft();
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($plant);
-        $entityManager->flush();
+        $plant = PlantFactory::createOne();
 
         $initialize = $this->rpc('/_mcp/agent', 'initialize', ['protocolVersion' => self::PROTOCOL_VERSION, 'capabilities' => new \stdClass(), 'clientInfo' => ['name' => 'tests', 'version' => '1.0.0']]);
         $session = $this->client->getInternalResponse()->getHeader('mcp-session-id') ?? self::fail('A session is opened.');
@@ -80,7 +77,7 @@ final class McpEndpointTest extends WebTestCase
         $confirmed = $this->rpc('/_mcp/agent', 'tools/call', ['name' => 'confirm_plant', 'arguments' => ['id' => $plant->getId()]], $session);
 
         self::assertSame(['code' => -32602, 'message' => 'Tool not found: "confirm_plant".'], $confirmed['error']);
-        $entityManager->clear();
+        self::getContainer()->get(EntityManagerInterface::class)->clear();
         self::assertFalse(self::getContainer()->get(PlantRepository::class)->get($plant->getId())->isValidated());
     }
 

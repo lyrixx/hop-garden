@@ -2,22 +2,21 @@
 
 namespace App\Tests\Unit\Plant\Form;
 
+use App\Factory\PlantFactory;
 use App\Plant\Entity\CareSheet;
-use App\Plant\Entity\Plant;
 use App\Plant\Form\Model\CareSheetFormData;
 use App\Plant\Model\CareSheetField;
 use App\Plant\Model\Confidence;
 use App\Plant\Model\Exposure;
 use App\Plant\Model\Source;
 use App\Plant\Model\Watering;
-use App\Tests\Utils\Factory\PlantFactory;
 use PHPUnit\Framework\TestCase;
 
 final class CareSheetFormDataTest extends TestCase
 {
     public function testAFormSavedAsIsKeepsTheConfidenceOfTheAssistant(): void
     {
-        $plant = Plant::propose('Bigleaf hydrangea', 'Hydrangea macrophylla', 'Hydrangeaceae', PlantFactory::careSheet(), new \DateTimeImmutable('2026-11-01'), notes: 'Grows fast.');
+        $plant = PlantFactory::createOne(['commonName' => 'Bigleaf hydrangea', 'notes' => 'Grows fast.']);
         $data = CareSheetFormData::fromPlant($plant);
 
         $careSheet = $data->toCareSheet($plant->getCareSheet());
@@ -36,7 +35,7 @@ final class CareSheetFormDataTest extends TestCase
             $confidence[$field->value] = Confidence::Low;
         }
         $previous = new CareSheet(-15, false, Exposure::PartShade, Watering::High, [3], [7, 8], [6], 'Prune.', 'Cuttings.', $confidence, [new Source('Trefle')]);
-        $data = CareSheetFormData::fromPlant(PlantFactory::draft(careSheet: $previous));
+        $data = CareSheetFormData::fromPlant(PlantFactory::createOne(['careSheet' => $previous]));
 
         $data->watering = Watering::Low;
         $data->pruningMonths = [11, 2, 2];
@@ -60,7 +59,7 @@ final class CareSheetFormDataTest extends TestCase
     public function testABlankSheetFilledInByHandStaysWithoutTheAssistant(): void
     {
         $blank = CareSheet::blank([new Source(Source::TREFLE)]);
-        $data = CareSheetFormData::fromPlant(PlantFactory::draft(careSheet: $blank));
+        $data = CareSheetFormData::fromPlant(PlantFactory::createOne(['careSheet' => $blank]));
 
         $data->minTemperatureC = -25;
         $careSheet = $data->toCareSheet($blank);
@@ -72,7 +71,7 @@ final class CareSheetFormDataTest extends TestCase
 
     public function testEmptyAdviceIsAnEmptyString(): void
     {
-        $plant = PlantFactory::draft();
+        $plant = PlantFactory::createOne();
         $data = CareSheetFormData::fromPlant($plant);
         $data->pruningAdvice = null;
 

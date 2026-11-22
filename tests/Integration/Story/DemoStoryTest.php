@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Tests\Integration\DataFixtures;
+namespace App\Tests\Integration\Story;
 
-use App\DataFixtures\DemoFixtures;
+use App\Chat\ChatHistory;
 use App\Garden\Entity\Planting;
 use App\Garden\Entity\Space;
 use App\Garden\PlantingRepository;
@@ -12,15 +12,19 @@ use App\Plant\PlantRepository;
 use App\Reminder\Model\ReminderType;
 use App\Reminder\NotificationRepository;
 use App\Reminder\ReminderChecker;
+use App\Story\DemoStory;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
+use Symfony\Component\Uid\UuidV7;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * What "castor demo:reset" then "castor demo:frost" show, on the test database.
  */
-final class DemoFixturesTest extends KernelTestCase
+final class DemoStoryTest extends KernelTestCase
 {
     use ClockSensitiveTrait;
 
@@ -30,7 +34,7 @@ final class DemoFixturesTest extends KernelTestCase
         self::mockTime('2026-12-01 07:00');
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
 
-        self::getContainer()->get(DemoFixtures::class)->load($entityManager);
+        DemoStory::load();
         $entityManager->clear();
 
         $plants = self::getContainer()->get(PlantRepository::class)->findValidated();
@@ -54,5 +58,17 @@ final class DemoFixturesTest extends KernelTestCase
             ['Frost expected on Tuesday 1 December (-3.2 °C): bring Lemon tree indoors. Down to -12.4 °C on Thursday 3 December.'],
             array_map(static fn ($notification): string => $notification->getMessage(), self::getContainer()->get(NotificationRepository::class)->findLatest()),
         );
+    }
+
+    public function testTheConversationsAreGone(): void
+    {
+        self::bootKernel();
+        $conversationId = new UuidV7();
+        self::getContainer()->get('ai.message_store.doctrine.dbal.chat')->save(MessageBag::forId($conversationId, Message::ofUser('hortensia')));
+        self::assertCount(1, self::getContainer()->get(ChatHistory::class)->entries($conversationId));
+
+        DemoStory::load();
+
+        self::assertSame([], self::getContainer()->get(ChatHistory::class)->entries($conversationId));
     }
 }

@@ -4,12 +4,13 @@ namespace App\Tests\Integration\Garden;
 
 use App\Chat\ChatHistory;
 use App\Chat\ChatPublisher;
+use App\Factory\PlantFactory;
+use App\Factory\PlantingFactory;
 use App\Garden\DraftCareSheetHandler;
 use App\Garden\Entity\Planting;
 use App\Garden\Message\DraftCareSheet;
 use App\Garden\PlantingRepository;
 use App\Tests\Utils\Chat\ScriptedGardener;
-use App\Tests\Utils\Factory\PlantFactory;
 use App\Tests\Utils\Mercure\ChatStreams;
 use App\Tests\Utils\Mercure\RecordingHub;
 use Doctrine\ORM\EntityManagerInterface;
@@ -28,7 +29,7 @@ final class DraftCareSheetHandlerTest extends KernelTestCase
 
     public function testTheAgentDraftsTheCareSheetOfTheSpeciesTheUserChose(): void
     {
-        $planting = $this->startDrafting(new Planting('Hortensia du portail', null, null, new \DateTimeImmutable('2026-11-01'), 191052, 'Hydrangea paniculata'));
+        $planting = self::hortensia()->create();
 
         $this->handle($planting);
 
@@ -62,7 +63,7 @@ final class DraftCareSheetHandlerTest extends KernelTestCase
 
     public function testARunWithoutDraftIsAFailureTheUserCanRetry(): void
     {
-        $planting = $this->startDrafting(new Planting('The mystery shrub', null, 'Yellow leaves.', new \DateTimeImmutable('2026-11-01')));
+        $planting = PlantingFactory::new()->drafting()->create(['name' => 'The mystery shrub', 'diseases' => 'Yellow leaves.']);
 
         $this->handle($planting);
 
@@ -79,7 +80,7 @@ final class DraftCareSheetHandlerTest extends KernelTestCase
 
     public function testAnAttemptReplacedByARetryDoesNothing(): void
     {
-        $planting = $this->startDrafting(new Planting('Hortensia du portail', null, null, new \DateTimeImmutable('2026-11-01'), 191052, 'Hydrangea paniculata'));
+        $planting = self::hortensia()->create();
         $staleConversationId = $planting->getConversationId() ?? self::fail();
         $planting->startDrafting(new UuidV7());
         self::getContainer()->get(EntityManagerInterface::class)->flush();
@@ -94,7 +95,7 @@ final class DraftCareSheetHandlerTest extends KernelTestCase
 
     public function testAProviderThatDoesNotAnswerIsAFailureTheUserCanRetry(): void
     {
-        $planting = $this->startDrafting(new Planting('Rose, ' . ScriptedGardener::UNREACHABLE, null, null, new \DateTimeImmutable('2026-11-01')));
+        $planting = PlantingFactory::new()->drafting()->create(['name' => 'Rose, ' . ScriptedGardener::UNREACHABLE]);
 
         $this->handle($planting);
 
@@ -110,7 +111,7 @@ final class DraftCareSheetHandlerTest extends KernelTestCase
 
     public function testABugIsAFailureTooAndIsNotHidden(): void
     {
-        $planting = $this->startDrafting(new Planting(ScriptedGardener::BROKEN, null, null, new \DateTimeImmutable('2026-11-01')));
+        $planting = PlantingFactory::new()->drafting()->create(['name' => ScriptedGardener::BROKEN]);
 
         try {
             $this->handle($planting);
@@ -127,7 +128,7 @@ final class DraftCareSheetHandlerTest extends KernelTestCase
 
     public function testAPlantingDeletedMeanwhileIsSkipped(): void
     {
-        $planting = $this->startDrafting(new Planting('Hortensia du portail', null, null, new \DateTimeImmutable('2026-11-01'), 191052, 'Hydrangea paniculata'));
+        $planting = self::hortensia()->create();
         $message = new DraftCareSheet($planting->getId(), $planting->getConversationId() ?? self::fail(), 'en');
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
         $entityManager->remove($planting);
@@ -140,12 +141,10 @@ final class DraftCareSheetHandlerTest extends KernelTestCase
 
     public function testAPlantingLinkedMeanwhileIsSkipped(): void
     {
-        $planting = $this->startDrafting(new Planting('Hortensia du portail', null, null, new \DateTimeImmutable('2026-11-01'), 191052, 'Hydrangea paniculata'));
-        $plant = PlantFactory::validated();
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($plant);
+        $planting = self::hortensia()->create();
+        $plant = PlantFactory::new()->validated()->create();
         $planting->linkTo($plant);
-        $entityManager->flush();
+        self::getContainer()->get(EntityManagerInterface::class)->flush();
 
         $this->handle($planting);
 
@@ -153,14 +152,12 @@ final class DraftCareSheetHandlerTest extends KernelTestCase
         self::assertSame($plant->getId(), $this->reload($planting)->getPlant()?->getId());
     }
 
-    private function startDrafting(Planting $planting): Planting
+    /**
+     * Its species chosen in the species picker, one of the recorded Trefle responses.
+     */
+    private static function hortensia(): PlantingFactory
     {
-        $planting->startDrafting(new UuidV7());
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($planting);
-        $entityManager->flush();
-
-        return $planting;
+        return PlantingFactory::new(['name' => 'Hortensia du portail', 'trefleId' => 191052, 'scientificName' => 'Hydrangea paniculata'])->drafting();
     }
 
     private function handle(Planting $planting): void

@@ -2,12 +2,13 @@
 
 namespace App\Tests\Integration\Garden;
 
+use App\Factory\PlantFactory;
+use App\Factory\PlantingFactory;
 use App\Garden\Entity\Planting;
 use App\Garden\PlantingRepository;
 use App\Garden\PlantValidation;
 use App\Plant\Entity\Plant;
 use App\Plant\Exception\PlantAlreadyValidatedException;
-use App\Tests\Utils\Factory\PlantFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
@@ -27,7 +28,7 @@ final class PlantValidationTest extends KernelTestCase
     public function testADraftOfTheChatIsValidatedWithoutAPlant(): void
     {
         self::mockTime('2026-11-21 10:00');
-        $plant = $this->save(Plant::propose('Panicled hydrangea', 'Hydrangea paniculata', 'Hydrangeaceae', PlantFactory::careSheet(), new \DateTimeImmutable('2026-11-21 09:55'), 191052));
+        $plant = PlantFactory::createOne(['commonName' => 'Panicled hydrangea', 'createdAt' => new \DateTimeImmutable('2026-11-21 09:55')]);
 
         $this->validate($plant);
 
@@ -37,11 +38,8 @@ final class PlantValidationTest extends KernelTestCase
 
     public function testTheDraftOfAPlantingKeepsItsPlanting(): void
     {
-        $plant = $this->save(PlantFactory::draft());
-        $planting = new Planting('Hydrangea by the shed', null, null, new \DateTimeImmutable('2026-11-01'));
-        $planting->linkTo($plant);
-        $this->entityManager->persist($planting);
-        $this->entityManager->flush();
+        $plant = PlantFactory::createOne();
+        PlantingFactory::new()->linkedTo($plant)->create(['name' => 'Hydrangea by the shed']);
 
         $this->validate($plant);
 
@@ -50,7 +48,7 @@ final class PlantValidationTest extends KernelTestCase
 
     public function testAStaleDraftIsReadAgainBeforeItIsValidated(): void
     {
-        $plant = $this->save(PlantFactory::draft());
+        $plant = PlantFactory::createOne();
         // Validated meanwhile by another request: this one still holds the draft
         $this->entityManager->getConnection()->executeStatement("UPDATE plant SET status = 'validated', validated_at = '2026-11-21 10:00:00' WHERE id = ?", [$plant->getId()]);
         self::assertFalse($plant->isValidated());
@@ -71,14 +69,6 @@ final class PlantValidationTest extends KernelTestCase
             self::getContainer()->get(PlantValidation::class)->validate($plant);
             $this->entityManager->flush();
         });
-    }
-
-    private function save(Plant $plant): Plant
-    {
-        $this->entityManager->persist($plant);
-        $this->entityManager->flush();
-
-        return $plant;
     }
 
     /**

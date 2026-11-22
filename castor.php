@@ -111,7 +111,7 @@ function fixtures(): void
 {
     io()->title('Loads fixtures');
 
-    docker_compose_run(['bin/console', 'doctrine:fixture:load', '-n']);
+    load_demo_story();
 }
 
 #[AsTask(description: 'Resets the demo data: 2 validated plants with their reminders, their plantings in 3 spaces, no notification', namespace: 'demo', name: 'reset')]
@@ -119,9 +119,24 @@ function demo_reset(): void
 {
     io()->title('Resetting the demo data');
 
-    docker_compose_run(['bin/console', 'doctrine:fixture:load', '-n', '--purge-with-truncate']);
+    load_demo_story();
 
     io()->success('Demo data loaded.');
+}
+
+/**
+ * App\Story\DemoStory, in a database that Foundry recreates with the migrations.
+ */
+function load_demo_story(): void
+{
+    // Recreating the database cuts the connections to it: the Messenger worker would stop with its own
+    workers_stop();
+
+    try {
+        docker_compose_run(['bin/console', 'foundry:load-fixtures', 'demo', '-n']);
+    } finally {
+        workers_start();
+    }
 }
 
 #[AsTask(description: 'Runs the reminder check against the recorded frost forecast (the toast shows up live)', namespace: 'demo', name: 'frost')]

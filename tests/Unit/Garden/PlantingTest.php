@@ -2,15 +2,14 @@
 
 namespace App\Tests\Unit\Garden;
 
+use App\Factory\PlantFactory;
 use App\Garden\Entity\Planting;
 use App\Garden\Entity\Space;
 use App\Garden\Exception\CareSheetAlreadyLinkedException;
 use App\Garden\Model\CareTask;
 use App\Garden\Model\Soil;
-use App\Plant\Entity\Plant;
 use App\Plant\Model\Exposure;
 use App\Tests\Utils\Factory\EntityId;
-use App\Tests\Utils\Factory\PlantFactory;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\UuidV7;
 
@@ -65,8 +64,7 @@ final class PlantingTest extends TestCase
 
     public function testAPlantAddedFromItsCardKeepsTheKeyOfTheCard(): void
     {
-        $plant = Plant::propose('Panicled hydrangea', 'Hydrangea paniculata', 'Hydrangeaceae', PlantFactory::careSheet(), new \DateTimeImmutable('2026-11-21 09:55'), 191052);
-        $plant->validate(new \DateTimeImmutable('2026-11-21 10:00'));
+        $plant = PlantFactory::new()->validated()->create(['scientificName' => 'Hydrangea paniculata', 'trefleId' => 191052]);
         $terrace = self::space('Terrace');
 
         $planting = Planting::proposed('0196a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b', 'Hortensia', $plant, $terrace, new \DateTimeImmutable('2026-11-22 09:00'));
@@ -87,7 +85,7 @@ final class PlantingTest extends TestCase
     {
         $this->expectException(\LogicException::class);
 
-        Planting::proposed('0196a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b', 'Hortensia', EntityId::assign(PlantFactory::draft(), 3), null, new \DateTimeImmutable('2026-11-22'));
+        Planting::proposed('0196a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b', 'Hortensia', EntityId::assign(PlantFactory::createOne(), 3), null, new \DateTimeImmutable('2026-11-22'));
     }
 
     public function testTheSameCareOnTheSameDayIsRecordedOnce(): void
@@ -153,7 +151,7 @@ final class PlantingTest extends TestCase
         $rose->startDrafting($conversationId);
         $rose->failDrafting();
 
-        $plant = PlantFactory::draft();
+        $plant = PlantFactory::createOne();
         $rose->linkTo($plant);
 
         self::assertSame($plant, $rose->getPlant());
@@ -165,7 +163,7 @@ final class PlantingTest extends TestCase
     public function testAPlantingWithItsCareSheetIsNotDraftedAgain(): void
     {
         $rose = EntityId::assign(self::planting('Rose'), 12);
-        $rose->linkTo(PlantFactory::validated());
+        $rose->linkTo(PlantFactory::new()->validated()->create());
 
         $this->expectException(CareSheetAlreadyLinkedException::class);
         $this->expectExceptionMessageIs('Planting 12 already has its care sheet.');

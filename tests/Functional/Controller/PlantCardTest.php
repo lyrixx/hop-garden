@@ -2,12 +2,11 @@
 
 namespace App\Tests\Functional\Controller;
 
+use App\Factory\PlantFactory;
+use App\Factory\PlantingFactory;
 use App\Plant\Entity\Plant;
 use App\Plate\Model\PlatePart;
 use App\Reminder\Model\ReminderType;
-use App\Tests\Utils\Factory\PlantFactory;
-use App\Tests\Utils\Factory\PlantingFactory;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -25,7 +24,7 @@ final class PlantCardTest extends WebTestCase
 
     public function testTheDraftCardShowsThePlateAndOneCardPerPart(): void
     {
-        $plant = $this->save(PlantFactory::draft());
+        $plant = PlantFactory::createOne();
 
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/card');
 
@@ -50,7 +49,7 @@ final class PlantCardTest extends WebTestCase
 
     public function testThePageOfTheSpeciesHoldsTheRemindersOfItsParts(): void
     {
-        $plant = $this->save(PlantFactory::validated());
+        $plant = PlantFactory::new()->validated()->create();
 
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId());
 
@@ -66,25 +65,13 @@ final class PlantCardTest extends WebTestCase
 
     public function testTheGardenListsItsPlants(): void
     {
-        $this->save(PlantFactory::draft('Panicled hydrangea'));
-        $planting = PlantingFactory::of($this->save(PlantFactory::validated()));
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($planting);
-        $entityManager->flush();
+        PlantFactory::createOne(['commonName' => 'Panicled hydrangea']);
+        $planting = PlantingFactory::new()->of(PlantFactory::new()->validated()->create())->create();
 
         $this->client->request('GET', '/garden');
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('.drafts', 'Panicled hydrangea');
         self::assertSelectorTextContains('a.plant-tile[href="/garden/' . $planting->getId() . '"]', 'Bigleaf hydrangea');
-    }
-
-    private function save(Plant $plant): Plant
-    {
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($plant);
-        $entityManager->flush();
-
-        return $plant;
     }
 }

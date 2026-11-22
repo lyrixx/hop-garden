@@ -2,18 +2,19 @@
 
 namespace App\Tests\Unit\Reminder;
 
+use App\Factory\CareSheetFactory;
+use App\Factory\PlantFactory;
+use App\Factory\ReminderFactory;
 use App\Reminder\CalendarSchedule;
-use App\Reminder\Entity\Reminder;
 use App\Reminder\Model\ReminderType;
 use App\Reminder\Model\UpcomingReminder;
-use App\Tests\Utils\Factory\PlantFactory;
 use PHPUnit\Framework\TestCase;
 
 final class CalendarScheduleTest extends TestCase
 {
     public function testNextOccurrence(): void
     {
-        $plant = PlantFactory::validated(careSheet: PlantFactory::careSheet(pruningMonths: [3, 11]));
+        $plant = PlantFactory::new()->validated()->create(['careSheet' => CareSheetFactory::new(['pruningMonths' => [3, 11]])]);
         $reminder = $plant->enableReminder(ReminderType::Pruning);
         $schedule = new CalendarSchedule();
 
@@ -25,7 +26,7 @@ final class CalendarScheduleTest extends TestCase
 
     public function testAFrostReminderHasNoCalendar(): void
     {
-        $plant = PlantFactory::validated();
+        $plant = PlantFactory::new()->validated()->create();
         $schedule = new CalendarSchedule();
 
         self::assertSame([], $schedule->upcoming([$plant->enableReminder(ReminderType::Frost)], new \DateTimeImmutable('2026-03-01'), 365));
@@ -33,7 +34,7 @@ final class CalendarScheduleTest extends TestCase
 
     public function testAFrostEpisodeIsExtendedByContiguousFrostDays(): void
     {
-        $reminder = new Reminder(PlantFactory::validated(), ReminderType::Frost);
+        $reminder = ReminderFactory::createOne(['type' => ReminderType::Frost]);
         $now = new \DateTimeImmutable('2026-12-01 07:00');
 
         self::assertTrue($reminder->recordFrostEpisode(new \DateTimeImmutable('2026-12-01'), new \DateTimeImmutable('2026-12-03'), $now));
@@ -44,14 +45,14 @@ final class CalendarScheduleTest extends TestCase
 
     public function testAReminderWithoutMonthsIsNeverDue(): void
     {
-        $plant = PlantFactory::validated(careSheet: PlantFactory::careSheet(deadheadingMonths: []));
+        $plant = PlantFactory::new()->validated()->create(['careSheet' => CareSheetFactory::new(['deadheadingMonths' => []])]);
 
         self::assertNull((new CalendarSchedule())->nextOccurrence($plant->enableReminder(ReminderType::Deadheading), new \DateTimeImmutable('2026-07-01'), 365));
     }
 
     public function testTheLastDayOfTheWindowCounts(): void
     {
-        $plant = PlantFactory::validated(careSheet: PlantFactory::careSheet(pruningMonths: [3]));
+        $plant = PlantFactory::new()->validated()->create(['careSheet' => CareSheetFactory::new(['pruningMonths' => [3]])]);
         $reminder = $plant->enableReminder(ReminderType::Pruning);
         $schedule = new CalendarSchedule();
 
@@ -62,7 +63,7 @@ final class CalendarScheduleTest extends TestCase
 
     public function testUpcomingRemindersSoonestFirst(): void
     {
-        $rose = PlantFactory::validated('Rose', PlantFactory::careSheet(pruningMonths: [1], deadheadingMonths: [12], cuttingMonths: [6]));
+        $rose = PlantFactory::new()->validated()->create(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['pruningMonths' => [1], 'deadheadingMonths' => [12], 'cuttingMonths' => [6]])]);
         $reminders = [
             $rose->enableReminder(ReminderType::Pruning),
             $rose->enableReminder(ReminderType::Deadheading),

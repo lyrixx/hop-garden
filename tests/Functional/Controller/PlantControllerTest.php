@@ -2,6 +2,9 @@
 
 namespace App\Tests\Functional\Controller;
 
+use App\Factory\PlantFactory;
+use App\Factory\PlantingFactory;
+use App\Factory\SpaceFactory;
 use App\Garden\Entity\Planting;
 use App\Garden\Entity\Space;
 use App\Garden\PlantingRepository;
@@ -13,7 +16,6 @@ use App\Plant\Model\Exposure;
 use App\Plant\Model\Source;
 use App\Plant\PlantRepository;
 use App\Reminder\Model\ReminderType;
-use App\Tests\Utils\Factory\PlantFactory;
 use App\Tests\Utils\Http\UnavailableDataSources;
 use Doctrine\Bundle\DoctrineBundle\DataCollector\DoctrineDataCollector;
 use Doctrine\ORM\EntityManagerInterface;
@@ -35,7 +37,7 @@ final class PlantControllerTest extends WebTestCase
 
     public function testTheDraftCardHighlightsTheValuesToVerify(): void
     {
-        $plant = $this->save(PlantFactory::draft());
+        $plant = PlantFactory::createOne();
 
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/card');
 
@@ -47,7 +49,7 @@ final class PlantControllerTest extends WebTestCase
 
     public function testValidate(): void
     {
-        $plant = $this->save(PlantFactory::draft());
+        $plant = PlantFactory::createOne();
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId());
 
         $this->client->submit($crawler->filter('form[action$="/validate"]')->form());
@@ -65,7 +67,7 @@ final class PlantControllerTest extends WebTestCase
     public function testValidatingADraftOfTheChatAddsNoPlant(): void
     {
         self::mockTime('2026-11-21 10:00');
-        $plant = $this->save(Plant::propose('Panicled hydrangea', 'Hydrangea paniculata', 'Hydrangeaceae', PlantFactory::careSheet(), new \DateTimeImmutable('2026-11-21 09:55'), 191052));
+        $plant = PlantFactory::createOne(['commonName' => 'Panicled hydrangea', 'scientificName' => 'Hydrangea paniculata', 'createdAt' => new \DateTimeImmutable('2026-11-21 09:55'), 'trefleId' => 191052]);
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId());
 
         $this->client->submit($crawler->filter('form[action$="/validate"]')->form());
@@ -76,12 +78,8 @@ final class PlantControllerTest extends WebTestCase
 
     public function testValidatingTheDraftOfAPlantingPlantsNothingMore(): void
     {
-        $plant = $this->save(PlantFactory::draft());
-        $planting = new Planting('Hydrangea by the shed', null, null, new \DateTimeImmutable('2026-11-01'), 191047, 'Hydrangea macrophylla');
-        $planting->linkTo($plant);
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($planting);
-        $entityManager->flush();
+        $plant = PlantFactory::createOne();
+        PlantingFactory::new()->linkedTo($plant)->create(['name' => 'Hydrangea by the shed', 'trefleId' => 191047, 'scientificName' => 'Hydrangea macrophylla']);
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/card');
 
         $this->client->submit($crawler->filter('form[action$="/validate"]')->form(), [], ['HTTP_TURBO_FRAME' => 'plant-card-' . $plant->getId() . '-frame']);
@@ -100,7 +98,7 @@ final class PlantControllerTest extends WebTestCase
 
     public function testTheCardIsValidatedInPlaceWherever(): void
     {
-        $plant = $this->save(PlantFactory::draft());
+        $plant = PlantFactory::createOne();
         $frame = 'plant-card-' . $plant->getId() . '-frame';
 
         foreach (['/plants/' . $plant->getId() . '/card', '/plants/' . $plant->getId()] as $url) {
@@ -112,7 +110,7 @@ final class PlantControllerTest extends WebTestCase
 
     public function testValidateFromTheChatReturnsTheUpdatedCardInItsFrame(): void
     {
-        $plant = $this->save(PlantFactory::draft());
+        $plant = PlantFactory::createOne();
         $frame = 'plant-card-' . $plant->getId() . '-frame';
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/card');
 
@@ -136,7 +134,7 @@ final class PlantControllerTest extends WebTestCase
 
     public function testValidateRequiresAValidCsrfToken(): void
     {
-        $plant = $this->save(PlantFactory::draft());
+        $plant = PlantFactory::createOne();
 
         $this->client->request('POST', '/plants/' . $plant->getId() . '/validate', ['_token' => 'forged']);
 
@@ -147,7 +145,7 @@ final class PlantControllerTest extends WebTestCase
 
     public function testValidatingTwiceIsHarmless(): void
     {
-        $plant = $this->save(PlantFactory::draft());
+        $plant = PlantFactory::createOne();
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId());
         $form = $crawler->filter('form[action$="/validate"]')->form();
 
@@ -161,7 +159,7 @@ final class PlantControllerTest extends WebTestCase
 
     public function testEditingADraftMarksTheChangedValuesAsVerified(): void
     {
-        $plant = $this->save(PlantFactory::draft());
+        $plant = PlantFactory::createOne();
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/edit');
 
         $this->client->submit($crawler->selectButton('Save the draft')->form(), [
@@ -178,7 +176,7 @@ final class PlantControllerTest extends WebTestCase
 
     public function testTheCardOfAValidatedPlantLinksToItsEdition(): void
     {
-        $plant = $this->save(PlantFactory::validated());
+        $plant = PlantFactory::new()->validated()->create();
 
         $this->client->request('GET', '/plants/' . $plant->getId() . '/card');
         self::assertSelectorExists('a[href$="/plants/' . $plant->getId() . '/edit"]');
@@ -189,7 +187,7 @@ final class PlantControllerTest extends WebTestCase
 
     public function testEditingAValidatedPlantKeepsItValidated(): void
     {
-        $plant = $this->save(PlantFactory::validated());
+        $plant = PlantFactory::new()->validated()->create();
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/edit');
 
         self::assertResponseIsSuccessful();
@@ -211,7 +209,7 @@ final class PlantControllerTest extends WebTestCase
 
     public function testRemindersOfAValidatedPlant(): void
     {
-        $plant = $this->save(PlantFactory::validated());
+        $plant = PlantFactory::new()->validated()->create();
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId());
 
         $this->client->submit($crawler->filter('form[action$="/reminders/frost"]')->form(), [], ['HTTP_TURBO_FRAME' => 'plant-' . $plant->getId() . '-reminder-frost']);
@@ -227,7 +225,7 @@ final class PlantControllerTest extends WebTestCase
 
     public function testAReminderSwitchedInTheChatAnswersInItsFrame(): void
     {
-        $plant = $this->save(PlantFactory::validated());
+        $plant = PlantFactory::new()->validated()->create();
         $frame = 'plant-' . $plant->getId() . '-reminder-pruning';
         // As the chat loads the card
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/card');
@@ -242,7 +240,7 @@ final class PlantControllerTest extends WebTestCase
 
     public function testEditInTheFrameOfTheCard(): void
     {
-        $plant = $this->save(PlantFactory::draft());
+        $plant = PlantFactory::createOne();
         $frame = 'plant-card-' . $plant->getId() . '-frame';
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/edit', server: ['HTTP_TURBO_FRAME' => $frame]);
 
@@ -265,7 +263,7 @@ final class PlantControllerTest extends WebTestCase
 
     public function testAnInvalidCareSheetComesBackInTheFrame(): void
     {
-        $plant = $this->save(PlantFactory::validated());
+        $plant = PlantFactory::new()->validated()->create();
         $frame = 'plant-card-' . $plant->getId() . '-frame';
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/edit', server: ['HTTP_TURBO_FRAME' => $frame]);
 
@@ -279,19 +277,12 @@ final class PlantControllerTest extends WebTestCase
 
     public function testTheIndexListsEverySpeciesValidatedFirstWithMyPlants(): void
     {
-        $hydrangea = $this->save(PlantFactory::validated());
-        $this->save(PlantFactory::validated('Panicled hydrangea'));
-        $rose = $this->save(Plant::propose('Climbing rose', 'Rosa canina', 'Rosaceae', PlantFactory::careSheet(), new \DateTimeImmutable('2026-11-01')));
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $northBed = new Space('North bed', Exposure::Shade, null, new \DateTimeImmutable('2026-11-01'));
-        $entityManager->persist($northBed);
-        $shed = new Planting('Hydrangea by the shed', $northBed, null, new \DateTimeImmutable('2026-11-01'));
-        $shed->linkTo($hydrangea);
-        $gate = new Planting('Hydrangea by the gate', null, null, new \DateTimeImmutable('2026-11-02'));
-        $gate->linkTo($hydrangea);
-        $entityManager->persist($shed);
-        $entityManager->persist($gate);
-        $entityManager->flush();
+        $hydrangea = PlantFactory::new()->validated()->create();
+        PlantFactory::new()->validated()->create(['commonName' => 'Panicled hydrangea']);
+        $rose = PlantFactory::createOne(['commonName' => 'Climbing rose', 'scientificName' => 'Rosa canina']);
+        $northBed = SpaceFactory::createOne(['name' => 'North bed', 'exposure' => Exposure::Shade]);
+        $shed = PlantingFactory::new()->inSpace($northBed)->linkedTo($hydrangea)->create(['name' => 'Hydrangea by the shed']);
+        $gate = PlantingFactory::new()->linkedTo($hydrangea)->create(['name' => 'Hydrangea by the gate', 'createdAt' => new \DateTimeImmutable('2026-11-02')]);
 
         $crawler = $this->client->request('GET', '/plants');
 
@@ -323,12 +314,12 @@ final class PlantControllerTest extends WebTestCase
 
     public function testTheIndexTakesAsManyQueriesForOneSpeciesAsForMany(): void
     {
-        $this->saveWithPlantings(PlantFactory::validated(), 1);
+        self::withPlantings(PlantFactory::new()->validated()->create(), 1);
         $queriesForOne = $this->indexQueryCount();
 
-        $this->saveWithPlantings(PlantFactory::validated('Panicled hydrangea'), 3);
-        $this->saveWithPlantings(PlantFactory::draft('Climbing rose'), 2);
-        $this->save(PlantFactory::draft('Lavender'));
+        self::withPlantings(PlantFactory::new()->validated()->create(['commonName' => 'Panicled hydrangea']), 3);
+        self::withPlantings(PlantFactory::createOne(['commonName' => 'Climbing rose']), 2);
+        PlantFactory::createOne(['commonName' => 'Lavender']);
 
         self::assertSame($queriesForOne, $this->indexQueryCount(), 'No query per species, nor per plant.');
     }
@@ -423,7 +414,7 @@ final class PlantControllerTest extends WebTestCase
     #[TestWith([null, 'hydrangea PANICULATA'], 'a draft of the chat, by its name')]
     public function testASpeciesWithACareSheetIsNotMadeTwice(?int $trefleId, string $scientificName): void
     {
-        $existing = $this->save(Plant::propose('Hortensia', $scientificName, 'Hydrangeaceae', PlantFactory::careSheet(), new \DateTimeImmutable('2026-11-01'), $trefleId));
+        $existing = PlantFactory::createOne(['commonName' => 'Hortensia', 'scientificName' => $scientificName, 'trefleId' => $trefleId]);
         $crawler = $this->client->request('GET', '/plants/new');
 
         $this->client->submit($crawler->selectButton('Create the draft')->form(), ['new_plant[name]' => 'hortensia', 'new_plant[trefleId]' => '191052']);
@@ -445,8 +436,8 @@ final class PlantControllerTest extends WebTestCase
 
     public function testAddToMyGardenOnlyFromAValidatedSpecies(): void
     {
-        $validated = $this->save(PlantFactory::validated());
-        $draft = $this->save(PlantFactory::draft('Draft hydrangea'));
+        $validated = PlantFactory::new()->validated()->create();
+        $draft = PlantFactory::createOne(['commonName' => 'Draft hydrangea']);
 
         $crawler = $this->client->request('GET', '/plants/' . $validated->getId());
         self::assertSame('/garden/new?plant=' . $validated->getId(), $crawler->filter('#in-your-garden .species-plantings-head')->selectLink('Add to my garden')->attr('href'));
@@ -457,17 +448,10 @@ final class PlantControllerTest extends WebTestCase
 
     public function testThePageOfTheSpeciesListsMyPlantsOfIt(): void
     {
-        $plant = $this->save(PlantFactory::validated());
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $northBed = new Space('North bed', Exposure::Shade, null, new \DateTimeImmutable('2026-11-01'));
-        $entityManager->persist($northBed);
-        $shed = new Planting('Hydrangea by the shed', $northBed, null, new \DateTimeImmutable('2026-11-01'));
-        $shed->linkTo($plant);
-        $gate = new Planting('Hydrangea by the gate', null, null, new \DateTimeImmutable('2026-11-02'));
-        $gate->linkTo($plant);
-        $entityManager->persist($shed);
-        $entityManager->persist($gate);
-        $entityManager->flush();
+        $plant = PlantFactory::new()->validated()->create();
+        $northBed = SpaceFactory::createOne(['name' => 'North bed']);
+        $shed = PlantingFactory::new()->inSpace($northBed)->linkedTo($plant)->create(['name' => 'Hydrangea by the shed']);
+        $gate = PlantingFactory::new()->linkedTo($plant)->create(['name' => 'Hydrangea by the gate', 'createdAt' => new \DateTimeImmutable('2026-11-02')]);
 
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId());
 
@@ -505,7 +489,7 @@ final class PlantControllerTest extends WebTestCase
     #[TestWith([['care_sheet[watering]' => '']])]
     public function testAnInvalidCareSheetIsRefused(array $values): void
     {
-        $plant = $this->save(PlantFactory::validated());
+        $plant = PlantFactory::new()->validated()->create();
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/edit');
         // As a request crafted by hand: the browser would refuse a blank field
         $form = $crawler->selectButton('Save')->form()->disableValidation();
@@ -520,10 +504,7 @@ final class PlantControllerTest extends WebTestCase
 
     public function testDisableAReminder(): void
     {
-        $plant = PlantFactory::validated();
-        $plant->enableReminder(ReminderType::Frost);
-        $plant->enableReminder(ReminderType::Pruning);
-        $this->save($plant);
+        $plant = PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Frost, ReminderType::Pruning)->create();
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId());
 
         $this->client->submit($crawler->filter('form[action$="/reminders/frost"]')->form());
@@ -534,7 +515,7 @@ final class PlantControllerTest extends WebTestCase
 
     public function testADraftHasNoReminder(): void
     {
-        $draft = $this->save(PlantFactory::draft());
+        $draft = PlantFactory::createOne();
         $token = $this->plantToken();
 
         $this->client->request('POST', '/plants/' . $draft->getId() . '/reminders/frost', ['_token' => $token, 'enabled' => '1']);
@@ -547,7 +528,7 @@ final class PlantControllerTest extends WebTestCase
 
     public function testAnUnknownReminderTypeIsNotFound(): void
     {
-        $plant = $this->save(PlantFactory::validated());
+        $plant = PlantFactory::new()->validated()->create();
         $token = $this->plantToken();
 
         $this->client->request('POST', '/plants/' . $plant->getId() . '/reminders/watering', ['_token' => $token, 'enabled' => '1']);
@@ -557,7 +538,7 @@ final class PlantControllerTest extends WebTestCase
 
     public function testRemindersRequireAValidCsrfToken(): void
     {
-        $plant = $this->save(PlantFactory::validated());
+        $plant = PlantFactory::new()->validated()->create();
 
         $this->client->request('POST', '/plants/' . $plant->getId() . '/reminders/frost', ['_token' => 'forged', 'enabled' => '1']);
 
@@ -579,24 +560,24 @@ final class PlantControllerTest extends WebTestCase
      */
     private function plantToken(): string
     {
-        $plant = $this->save(PlantFactory::draft('Token holder'));
+        $plant = PlantFactory::createOne(['commonName' => 'Token holder']);
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/card');
 
         return (string) $crawler->filter('form[action$="/validate"] input[name="_token"]')->attr('value');
     }
 
-    private function saveWithPlantings(Plant $plant, int $count): void
+    /**
+     * Each in a space of its own.
+     */
+    private static function withPlantings(Plant $plant, int $count): void
     {
-        $this->save($plant);
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
         for ($i = 1; $i <= $count; ++$i) {
-            $space = new Space($plant->getCommonName() . ' bed ' . $i, null, null, new \DateTimeImmutable('2026-11-01'));
-            $entityManager->persist($space);
-            $planting = new Planting($plant->getCommonName() . ' ' . $i, $space, null, new \DateTimeImmutable('2026-11-01'));
-            $planting->linkTo($plant);
-            $entityManager->persist($planting);
+            PlantingFactory::new()
+                ->inSpace(SpaceFactory::new(['name' => $plant->getCommonName() . ' bed ' . $i]))
+                ->linkedTo($plant)
+                ->create(['name' => $plant->getCommonName() . ' ' . $i])
+            ;
         }
-        $entityManager->flush();
     }
 
     private function indexQueryCount(): int
@@ -627,15 +608,6 @@ final class PlantControllerTest extends WebTestCase
         self::getContainer()->get(EntityManagerInterface::class)->clear();
 
         return self::getContainer()->get(PlantRepository::class)->findOneBy([], ['id' => 'DESC']);
-    }
-
-    private function save(Plant $plant): Plant
-    {
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($plant);
-        $entityManager->flush();
-
-        return $plant;
     }
 
     private function reload(Plant $plant): Plant

@@ -7,13 +7,12 @@ use App\Chat\ChatPublisher;
 use App\Chat\Message\RunAgent;
 use App\Chat\Model\ChatEntry;
 use App\Chat\RunAgentHandler;
+use App\Factory\PlantingFactory;
 use App\Garden\DraftCareSheetHandler;
-use App\Garden\Entity\Planting;
 use App\Garden\Message\DraftCareSheet;
 use App\Tests\Utils\Chat\ScriptedGardener;
 use App\Tests\Utils\Mercure\ChatStreams;
 use App\Tests\Utils\Mercure\RecordingHub;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Uid\UuidV7;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -72,11 +71,7 @@ final class InterfaceLanguageTest extends KernelTestCase
 
     public function testTheCareSheetDraftedForAPlantingIsInTheLanguageOfTheMessage(): void
     {
-        $planting = new Planting('Hortensia du portail', null, null, new \DateTimeImmutable('2026-11-01'), 191052, 'Hydrangea paniculata');
-        $planting->startDrafting(new UuidV7());
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($planting);
-        $entityManager->flush();
+        $planting = PlantingFactory::new()->drafting()->create(['name' => 'Hortensia du portail', 'trefleId' => 191052, 'scientificName' => 'Hydrangea paniculata']);
 
         self::getContainer()->get(DraftCareSheetHandler::class)(new DraftCareSheet($planting->getId(), $planting->getConversationId() ?? self::fail(), 'fr'));
 

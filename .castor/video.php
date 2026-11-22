@@ -10,6 +10,7 @@ use function Castor\context;
 use function Castor\io;
 use function Castor\run;
 use function Castor\variable;
+use function docker\get_project_url;
 
 // The video tooling (Remotion, Playwright) runs on the host, as Node.js tools, like the media of
 // lyrixx/async-messenger-mercure: nothing of it reaches the application.
@@ -36,7 +37,7 @@ function capture(): void
     }
 
     run(['node', 'capture.mjs'], context: video_context()->withEnvironment([
-        'BASE_URL' => 'https://' . variable('root_domain'),
+        'BASE_URL' => get_project_url(variable('root_domain')),
     ])->withTimeout(null));
 
     io()->success('Capture written in video/public/capture/. Run "castor video:render" next.');

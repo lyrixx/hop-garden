@@ -2,7 +2,8 @@
 
 namespace App\Tests\Functional\Controller;
 
-use App\Garden\Entity\Planting;
+use App\Factory\PlantingFactory;
+use App\Factory\SpaceFactory;
 use App\Garden\Entity\Space;
 use App\Garden\Model\Soil;
 use App\Garden\SpaceRepository;
@@ -25,10 +26,10 @@ final class SpaceControllerTest extends WebTestCase
 
     public function testTheSpacesWithTheirConditionsAndTheirPlants(): void
     {
-        $northBed = $this->save(new Space('North bed', Exposure::Shade, Soil::Clay, new \DateTimeImmutable('2026-11-01')));
-        $this->save(new Space('Balcony', null, null, new \DateTimeImmutable('2026-11-01')));
-        $this->save(new Planting('Hosta', $northBed, null, new \DateTimeImmutable('2026-11-01')));
-        $this->save(new Planting('Fern', $northBed, null, new \DateTimeImmutable('2026-11-01')));
+        $northBed = SpaceFactory::createOne(['name' => 'North bed', 'exposure' => Exposure::Shade, 'soil' => Soil::Clay]);
+        SpaceFactory::createOne(['name' => 'Balcony']);
+        PlantingFactory::new()->inSpace($northBed)->create(['name' => 'Hosta']);
+        PlantingFactory::new()->inSpace($northBed)->create(['name' => 'Fern']);
 
         $crawler = $this->client->request('GET', '/spaces');
 
@@ -54,8 +55,8 @@ final class SpaceControllerTest extends WebTestCase
 
     public function testASpaceWithItsPlants(): void
     {
-        $northBed = $this->save(new Space('North bed', Exposure::Shade, null, new \DateTimeImmutable('2026-11-01')));
-        $hosta = $this->save(new Planting('Hosta', $northBed, null, new \DateTimeImmutable('2026-11-01')));
+        $northBed = SpaceFactory::createOne(['name' => 'North bed', 'exposure' => Exposure::Shade]);
+        $hosta = PlantingFactory::new()->inSpace($northBed)->create(['name' => 'Hosta']);
 
         $crawler = $this->client->request('GET', '/spaces/' . $northBed->getId());
 
@@ -108,7 +109,7 @@ final class SpaceControllerTest extends WebTestCase
 
     public function testEditASpace(): void
     {
-        $balcony = $this->save(new Space('Balcony', Exposure::Sun, null, new \DateTimeImmutable('2026-11-01')));
+        $balcony = SpaceFactory::createOne(['name' => 'Balcony', 'exposure' => Exposure::Sun]);
 
         $crawler = $this->client->request('GET', '/spaces/' . $balcony->getId());
         $crawler = $this->client->click($crawler->selectLink('Edit the space')->link());
@@ -131,29 +132,13 @@ final class SpaceControllerTest extends WebTestCase
 
     public function testAnInvalidEditIsRefused(): void
     {
-        $balcony = $this->save(new Space('Balcony', Exposure::Sun, null, new \DateTimeImmutable('2026-11-01')));
+        $balcony = SpaceFactory::createOne(['name' => 'Balcony', 'exposure' => Exposure::Sun]);
         $crawler = $this->client->request('GET', '/spaces/' . $balcony->getId() . '/edit');
 
         $this->client->submit($crawler->selectButton('Save')->form(), ['space[name]' => str_repeat('a', 101)]);
 
         self::assertResponseStatusCodeSame(422);
         self::assertSame('Balcony', $this->lastSpace()->getName());
-    }
-
-    /**
-     * @template T of object
-     *
-     * @param T $entity
-     *
-     * @return T
-     */
-    private function save(object $entity): object
-    {
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($entity);
-        $entityManager->flush();
-
-        return $entity;
     }
 
     private function lastSpace(): Space

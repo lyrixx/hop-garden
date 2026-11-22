@@ -2,8 +2,8 @@
 
 namespace App\Tests\Integration\Mcp;
 
+use App\Factory\PlantFactory;
 use App\Plant\PlantRepository;
-use App\Tests\Utils\Factory\PlantFactory;
 use App\Tests\Utils\Mcp\McpTestCase;
 use Doctrine\ORM\EntityManagerInterface;
 use Mcp\Exception\RequestException;
@@ -62,10 +62,7 @@ final class ServerCapabilitiesTest extends McpTestCase
 
     public function testResources(): void
     {
-        $plant = PlantFactory::validated('Lavender');
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($plant);
-        $entityManager->flush();
+        $plant = PlantFactory::new()->validated()->create(['commonName' => 'Lavender']);
 
         $resources = $this->mcp()->listResources()->resources;
         self::assertSame(['hopgarden://collection'], array_map(static fn ($resource) => $resource->uri, $resources));
@@ -96,10 +93,7 @@ final class ServerCapabilitiesTest extends McpTestCase
 
     public function testTheAgentServerRefusesConfirmPlant(): void
     {
-        $plant = PlantFactory::draft();
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($plant);
-        $entityManager->flush();
+        $plant = PlantFactory::createOne();
 
         try {
             $this->mcp('/_mcp/agent')->callTool('confirm_plant', ['id' => $plant->getId()]);
@@ -108,7 +102,7 @@ final class ServerCapabilitiesTest extends McpTestCase
             self::assertStringContainsString('confirm_plant', $e->getMessage());
         }
 
-        $entityManager->clear();
+        self::getContainer()->get(EntityManagerInterface::class)->clear();
         self::assertFalse(self::getContainer()->get(PlantRepository::class)->get($plant->getId())->isValidated(), 'Only the user validates.');
     }
 
@@ -129,10 +123,7 @@ final class ServerCapabilitiesTest extends McpTestCase
 
     public function testADraftCareSheetIsReadableToo(): void
     {
-        $plant = PlantFactory::draft();
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($plant);
-        $entityManager->flush();
+        $plant = PlantFactory::createOne();
 
         $sheet = $this->mcp()->readResource('hopgarden://plants/' . $plant->getId())->contents[0];
 

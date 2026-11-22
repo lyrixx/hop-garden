@@ -4,6 +4,9 @@ namespace App\Tests\Unit\Garden;
 
 use App\DataSource\OpenMeteo\Model\DailyMinimum;
 use App\DataSource\OpenMeteo\Model\FrostForecast;
+use App\Factory\CareSheetFactory;
+use App\Factory\PlantingFactory;
+use App\Factory\SpaceFactory;
 use App\Garden\Entity\Planting;
 use App\Garden\Entity\Space;
 use App\Garden\Model\CareTask;
@@ -17,7 +20,6 @@ use App\Plant\Entity\CareSheet;
 use App\Plant\Model\Exposure;
 use App\Plant\Model\Watering;
 use App\Reminder\FrostRiskEvaluator;
-use App\Tests\Utils\Factory\PlantFactory;
 use App\Tests\Utils\Translation\Translators;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -38,16 +40,16 @@ final class RecommendationEngineTest extends TestCase
     {
         $this->engine = self::engine('fr');
 
-        self::assertSame('La mi-ombre lui convient.', $this->recommend(RecommendationSubject::Exposure, self::planting(Exposure::PartShade), PlantFactory::careSheet(exposure: Exposure::PartShade))->message);
+        self::assertSame('La mi-ombre lui convient.', $this->recommend(RecommendationSubject::Exposure, self::planting(Exposure::PartShade), CareSheetFactory::createOne(['exposure' => Exposure::PartShade]))->message);
         self::assertSame(
             "Elle a besoin du plein soleil et se trouve ici à l’ombre\u{a0}: déplacez-la vers un coin en plein soleil, à l’automne ou au début du printemps.",
-            $this->recommend(RecommendationSubject::Exposure, self::planting(Exposure::Shade), PlantFactory::careSheet(exposure: Exposure::Sun))->message,
+            $this->recommend(RecommendationSubject::Exposure, self::planting(Exposure::Shade), CareSheetFactory::createOne(['exposure' => Exposure::Sun]))->message,
         );
     }
 
     public function testTheSameExposureSuitsIt(): void
     {
-        $recommendation = $this->recommend(RecommendationSubject::Exposure, self::planting(Exposure::PartShade), PlantFactory::careSheet(exposure: Exposure::PartShade));
+        $recommendation = $this->recommend(RecommendationSubject::Exposure, self::planting(Exposure::PartShade), CareSheetFactory::createOne(['exposure' => Exposure::PartShade]));
 
         self::assertSame(RecommendationLevel::Ok, $recommendation->level);
         self::assertSame('Part shade suits it.', $recommendation->message);
@@ -55,7 +57,7 @@ final class RecommendationEngineTest extends TestCase
 
     public function testAnExposureOneStepAwayIsAnAdvice(): void
     {
-        $recommendation = $this->recommend(RecommendationSubject::Exposure, self::planting(Exposure::PartShade), PlantFactory::careSheet(exposure: Exposure::Sun));
+        $recommendation = $this->recommend(RecommendationSubject::Exposure, self::planting(Exposure::PartShade), CareSheetFactory::createOne(['exposure' => Exposure::Sun]));
 
         self::assertSame(RecommendationLevel::Info, $recommendation->level);
         self::assertSame('It prefers full sun and gets part shade here: it should cope, but would do better in full sun.', $recommendation->message);
@@ -63,7 +65,7 @@ final class RecommendationEngineTest extends TestCase
 
     public function testTheOppositeExposureIsAWarning(): void
     {
-        $recommendation = $this->recommend(RecommendationSubject::Exposure, self::planting(Exposure::Shade), PlantFactory::careSheet(exposure: Exposure::Sun));
+        $recommendation = $this->recommend(RecommendationSubject::Exposure, self::planting(Exposure::Shade), CareSheetFactory::createOne(['exposure' => Exposure::Sun]));
 
         self::assertSame(RecommendationLevel::Warning, $recommendation->level);
         self::assertSame('It needs full sun and gets shade here: move it to a spot in full sun, in autumn or early spring.', $recommendation->message);
@@ -71,8 +73,8 @@ final class RecommendationEngineTest extends TestCase
 
     public function testAnUnknownExposureIsAskedFor(): void
     {
-        $planting = new Planting('Panicled hydrangea', null, null, new \DateTimeImmutable('2026-11-21'), 191052, 'Hydrangea paniculata');
-        $careSheet = PlantFactory::careSheet(exposure: Exposure::Sun, watering: Watering::High);
+        $planting = PlantingFactory::createOne(['name' => 'Panicled hydrangea', 'trefleId' => 191052, 'scientificName' => 'Hydrangea paniculata']);
+        $careSheet = CareSheetFactory::createOne(['exposure' => Exposure::Sun, 'watering' => Watering::High]);
 
         $exposure = $this->recommend(RecommendationSubject::Exposure, $planting, $careSheet);
         self::assertSame(RecommendationLevel::Info, $exposure->level, 'Not a warning: nothing is wrong yet.');
@@ -84,10 +86,10 @@ final class RecommendationEngineTest extends TestCase
 
     public function testTheUnknownExposureOfItsSpaceIsAskedFor(): void
     {
-        $shed = new Space('By the shed', null, Soil::Clay, new \DateTimeImmutable('2026-01-01'));
-        $planting = new Planting('Panicled hydrangea', $shed, null, new \DateTimeImmutable('2026-11-21'));
+        $shed = SpaceFactory::createOne(['name' => 'By the shed', 'soil' => Soil::Clay]);
+        $planting = PlantingFactory::new()->inSpace($shed)->create(['name' => 'Panicled hydrangea']);
 
-        $exposure = $this->recommend(RecommendationSubject::Exposure, $planting, PlantFactory::careSheet(exposure: Exposure::Sun));
+        $exposure = $this->recommend(RecommendationSubject::Exposure, $planting, CareSheetFactory::createOne(['exposure' => Exposure::Sun]));
 
         self::assertSame(RecommendationLevel::Info, $exposure->level);
         self::assertSame('Tell us the exposure of By the shed, in "My spaces": its care sheet asks for full sun.', $exposure->message);
@@ -95,9 +97,9 @@ final class RecommendationEngineTest extends TestCase
 
     public function testTheExposureFollowsTheSpace(): void
     {
-        $shed = new Space('By the shed', Exposure::Shade, null, new \DateTimeImmutable('2026-01-01'));
-        $planting = new Planting('Panicled hydrangea', $shed, null, new \DateTimeImmutable('2026-11-21'));
-        $careSheet = PlantFactory::careSheet(exposure: Exposure::Sun);
+        $shed = SpaceFactory::createOne(['name' => 'By the shed', 'exposure' => Exposure::Shade]);
+        $planting = PlantingFactory::new()->inSpace($shed)->create(['name' => 'Panicled hydrangea']);
+        $careSheet = CareSheetFactory::createOne(['exposure' => Exposure::Sun]);
         self::assertSame(RecommendationLevel::Warning, $this->recommend(RecommendationSubject::Exposure, $planting, $careSheet)->level);
 
         $shed->revise('By the shed', Exposure::Sun, null);
@@ -110,7 +112,7 @@ final class RecommendationEngineTest extends TestCase
         $planting = self::planting(Exposure::Sun);
         $planting->recordCare(CareTask::Watering, new \DateTimeImmutable('2026-07-02'));
 
-        $recommendation = $this->recommend(RecommendationSubject::Watering, $planting, PlantFactory::careSheet(watering: Watering::High), today: '2026-07-04');
+        $recommendation = $this->recommend(RecommendationSubject::Watering, $planting, CareSheetFactory::createOne(['watering' => Watering::High]), today: '2026-07-04');
 
         self::assertSame(RecommendationLevel::Info, $recommendation->level);
         self::assertSame('It needs plenty of water and gets full sun here: water it often in summer, and mulch the soil to keep it moist. Last watered on 2 July 2026.', $recommendation->message);
@@ -118,7 +120,7 @@ final class RecommendationEngineTest extends TestCase
 
     public function testAForecastFrostOnAnUnprotectedPlantIsAWarning(): void
     {
-        $careSheet = PlantFactory::careSheet(minTemperatureC: -3, frostSensitive: true);
+        $careSheet = CareSheetFactory::createOne(['minTemperatureC' => -3, 'frostSensitive' => true]);
 
         $recommendation = $this->recommend(RecommendationSubject::Frost, self::planting(), $careSheet, '2026-12-01', self::frostForecast());
 
@@ -128,7 +130,7 @@ final class RecommendationEngineTest extends TestCase
 
     public function testAForecastFrostBelowTheHardinessOfAHardyPlant(): void
     {
-        $careSheet = PlantFactory::careSheet(minTemperatureC: -12);
+        $careSheet = CareSheetFactory::createOne(['minTemperatureC' => -12]);
 
         $recommendation = $this->recommend(RecommendationSubject::Frost, self::planting(), $careSheet, '2026-12-01', self::frostForecast());
 
@@ -142,7 +144,7 @@ final class RecommendationEngineTest extends TestCase
         $planting = self::planting();
         $planting->recordCare(CareTask::FrostProtection, new \DateTimeImmutable('2026-11-20'));
 
-        $recommendation = $this->recommend(RecommendationSubject::Frost, $planting, PlantFactory::careSheet(minTemperatureC: -3, frostSensitive: true), '2026-12-01', self::frostForecast());
+        $recommendation = $this->recommend(RecommendationSubject::Frost, $planting, CareSheetFactory::createOne(['minTemperatureC' => -3, 'frostSensitive' => true]), '2026-12-01', self::frostForecast());
 
         self::assertSame(RecommendationLevel::Info, $recommendation->level);
         self::assertStringEndsWith('Sheltered on 20 November 2026: check that the protection holds.', $recommendation->message);
@@ -153,7 +155,7 @@ final class RecommendationEngineTest extends TestCase
         $planting = self::planting();
         $planting->recordCare(CareTask::FrostProtection, new \DateTimeImmutable('2025-12-01'));
 
-        $recommendation = $this->recommend(RecommendationSubject::Frost, $planting, PlantFactory::careSheet(minTemperatureC: -3, frostSensitive: true), '2026-12-01', self::frostForecast());
+        $recommendation = $this->recommend(RecommendationSubject::Frost, $planting, CareSheetFactory::createOne(['minTemperatureC' => -3, 'frostSensitive' => true]), '2026-12-01', self::frostForecast());
 
         self::assertSame(RecommendationLevel::Warning, $recommendation->level);
     }
@@ -163,14 +165,14 @@ final class RecommendationEngineTest extends TestCase
         $planting = self::planting();
         $planting->recordCare(CareTask::FrostProtection, new \DateTimeImmutable('2026-10-15'));
 
-        $recommendation = $this->recommend(RecommendationSubject::Frost, $planting, PlantFactory::careSheet(minTemperatureC: -3, frostSensitive: true), '2027-01-10', self::frostForecast('2027-01-10'));
+        $recommendation = $this->recommend(RecommendationSubject::Frost, $planting, CareSheetFactory::createOne(['minTemperatureC' => -3, 'frostSensitive' => true]), '2027-01-10', self::frostForecast('2027-01-10'));
 
         self::assertSame(RecommendationLevel::Info, $recommendation->level);
     }
 
     public function testAHardyPlantAboveTheForecast(): void
     {
-        $recommendation = $this->recommend(RecommendationSubject::Frost, self::planting(), PlantFactory::careSheet(minTemperatureC: -20), '2026-12-01', self::frostForecast());
+        $recommendation = $this->recommend(RecommendationSubject::Frost, self::planting(), CareSheetFactory::createOne(['minTemperatureC' => -20]), '2026-12-01', self::frostForecast());
 
         self::assertSame(RecommendationLevel::Ok, $recommendation->level);
         self::assertSame('Hardy down to -20 °C: the forecast stays above.', $recommendation->message);
@@ -178,7 +180,7 @@ final class RecommendationEngineTest extends TestCase
 
     public function testWithoutForecastAFrostSensitivePlantIsAReminderInWinter(): void
     {
-        $recommendation = $this->recommend(RecommendationSubject::Frost, self::planting(), PlantFactory::careSheet(minTemperatureC: -3, frostSensitive: true), '2026-12-01');
+        $recommendation = $this->recommend(RecommendationSubject::Frost, self::planting(), CareSheetFactory::createOne(['minTemperatureC' => -3, 'frostSensitive' => true]), '2026-12-01');
 
         self::assertSame(RecommendationLevel::Info, $recommendation->level);
         self::assertSame('Frost sensitive (hardy down to -3 °C), and no frost protection recorded this winter: bring it indoors or shelter it.', $recommendation->message);
@@ -186,7 +188,7 @@ final class RecommendationEngineTest extends TestCase
 
     public function testInAPruningMonthWithoutPruning(): void
     {
-        $recommendation = $this->recommend(RecommendationSubject::Pruning, self::planting(), PlantFactory::careSheet(pruningMonths: [2, 3]), '2026-03-15');
+        $recommendation = $this->recommend(RecommendationSubject::Pruning, self::planting(), CareSheetFactory::createOne(['pruningMonths' => [2, 3]]), '2026-03-15');
 
         self::assertSame(RecommendationLevel::Action, $recommendation->level);
         self::assertSame('Time to prune it (February and March). Cut the faded flower heads back to the first pair of buds.', $recommendation->message);
@@ -197,7 +199,7 @@ final class RecommendationEngineTest extends TestCase
         $planting = self::planting();
         $planting->recordCare(CareTask::Pruning, new \DateTimeImmutable('2026-02-20'));
 
-        $recommendation = $this->recommend(RecommendationSubject::Pruning, $planting, PlantFactory::careSheet(pruningMonths: [2, 3]), '2026-03-15');
+        $recommendation = $this->recommend(RecommendationSubject::Pruning, $planting, CareSheetFactory::createOne(['pruningMonths' => [2, 3]]), '2026-03-15');
 
         self::assertSame(RecommendationLevel::Ok, $recommendation->level);
         self::assertSame('Pruned on 20 February 2026: done for this season. Next time in February and March.', $recommendation->message);
@@ -208,7 +210,7 @@ final class RecommendationEngineTest extends TestCase
         $planting = self::planting();
         $planting->recordCare(CareTask::Pruning, new \DateTimeImmutable('2025-03-10'));
 
-        $recommendation = $this->recommend(RecommendationSubject::Pruning, $planting, PlantFactory::careSheet(pruningMonths: [2, 3]), '2026-03-15');
+        $recommendation = $this->recommend(RecommendationSubject::Pruning, $planting, CareSheetFactory::createOne(['pruningMonths' => [2, 3]]), '2026-03-15');
 
         self::assertSame(RecommendationLevel::Action, $recommendation->level);
         self::assertStringEndsWith('Last pruned on 10 March 2025.', $recommendation->message);
@@ -223,7 +225,7 @@ final class RecommendationEngineTest extends TestCase
         $planting = self::planting();
         $planting->recordCare(CareTask::Pruning, new \DateTimeImmutable($prunedOn));
 
-        $recommendation = $this->recommend(RecommendationSubject::Pruning, $planting, PlantFactory::careSheet(pruningMonths: $pruningMonths), $today);
+        $recommendation = $this->recommend(RecommendationSubject::Pruning, $planting, CareSheetFactory::createOne(['pruningMonths' => $pruningMonths]), $today);
 
         self::assertSame($expected, $recommendation->level);
     }
@@ -242,7 +244,7 @@ final class RecommendationEngineTest extends TestCase
 
     public function testOutOfSeasonItTellsWhenAndHowToPrune(): void
     {
-        $recommendation = $this->recommend(RecommendationSubject::Pruning, self::planting(), PlantFactory::careSheet(pruningMonths: [2, 3]), '2026-07-01');
+        $recommendation = $this->recommend(RecommendationSubject::Pruning, self::planting(), CareSheetFactory::createOne(['pruningMonths' => [2, 3]]), '2026-07-01');
 
         self::assertSame(RecommendationLevel::Info, $recommendation->level);
         self::assertSame('Prune it in February and March. Cut the faded flower heads back to the first pair of buds.', $recommendation->message);
@@ -250,7 +252,7 @@ final class RecommendationEngineTest extends TestCase
 
     public function testTheMostPressingFirst(): void
     {
-        $careSheet = PlantFactory::careSheet(minTemperatureC: -3, frostSensitive: true, pruningMonths: [12], exposure: Exposure::Sun, watering: Watering::Medium);
+        $careSheet = CareSheetFactory::createOne(['minTemperatureC' => -3, 'frostSensitive' => true, 'pruningMonths' => [12], 'exposure' => Exposure::Sun, 'watering' => Watering::Medium]);
 
         $recommendations = $this->engine->recommend(self::planting(Exposure::Sun), $careSheet, new \DateTimeImmutable('2026-12-01'), self::frostForecast());
 
@@ -268,9 +270,9 @@ final class RecommendationEngineTest extends TestCase
     #[DataProvider('provideTheWateringFollowsTheNeedsAndTheExposureCases')]
     public function testTheWateringFollowsTheNeedsAndTheExposure(Watering $watering, ?Exposure $exposure, string $expected): void
     {
-        $planting = new Planting('Hydrangea by the shed', self::space($exposure), null, new \DateTimeImmutable('2026-01-01'));
+        $planting = PlantingFactory::new()->inSpace(self::space($exposure))->create(['name' => 'Hydrangea by the shed']);
 
-        self::assertSame($expected, $this->recommend(RecommendationSubject::Watering, $planting, PlantFactory::careSheet(watering: $watering))->message);
+        self::assertSame($expected, $this->recommend(RecommendationSubject::Watering, $planting, CareSheetFactory::createOne(['watering' => $watering]))->message);
     }
 
     /**
@@ -289,14 +291,14 @@ final class RecommendationEngineTest extends TestCase
     {
         $forecast = new FrostForecast(46.6, 2.4, [new DailyMinimum(new \DateTimeImmutable('2026-12-01'), 2.0), new DailyMinimum(new \DateTimeImmutable('2026-12-02'), -1.5)]);
 
-        $recommendation = $this->recommend(RecommendationSubject::Frost, self::planting(), PlantFactory::careSheet(minTemperatureC: -3, frostSensitive: true), '2026-12-01', $forecast);
+        $recommendation = $this->recommend(RecommendationSubject::Frost, self::planting(), CareSheetFactory::createOne(['minTemperatureC' => -3, 'frostSensitive' => true]), '2026-12-01', $forecast);
 
         self::assertSame('Frost expected on Wednesday 2 December (-1.5 °C). It is frost sensitive: bring it indoors or shelter it.', $recommendation->message);
     }
 
     public function testWithoutForecastAHardyPlantReliesOnItsHardiness(): void
     {
-        $recommendation = $this->recommend(RecommendationSubject::Frost, self::planting(), PlantFactory::careSheet(minTemperatureC: -15), '2026-12-01');
+        $recommendation = $this->recommend(RecommendationSubject::Frost, self::planting(), CareSheetFactory::createOne(['minTemperatureC' => -15]), '2026-12-01');
 
         self::assertSame(RecommendationLevel::Ok, $recommendation->level);
         self::assertSame('Hardy down to -15 °C.', $recommendation->message);
@@ -304,7 +306,7 @@ final class RecommendationEngineTest extends TestCase
 
     public function testAFrostSensitivePlantOutOfTheColdSeason(): void
     {
-        $recommendation = $this->recommend(RecommendationSubject::Frost, self::planting(), PlantFactory::careSheet(minTemperatureC: 5, frostSensitive: true), '2026-07-01');
+        $recommendation = $this->recommend(RecommendationSubject::Frost, self::planting(), CareSheetFactory::createOne(['minTemperatureC' => 5, 'frostSensitive' => true]), '2026-07-01');
 
         self::assertSame(RecommendationLevel::Info, $recommendation->level);
         self::assertSame('Frost sensitive (hardy down to 5 °C): bring it indoors or shelter it before the first autumn frost.', $recommendation->message);
@@ -315,7 +317,7 @@ final class RecommendationEngineTest extends TestCase
         $planting = self::planting();
         $planting->recordCare(CareTask::FrostProtection, new \DateTimeImmutable('2026-11-20'));
 
-        $recommendation = $this->recommend(RecommendationSubject::Frost, $planting, PlantFactory::careSheet(minTemperatureC: -3, frostSensitive: true), '2026-12-01');
+        $recommendation = $this->recommend(RecommendationSubject::Frost, $planting, CareSheetFactory::createOne(['minTemperatureC' => -3, 'frostSensitive' => true]), '2026-12-01');
 
         self::assertSame(RecommendationLevel::Ok, $recommendation->level);
         self::assertSame('Sheltered from frost on 20 November 2026.', $recommendation->message);
@@ -323,7 +325,7 @@ final class RecommendationEngineTest extends TestCase
 
     public function testAPlantWithoutPruningMonths(): void
     {
-        $recommendation = $this->recommend(RecommendationSubject::Pruning, self::planting(), PlantFactory::careSheet(pruningMonths: []), '2026-03-15');
+        $recommendation = $this->recommend(RecommendationSubject::Pruning, self::planting(), CareSheetFactory::createOne(['pruningMonths' => []]), '2026-03-15');
 
         self::assertSame(RecommendationLevel::Ok, $recommendation->level);
         self::assertSame('No regular pruning in its care sheet. Cut the faded flower heads back to the first pair of buds.', $recommendation->message);
@@ -334,7 +336,7 @@ final class RecommendationEngineTest extends TestCase
         $planting = self::planting();
         $planting->recordCare(CareTask::Pruning, new \DateTimeImmutable('2026-03-10'));
 
-        $recommendation = $this->recommend(RecommendationSubject::Pruning, $planting, PlantFactory::careSheet(pruningMonths: [3]), '2026-07-01');
+        $recommendation = $this->recommend(RecommendationSubject::Pruning, $planting, CareSheetFactory::createOne(['pruningMonths' => [3]]), '2026-07-01');
 
         self::assertSame('Prune it in March. Cut the faded flower heads back to the first pair of buds. Last pruned on 10 March 2026.', $recommendation->message);
     }
@@ -359,12 +361,12 @@ final class RecommendationEngineTest extends TestCase
 
     private static function planting(Exposure $exposure = Exposure::PartShade): Planting
     {
-        return new Planting('Hydrangea by the shed', self::space($exposure), null, new \DateTimeImmutable('2026-01-01'), 191047, 'Hydrangea macrophylla');
+        return PlantingFactory::new()->inSpace(self::space($exposure))->create(['name' => 'Hydrangea by the shed', 'trefleId' => 191047, 'scientificName' => 'Hydrangea macrophylla']);
     }
 
     private static function space(?Exposure $exposure): Space
     {
-        return new Space('By the shed', $exposure, null, new \DateTimeImmutable('2026-01-01'));
+        return SpaceFactory::createOne(['name' => 'By the shed', 'exposure' => $exposure]);
     }
 
     /**

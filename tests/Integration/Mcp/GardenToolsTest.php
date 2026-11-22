@@ -2,15 +2,14 @@
 
 namespace App\Tests\Integration\Mcp;
 
-use App\Garden\Entity\Space;
+use App\Factory\PlantFactory;
+use App\Factory\PlantingFactory;
+use App\Factory\SpaceFactory;
 use App\Garden\Model\Soil;
 use App\Garden\PlantingRepository;
 use App\Garden\SpaceRepository;
 use App\Plant\Model\Exposure;
-use App\Tests\Utils\Factory\PlantFactory;
-use App\Tests\Utils\Factory\PlantingFactory;
 use App\Tests\Utils\Mcp\McpTestCase;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -20,9 +19,9 @@ final class GardenToolsTest extends McpTestCase
 {
     public function testListSpaces(): void
     {
-        $terrace = $this->save(new Space('Terrace', Exposure::PartShade, Soil::Loamy, new \DateTimeImmutable('2026-11-01')));
-        $this->save(new Space('Balcony', null, null, new \DateTimeImmutable('2026-11-01')));
-        $this->save(PlantingFactory::of($this->save(PlantFactory::validated()), $terrace));
+        $terrace = SpaceFactory::createOne(['name' => 'Terrace', 'exposure' => Exposure::PartShade, 'soil' => Soil::Loamy]);
+        SpaceFactory::createOne(['name' => 'Balcony']);
+        PlantingFactory::new()->of(PlantFactory::new()->validated()->create())->inSpace($terrace)->create();
 
         $result = $this->callTool('list_spaces');
 
@@ -34,8 +33,8 @@ final class GardenToolsTest extends McpTestCase
 
     public function testProposePlantingWritesNothing(): void
     {
-        $plant = $this->save(PlantFactory::validated());
-        $terrace = $this->save(new Space('Terrace', null, null, new \DateTimeImmutable('2026-11-01')));
+        $plant = PlantFactory::new()->validated()->create();
+        $terrace = SpaceFactory::createOne(['name' => 'Terrace']);
 
         $result = $this->callTool('propose_planting', ['plant_id' => $plant->getId(), 'name' => ' Hortensia ', 'space_id' => $terrace->getId()]);
 
@@ -51,7 +50,7 @@ final class GardenToolsTest extends McpTestCase
 
     public function testProposePlantingWithoutASpace(): void
     {
-        $plant = $this->save(PlantFactory::validated());
+        $plant = PlantFactory::new()->validated()->create();
 
         $result = $this->callTool('propose_planting', ['plant_id' => $plant->getId(), 'name' => 'Hortensia']);
 
@@ -61,8 +60,8 @@ final class GardenToolsTest extends McpTestCase
 
     public function testProposePlantingRefusesADraftAnUnknownPlantOrAnUnknownSpace(): void
     {
-        $draft = $this->save(PlantFactory::draft());
-        $validated = $this->save(PlantFactory::validated());
+        $draft = PlantFactory::createOne();
+        $validated = PlantFactory::new()->validated()->create();
 
         self::assertStringContainsString('is a draft: the user validates its card first', $this->callToolExpectingError('propose_planting', ['plant_id' => $draft->getId(), 'name' => 'Hortensia']));
         self::assertStringContainsString('No plant with id 999999', $this->callToolExpectingError('propose_planting', ['plant_id' => 999999, 'name' => 'Hortensia']));
@@ -81,7 +80,7 @@ final class GardenToolsTest extends McpTestCase
 
     public function testProposeSpaceRefusesASpaceTheGardenHas(): void
     {
-        $terrace = $this->save(new Space('Terrace', null, null, new \DateTimeImmutable('2026-11-01')));
+        $terrace = SpaceFactory::createOne(['name' => 'Terrace']);
 
         self::assertStringContainsString(
             \sprintf('The space "Terrace" exists already (id %d): propose the plant in it with propose_planting.', $terrace->getId()),
@@ -97,21 +96,5 @@ final class GardenToolsTest extends McpTestCase
 
         self::assertSame(['Where did you plant it?', ['Terrace', 'A new space']], [$result['question'], $result['options']]);
         self::assertStringContainsString('Stop here', $result['next_step']);
-    }
-
-    /**
-     * @template T of object
-     *
-     * @param T $entity
-     *
-     * @return T
-     */
-    private function save(object $entity): object
-    {
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($entity);
-        $entityManager->flush();
-
-        return $entity;
     }
 }

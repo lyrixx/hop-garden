@@ -27,7 +27,7 @@ const EDGES: Array<{ from: [number, number]; to: [number, number]; label: string
     { from: [1325, 380], to: [1325, 460], label: 'tools', labelOffset: [45, 0] },
     { from: [1130, 540], to: [920, 720], label: 'MCP over HTTP', highlight: true, labelOffset: [20, -22] },
     { from: [690, 800], to: [690, 900], label: '' },
-    { from: [1130, 350], to: [920, 500], label: 'tokens · tool calls · card', labelOffset: [-6, -16] },
+    { from: [1130, 350], to: [920, 500], label: 'tokens · tool calls · cards', labelOffset: [-6, -16] },
     { from: [460, 530], to: [330, 530], label: 'SSE', labelOffset: [0, 28] },
 ];
 

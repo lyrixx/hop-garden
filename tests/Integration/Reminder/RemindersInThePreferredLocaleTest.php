@@ -2,14 +2,15 @@
 
 namespace App\Tests\Integration\Reminder;
 
+use App\Factory\CareSheetFactory;
+use App\Factory\PlantFactory;
+use App\Factory\PlantingFactory;
 use App\Locale\Model\SupportedLocale;
 use App\Locale\PreferredLocale;
 use App\Reminder\Message\CheckRemindersMessage;
 use App\Reminder\Model\ReminderType;
 use App\Reminder\NotificationRepository;
 use App\Reminder\Notifier\NotificationToastPublisher;
-use App\Tests\Utils\Factory\PlantFactory;
-use App\Tests\Utils\Factory\PlantingFactory;
 use App\Tests\Utils\Mercure\RecordingHub;
 use App\Tests\Utils\Mercure\TurboStream;
 use Doctrine\ORM\EntityManagerInterface;
@@ -35,14 +36,14 @@ final class RemindersInThePreferredLocaleTest extends KernelTestCase
         self::bootKernel();
         RecordingHub::reset();
 
-        $lemonTree = PlantFactory::validated('Citronnier', PlantFactory::careSheet(minTemperatureC: -3, frostSensitive: true, pruningMonths: [12]));
-        $lemonTree->enableReminder(ReminderType::Frost);
-        $lemonTree->enableReminder(ReminderType::Pruning);
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($lemonTree);
-        $entityManager->persist(PlantingFactory::of($lemonTree));
+        $lemonTree = PlantFactory::new()
+            ->validated()
+            ->withEnabledReminders(ReminderType::Frost, ReminderType::Pruning)
+            ->create(['commonName' => 'Citronnier', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -3, 'frostSensitive' => true, 'pruningMonths' => [12]])])
+        ;
+        PlantingFactory::new()->of($lemonTree)->create();
         self::getContainer()->get(PreferredLocale::class)->set(SupportedLocale::French);
-        $entityManager->flush();
+        self::getContainer()->get(EntityManagerInterface::class)->flush();
     }
 
     public function testTheSchedulerNotifiesInThePreferredLocale(): void
