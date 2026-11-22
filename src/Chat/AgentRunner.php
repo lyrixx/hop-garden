@@ -16,7 +16,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Uid\UuidV7;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpException;
@@ -34,7 +34,7 @@ final readonly class AgentRunner
     private const int DELTA_BATCH_LENGTH = 24;
 
     public function __construct(
-        #[Autowire(service: 'ai.agent.gardener')]
+        #[Target('gardener')]
         private AgentInterface $agent,
         private ChatPublisher $publisher,
         private ToolCallDisplay $toolCallDisplay,

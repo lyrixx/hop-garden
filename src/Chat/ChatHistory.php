@@ -16,6 +16,8 @@ use Symfony\Component\Uid\UuidV7;
 final readonly class ChatHistory
 {
     public function __construct(
+        // Not #[Target('chat')]: symfony/ai-bundle 1.0.0-BETA1 aliases that target to a missing service,
+        // "ai.message_store.doctrine.chat" (without ".dbal")
         #[Autowire(service: 'ai.message_store.doctrine.dbal.chat')]
         private MessageStoreInterface $messageStore,
         private ToolCallDisplay $toolCallDisplay,
