@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'invitation.unavailable.title'|trans }} · Hop Garden{% endblock %}
+
+{#
+    The link of an invitation that no longer works, and why: status, one of unknown (never was, or its garden was
+    deleted), expired, revoked, accepted. Neither its garden nor who sent it: the link may have gone further than its address
+#}
+{% block body %}
+<div class="with-specimen auth">
+<div>
+    <header class="plate-head">
+        <span class="plate-tab">{{ 'invitation.tab'|trans }}</span>
+        <h1>{{ 'invitation.unavailable.title'|trans }}</h1>
+    </header>
+
+    <section class="card crowned auth-note invitation-{{ status }}">
+        <span class="pict"><twig:Icon name="people" :size="18"/></span>
+        <div>
+            <p>{{ ('invitation.unavailable.' ~ status)|trans }}</p>
+            <p class="hint">{{ 'invitation.unavailable.ask'|trans }}</p>
+        </div>
+    </section>
+</div>
+<twig:Specimen plate="wormia-subsessilis"/>
+</div>
+{% endblock %}

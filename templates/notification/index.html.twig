@@ -48,15 +48,27 @@
     {% else %}
         <ul class="notification-list">
             {% for notification in notifications %}
-                {% set type = notification.reminder.type %}
-                <li class="card notification notification-{{ type.value }} {{ notification.read ? '' : 'is-unread' }}">
-                    <span class="pict {{ type.calendar ? '' : 'pict-frost' }}"><twig:Icon :name="type.pictogram" :size="18"/></span>
-                    <div>
-                        <span class="tag tag-{{ type.value }}">{{ type|trans }}</span>
-                        <p>{{ notification.message }}</p>
-                        <p class="meta"><twig:Reminder:PlantLink :plant="notification.reminder.plant" :plantingIds="planting_ids"/> · {{ notification.createdAt|day_and_time }}</p>
-                    </div>
-                </li>
+                {% if notification.reminder %}
+                    {% set type = notification.reminder.type %}
+                    <li class="card notification notification-{{ type.value }} {{ notification.read ? '' : 'is-unread' }}">
+                        <span class="pict {{ type.calendar ? '' : 'pict-frost' }}"><twig:Icon :name="type.pictogram" :size="18"/></span>
+                        <div>
+                            <span class="tag tag-{{ type.value }}">{{ type|trans }}</span>
+                            <p>{{ notification.message }}</p>
+                            <p class="meta"><twig:Reminder:PlantLink :plant="notification.reminder.plant" :plantingIds="planting_ids"/> · {{ notification.createdAt|day_and_time }}</p>
+                        </div>
+                    </li>
+                {% else %}
+                    {# A new member, with the invitation of the recipient #}
+                    <li class="card notification notification-member {{ notification.read ? '' : 'is-unread' }}">
+                        <span class="pict"><twig:Icon name="people" :size="18"/></span>
+                        <div>
+                            <span class="tag tag-member">{{ 'notification.new_member.tag'|trans }}</span>
+                            <p>{{ notification.message }}</p>
+                            <p class="meta"><a href="{{ path('garden_members', {id: notification.garden.id}) }}">{{ 'toast.see_members'|trans }}</a> · {{ notification.createdAt|day_and_time }}</p>
+                        </div>
+                    </li>
+                {% endif %}
             {% endfor %}
         </ul>
     {% endif %}

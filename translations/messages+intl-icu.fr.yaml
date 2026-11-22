@@ -172,6 +172,13 @@ email:
         expiry: "Ce lien marche pendant une heure. Ce n’est pas vous ? Ignorez cet email : rien ne change."
         intro: "Confirmez que c’est la nouvelle adresse de votre compte Hop Garden :"
         subject: "Confirmez votre nouvelle adresse"
+    invitation:
+        button: "Rejoindre {garden}"
+        expiry: "Ce lien marche jusqu’au {date}, une fois. Vous ne l’attendiez pas ? Ignorez cet email : rien ne se passe sans vous."
+        hello: "Bonjour,"
+        intro: "{inviter} vous invite à jardiner ensemble dans {garden}, sur Hop Garden : vous partagez ses plantes, leurs fiches de culture et leurs rappels."
+        no_waiting: "Pas de liste d’attente avec cette invitation : créez votre compte, ou connectez-vous, et vous entrez."
+        subject: "{inviter} vous invite dans {garden} sur Hop Garden"
     layout:
         copy_link: "Ou copiez ce lien dans votre navigateur :"
         footer: "Hop Garden : les plantes de votre jardin, avec un agent IA."
@@ -185,6 +192,7 @@ email:
         button: "Vérifier mon adresse"
         expiry: "Ce lien marche pendant 48 heures. Ce n’est pas vous ? Ignorez cet email : aucun compte n’est créé sans lui."
         intro: "Merci de rejoindre Hop Garden. Vérifiez votre adresse : votre compte rejoint alors la liste d’attente."
+        intro_invited: "Merci de rejoindre Hop Garden. Vérifiez votre adresse, puis connectez-vous : votre invitation vous fait entrer, sans liste d’attente."
         subject: "Vérifiez votre adresse pour Hop Garden"
 exposure:
     part_shade: "Mi-ombre"
@@ -203,6 +211,14 @@ flash:
     garden:
         created: "{name} est prêt. Dites à l’assistant ce qui y pousse."
         saved: "{name} est enregistré."
+    invitation:
+        closed: "L’invitation de {email} a été acceptée ou révoquée entre-temps."
+        joined: "Bienvenue dans {garden} : vous en êtes membre."
+        new_link: "Un nouveau lien pour {email} : le précédent ne marche plus."
+        resent: "Invitation renvoyée à {email}, avec un nouveau lien : le précédent ne marche plus."
+        revoked: "L’invitation de {email} est révoquée : son lien ne marche plus."
+        sent: "Invitation envoyée à {email}. Son lien est aussi ci-dessous : envoyez-le autrement si vous voulez."
+        verify_first: "Votre compte est prêt, et membre de {garden}. Vérifiez votre adresse avec le lien que nous venons d’envoyer, puis connectez-vous."
     planting:
         added_drafting: "{name} est dans votre jardin. L’assistant rédige sa fiche de culture."
         added_quota_reached: "{name} est dans votre jardin. Sa fiche attend : l’assistant a assez travaillé pour votre jardin aujourd’hui, réessayez demain."
@@ -212,8 +228,10 @@ flash:
         saved: "Les infos de jardin de {name} sont enregistrées."
     quota:
         agent_runs: "L’assistant a assez travaillé pour votre jardin aujourd’hui : réessayez demain."
+        invitations: "Votre jardin a envoyé assez d’invitations aujourd’hui : réessayez demain."
     registration:
         link_expired: "Ce lien a expiré. Choisissez un nouveau mot de passe : son lien vérifie aussi votre adresse."
+        verified: "Votre adresse est vérifiée : connectez-vous."
     reset_password:
         done: "Votre mot de passe est changé : connectez-vous avec."
         invalid_link: "Ce lien ne marche pas, ou a expiré : demandez-en un nouveau."
@@ -265,9 +283,35 @@ garden:
         place:
             label: "Laquelle ?"
         search: "Chercher"
+    members:
+        intro: "Ses membres partagent ses plantes, ses fiches de culture, ses espaces et ses rappels."
+        invitation:
+            copied: "Copié"
+            copy: "Copier"
+            expired_on: "expirée le {date}"
+            expires_on: "expire le {date}"
+            link: "Son lien, à envoyer autrement"
+            new_link: "Copier un nouveau lien"
+            new_link_help: "Un nouveau lien, sans email : celui envoyé avant ne marche plus."
+            resend: "Renvoyer"
+            revoke: "Révoquer"
+            revoke_confirm: "Révoquer l’invitation de {email} ? Son lien ne marchera plus."
+            sent_on: "Invitée le {date} par {name}"
+        invitations: "Invitations en attente"
+        invite:
+            email: "Son adresse email"
+            help: "Nous lui envoyons par email un lien pour rejoindre le jardin, valable 14 jours. Il s’affiche aussi ici, pour l’envoyer autrement."
+            placeholder: "nom@exemple.fr"
+            submit: "Inviter"
+            title: "Inviter quelqu’un"
+        no_invitation: "Aucune invitation en attente."
+        since: "depuis le {date}"
+        tab: "Membres"
+        title: "Membres"
+        you: "(vous)"
     settings:
         intro: "Il pousse à {place} ({timezone}). Cherchez une autre ville pour le déplacer."
-        members: "Ses membres"
+        members: "{count, plural, one {Son membre et ses invitations} other {Ses # membres et ses invitations}}"
         tab: "Réglages"
         title: "Réglages du jardin"
     subtitle: "Chacune de mes plantes là où elle pousse : sa photo, les soins reçus, et l’espèce à laquelle elle appartient, avec sa fiche de culture et ses rappels."
@@ -326,6 +370,34 @@ home:
     problems:
         heading: "Ce que Hop Garden règle"
     title: "Hop Garden · Rappels de taille et alertes gel pour votre jardin"
+invitation:
+    accept: "Rejoindre {garden}"
+    accept_other_account: "Rejoindre avec ce compte"
+    create_account: "Créer mon compte"
+    intro: "{inviter} vous invite à jardiner ensemble : vous partagez ses plantes, leurs fiches de culture et leurs rappels."
+    log_in: "J’ai un compte : me connecter"
+    log_out: "Utiliser un autre compte"
+    member:
+        body: "Vous êtes déjà membre de {garden}."
+        open: "Ouvrir {garden}"
+        title: "Déjà dans {garden}"
+    no_waiting: "Pas de liste d’attente avec cette invitation : créez votre compte, ou connectez-vous, et vous entrez."
+    other_account: "Cette invitation a été envoyée à {email}, et vous utilisez le compte {current}. Rejoignez avec ce compte, ou déconnectez-vous pour en utiliser un autre."
+    register:
+        email_help: "L’adresse invitée vous fait entrer tout de suite. Avec une autre, vérifiez-la d’abord."
+        submit: "Créer mon compte et rejoindre {garden}"
+        subtitle: "Pour rejoindre {garden}, à l’invitation de {inviter} : sans liste d’attente."
+        title: "Créez votre compte"
+    sent_to: "Invitation pour {email}"
+    tab: "Invitation"
+    title: "Rejoindre {garden}"
+    unavailable:
+        accepted: "Cette invitation a déjà servi : chacune fait entrer une personne."
+        ask: "Demandez-en une nouvelle à la personne qui vous l’a envoyée."
+        expired: "Cette invitation a expiré."
+        revoked: "Cette invitation a été retirée."
+        title: "Cette invitation ne marche plus"
+        unknown: "Cette invitation n’existe pas, ou plus : vérifiez le lien. Son jardin a peut-être été supprimé."
 legal:
     draft_note: "Cette page est un brouillon : les parties marquées « À compléter » attendent les informations de l’éditeur."
     last_updated: "Dernière mise à jour :"
@@ -508,6 +580,7 @@ nav:
     assistant: "Assistant"
     garden: "Mon jardin"
     garden_current: "Votre jardin"
+    garden_members: "Les membres de {garden}"
     garden_new: "Nouveau jardin"
     garden_settings: "Réglages du jardin"
     garden_switch: "Changer de jardin"
@@ -523,6 +596,10 @@ notification:
         hint: "Les rappels activés des {weeks} prochaines semaines, et les alertes gel des prévisions."
         no_forecast: "Sans les alertes gel : pas de prévisions pour l’instant."
         title: "À venir"
+    new_member:
+        message: "{name} a rejoint {garden}."
+        other_address: "{name} a rejoint {garden}, avec l’invitation envoyée à {email}."
+        tag: "Nouveau membre"
     received:
         empty: "Rien pour l’instant. Les rappels sont vérifiés chaque jour à 7 h."
         title: "Reçues"
@@ -801,6 +878,7 @@ toast:
     frost: "Alerte gel"
     reminder: "Rappel"
     see: "Voir {name}"
+    see_members: "Voir les membres"
 unit:
     celsius: "{temperature} °C"
 watering:

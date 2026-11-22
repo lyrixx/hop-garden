@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'invitation.member.title'|trans({garden: garden.name}) }} · Hop Garden{% endblock %}
+
+{# The link of an invitation, opened by a member of its garden: whatever its status, their garden #}
+{% block body %}
+<div class="with-specimen auth">
+<div>
+    <header class="plate-head">
+        <span class="plate-tab">{{ 'invitation.tab'|trans }}</span>
+        <h1>{{ 'invitation.member.title'|trans({garden: garden.name}) }}</h1>
+    </header>
+
+    <section class="card crowned auth-note">
+        <span class="pict"><twig:Icon name="check" :size="18"/></span>
+        <div>
+            <p>{{ 'invitation.member.body'|trans({garden: garden.name}) }}</p>
+            <form method="post" action="{{ path('garden_switch', {id: garden.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('garden_switch') }}">
+                <twig:Button class="button-next">{{ 'invitation.member.open'|trans({garden: garden.name}) }}</twig:Button>
+            </form>
+        </div>
+    </section>
+</div>
+<twig:Specimen plate="wormia-subsessilis"/>
+</div>
+{% endblock %}

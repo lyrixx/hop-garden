@@ -10,8 +10,8 @@ use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 /**
- * Its members view and edit a garden, its owner manages it (its name, its place; its members in phase 2). A token bound
- * to a garden (CurrentGarden::TOKEN_ATTRIBUTE) gets no other one, whatever its user belongs to.
+ * Its members view and edit a garden, its owner manages it: its name, its place, its invitations and its members. A
+ * token bound to a garden (CurrentGarden::TOKEN_ATTRIBUTE) gets no other one, whatever its user belongs to.
  *
  * @extends Voter<string, Garden>
  */

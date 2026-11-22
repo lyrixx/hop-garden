@@ -7,6 +7,7 @@ use App\Chat\ConversationRepository;
 use App\Chat\Entity\Conversation;
 use App\Factory\CareSheetFactory;
 use App\Factory\GardenFactory;
+use App\Factory\InvitationFactory;
 use App\Factory\NotificationFactory;
 use App\Factory\PlantFactory;
 use App\Factory\PlantingFactory;
@@ -14,6 +15,7 @@ use App\Factory\SpaceFactory;
 use App\Factory\UserFactory;
 use App\Garden\Entity\Garden;
 use App\Garden\Entity\GardenLocation;
+use App\Garden\Entity\Invitation;
 use App\Garden\Entity\Planting;
 use App\Garden\Entity\Space;
 use App\Locale\Model\SupportedLocale;
@@ -28,8 +30,8 @@ use Symfony\Component\Uid\UuidV7;
 
 /**
  * The gardens of the isolation tests, as the demo has them: Alice (English, its owner) and Bob (French) share an
- * allotment, with one resource of each kind; Carol has her balcony, where she must see none of them. Their names have no
- * character the templates escape, so that a page that shows one is caught.
+ * allotment, with one resource of each kind, and an invitation of Alice waiting for Erin; Carol has her balcony, where
+ * she must see none of them. Their names have no character the templates escape, so that a page that shows one is caught.
  */
 final readonly class TwoGardens
 {
@@ -37,7 +39,12 @@ final readonly class TwoGardens
     /**
      * What must never show to Carol: the names of their resources.
      */
-    public const array NAMES = ['Allotment of Alice and Bob', 'Climbing rose', 'Rosa moschata', 'Draft of the allotment', 'Rose by the gate', 'Lemon tree drafting', 'Terrace of the allotment', 'Rose of the card', 'Space of the card'];
+    public const array NAMES = ['Allotment of Alice and Bob', 'Climbing rose', 'Rosa moschata', 'Draft of the allotment', 'Rose by the gate', 'Lemon tree drafting', 'Terrace of the allotment', 'Rose of the card', 'Space of the card', 'erin@example.com'];
+
+    /**
+     * Of the link of the invitation of Erin.
+     */
+    public const string INVITATION_TOKEN = 'the-link-of-the-invitation-of-erin-by-alice';
 
     private function __construct(
         public User $alice,
@@ -55,6 +62,7 @@ final readonly class TwoGardens
         public UuidV7 $bobsConversation,
         public Plant $lavender,
         public Space $windowBox,
+        public Invitation $invitation,
     ) {
     }
 
@@ -87,12 +95,14 @@ final readonly class TwoGardens
         $container->get(ConversationRepository::class)->add(Conversation::start($bobsConversation, $bob, $allotment, new \DateTimeImmutable('2026-11-01')));
         $container->get('ai.message_store.doctrine.dbal.chat')->save(MessageBag::forId($bobsConversation, Message::ofUser('Où tailler Climbing rose ?')));
 
+        $invitation = InvitationFactory::createOne(['garden' => $allotment, 'email' => 'erin@example.com', 'token' => self::INVITATION_TOKEN, 'sentAt' => new \DateTimeImmutable('2026-11-20')]);
+
         $lavender = PlantFactory::new()->validated()->create(['garden' => $balcony, 'commonName' => 'Lavender of Carol']);
         $windowBox = SpaceFactory::createOne(['garden' => $balcony, 'name' => 'Window box of Carol']);
         PlantingFactory::new()->inSpace($windowBox)->linkedTo($lavender)->create(['name' => 'Lavender in the window box']);
         $entityManager->flush();
 
-        return new self($alice, $bob, $carol, $allotment, $balcony, $rose, $draft, $terrace, $gate, $drafting, $proposedPlanting, $proposedSpace, $bobsConversation, $lavender, $windowBox);
+        return new self($alice, $bob, $carol, $allotment, $balcony, $rose, $draft, $terrace, $gate, $drafting, $proposedPlanting, $proposedSpace, $bobsConversation, $lavender, $windowBox, $invitation);
     }
 
     /**

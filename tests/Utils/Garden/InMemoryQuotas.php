@@ -11,9 +11,9 @@ use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
  */
 final class InMemoryQuotas
 {
-    public static function create(int $agentRuns = 200, int $latinNames = 100): GardenQuotas
+    public static function create(int $agentRuns = 200, int $latinNames = 100, int $invitations = 20): GardenQuotas
     {
-        return new GardenQuotas(self::limiter('garden_agent_runs', $agentRuns), self::limiter('garden_latin_names', $latinNames));
+        return new GardenQuotas(self::limiter('garden_agent_runs', $agentRuns), self::limiter('garden_latin_names', $latinNames), self::limiter('garden_invitations', $invitations));
     }
 
     private static function limiter(string $id, int $limit): RateLimiterFactory

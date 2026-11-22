@@ -1,17 +1,30 @@
 {#
-    A reminder as a toast, pushed by the worker on every page (App\Reminder\Notifier\NotificationToastPublisher).
+    A notification as a toast, pushed on every page once it is stored (App\Reminder\Notifier\NotificationToastPublisher):
+    a reminder, by the worker, or a new member, by the page where they accepted the invitation.
     notification: App\Reminder\Entity\Notification
 #}
 {% props notification %}
-{% set plant = notification.reminder.plant %}
-{% set frost = not notification.reminder.type.calendar %}
-<div class="card toast toast-{{ notification.reminder.type.value }}" id="toast-{{ notification.id }}" role="status" data-controller="toast">
-    <button type="button" class="toast-close" aria-label="{{ 'action.close'|trans }}" data-action="toast#close">×</button>
-    <span class="pict {{ frost ? 'pict-frost' }}"><twig:Icon :name="frost ? 'snowflake' : 'bell'" :size="22"/></span>
-    <div>
-        <strong>{{ (frost ? 'toast.frost' : 'toast.reminder')|trans }}</strong>
-        <p>{{ notification.message }}</p>
-        {# My plant, in the garden, that the reminder is about #}
-        <a href="{{ my_plant_path(plant) ?? path('plant_show', {id: plant.id}) }}">{{ 'toast.see'|trans({name: plant.commonName}) }}</a>
+{% if notification.reminder %}
+    {% set plant = notification.reminder.plant %}
+    {% set frost = not notification.reminder.type.calendar %}
+    <div class="card toast toast-{{ notification.reminder.type.value }}" id="toast-{{ notification.id }}" role="status" data-controller="toast">
+        <button type="button" class="toast-close" aria-label="{{ 'action.close'|trans }}" data-action="toast#close">×</button>
+        <span class="pict {{ frost ? 'pict-frost' }}"><twig:Icon :name="frost ? 'snowflake' : 'bell'" :size="22"/></span>
+        <div>
+            <strong>{{ (frost ? 'toast.frost' : 'toast.reminder')|trans }}</strong>
+            <p>{{ notification.message }}</p>
+            {# My plant, in the garden, that the reminder is about #}
+            <a href="{{ my_plant_path(plant) ?? path('plant_show', {id: plant.id}) }}">{{ 'toast.see'|trans({name: plant.commonName}) }}</a>
+        </div>
     </div>
-</div>
+{% else %}
+    <div class="card toast toast-member" id="toast-{{ notification.id }}" role="status" data-controller="toast">
+        <button type="button" class="toast-close" aria-label="{{ 'action.close'|trans }}" data-action="toast#close">×</button>
+        <span class="pict"><twig:Icon name="people" :size="22"/></span>
+        <div>
+            <strong>{{ 'notification.new_member.tag'|trans }}</strong>
+            <p>{{ notification.message }}</p>
+            <a href="{{ path('garden_members', {id: notification.garden.id}) }}">{{ 'toast.see_members'|trans }}</a>
+        </div>
+    </div>
+{% endif %}

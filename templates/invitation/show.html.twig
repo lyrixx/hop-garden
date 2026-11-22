@@ -1,0 +1,56 @@
+{% extends 'base.html.twig' %}
+
+{% set garden = invitation.garden %}
+
+{% block title %}{{ 'invitation.title'|trans({garden: garden.name}) }} · Hop Garden{% endblock %}
+
+{#
+    A pending invitation (App\Controller\InvitationController::show()): a visitor creates an account or logs in, then comes
+    back here; a member joins, with the account of the address invited (sent_to_them) or another one, or logs out to
+    change (App\Garden\InvitationLogoutListener brings them back). token: the one of its link
+#}
+{% block body %}
+<div class="with-specimen auth">
+<div>
+    <header class="plate-head">
+        <span class="plate-tab">{{ 'invitation.tab'|trans }}</span>
+        <h1>{{ 'invitation.title'|trans({garden: garden.name}) }}</h1>
+        <p>{{ 'invitation.intro'|trans({inviter: invitation.invitedBy.displayName, garden: garden.name}) }}</p>
+    </header>
+
+    <section class="card crowned auth-note invitation-card">
+        <span class="pict"><twig:Icon name="people" :size="18"/></span>
+        <div>
+            <p><strong>{{ garden.name }}</strong> · {{ garden.location.placeName }}</p>
+            <p class="hint">{{ 'invitation.sent_to'|trans({email: invitation.email}) }}</p>
+            {% if app.user %}
+                {% if not sent_to_them %}
+                    <p class="warning">{{ 'invitation.other_account'|trans({email: invitation.email, current: app.user.email}) }}</p>
+                {% endif %}
+                <div class="actions">
+                    <form method="post" action="{{ path('invitation_accept', {token: token}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('invitation_accept') }}">
+                        <twig:Button class="button-next">{{ (sent_to_them ? 'invitation.accept' : 'invitation.accept_other_account')|trans({garden: garden.name}) }}</twig:Button>
+                    </form>
+                    {% if not sent_to_them %}
+                        <form method="post" action="{{ path('_logout_main') }}">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}" data-controller="csrf-protection">
+                            <input type="hidden" name="{{ constant('App\\Garden\\InvitationLogoutListener::FIELD') }}" value="{{ token }}">
+                            <twig:Button class="button-secondary" icon="logout" :iconSize="16">{{ 'invitation.log_out'|trans }}</twig:Button>
+                        </form>
+                    {% endif %}
+                </div>
+            {% else %}
+                <p>{{ 'invitation.no_waiting'|trans }}</p>
+                <div class="actions">
+                    <twig:Button href="{{ path('invitation_register', {token: token}) }}" class="button-next">{{ 'invitation.create_account'|trans }}</twig:Button>
+                    {# The login leads back here: InvitationController::show() kept this page as its target #}
+                    <twig:Button href="{{ path('login') }}" class="button-secondary">{{ 'invitation.log_in'|trans }}</twig:Button>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+<twig:Specimen plate="wormia-subsessilis"/>
+</div>
+{% endblock %}

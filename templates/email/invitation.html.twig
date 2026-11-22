@@ -1,0 +1,11 @@
+{% extends 'email/layout.html.twig' %}
+{% import 'email/_ui.html.twig' as ui %}
+
+{# inviter, garden: their names · url: the link of the invitation · expires_at: in the timezone of the garden #}
+{% block content %}
+    <p>{{ 'email.invitation.hello'|trans }}</p>
+    <p>{{ 'email.invitation.intro'|trans({inviter: inviter, garden: garden}) }}</p>
+    {{ ui.button(url, 'email.invitation.button'|trans({garden: garden})) }}
+    {{ ui.note('email.invitation.no_waiting'|trans) }}
+    {{ ui.note('email.invitation.expiry'|trans({date: expires_at|long_date})) }}
+{% endblock %}

@@ -5,7 +5,9 @@ namespace App\Tests\Functional\Security;
 use App\Chat\Message\RunAgent;
 use App\Factory\PlantingFactory;
 use App\Garden\Entity\Garden;
+use App\Garden\Entity\Invitation;
 use App\Garden\Entity\Planting;
+use App\Garden\InvitationRepository;
 use App\Garden\PlantingRepository;
 use App\Plant\Model\PlantStatus;
 use App\Plant\PlantRepository;
@@ -42,6 +44,8 @@ final class GardenIsolationTest extends WebTestCase
         'ux_live_component',
         // Her subscriber cookie, renewed: her topics (MercureSubscriptionTest)
         'mercure_cookie',
+        // The link of an invitation: whoever has its token joins its garden, it is all they need (AcceptInvitationTest)
+        'invitation', 'invitation_register', 'invitation_accept',
     ];
 
     /**
@@ -212,6 +216,8 @@ final class GardenIsolationTest extends WebTestCase
         $draft = $gardens->draft->getId();
         $terrace = $gardens->terrace->getId();
         $allotment = $gardens->allotment->getId();
+        $balcony = $gardens->balcony->getId();
+        $invitation = $gardens->invitation->getId()->toRfc4122();
         $plantingCard = '/proposals/plantings/' . $gardens->proposedPlanting->getProposalId() . '?' . http_build_query(['plant_id' => $rose, 'space_id' => $terrace, 'name' => 'Rose of the card']);
         $spaceCard = '/proposals/spaces/' . $gardens->proposedSpace->getProposalId() . '?' . http_build_query(['name' => 'Space of the card']);
 
@@ -233,7 +239,21 @@ final class GardenIsolationTest extends WebTestCase
             'space_proposal' => [['GET', $spaceCard, []], ['POST', $spaceCard, []]],
             'garden_switch' => [['POST', "/gardens/{$allotment}/switch", []]],
             'garden_settings' => [['GET', "/gardens/{$allotment}/settings", []], ['POST', "/gardens/{$allotment}/settings", ['garden' => ['name' => 'Taken']]]],
+            'garden_members' => [['GET', "/gardens/{$allotment}/members", []]],
+            'garden_invite' => [['POST', "/gardens/{$allotment}/invitations", ['invitation' => ['email' => 'mallory@example.com']]]],
+            // Theirs, through her own garden too, and one that does not exist
+            'garden_invitation_resend' => self::throughBoth("/invitations/{$invitation}/resend", $allotment, $balcony),
+            'garden_invitation_link' => self::throughBoth("/invitations/{$invitation}/link", $allotment, $balcony),
+            'garden_invitation_revoke' => [...self::throughBoth("/invitations/{$invitation}/revoke", $allotment, $balcony), ['POST', "/gardens/{$balcony}/invitations/0196a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b/revoke", []]],
         ];
+    }
+
+    /**
+     * @return list<array{string, string, array<string, mixed>}>
+     */
+    private static function throughBoth(string $path, int $theirs, int $hers): array
+    {
+        return [['POST', "/gardens/{$theirs}{$path}", []], ['POST', "/gardens/{$hers}{$path}", []]];
     }
 
     private function assertTheirGardenIsUntouched(): void
@@ -250,7 +270,13 @@ final class GardenIsolationTest extends WebTestCase
             array_map(static fn (Planting $planting): string => $planting->getName(), self::getContainer()->get(PlantingRepository::class)->findAllByName($this->gardens->allotment)),
         );
         self::assertSame("Carol's balcony", $entityManager->find(Garden::class, $this->gardens->balcony->getId())?->getName());
-        self::assertSame('Allotment of Alice and Bob', $entityManager->find(Garden::class, $this->gardens->allotment->getId())?->getName());
+        $allotment = $entityManager->find(Garden::class, $this->gardens->allotment->getId()) ?? self::fail('Their garden is gone.');
+        self::assertSame('Allotment of Alice and Bob', $allotment->getName());
+        self::assertSame(['Alice', 'Bob'], array_map(static fn ($member): string => $member->getDisplayName(), $allotment->getMembers()));
+        $invitations = self::getContainer()->get(InvitationRepository::class);
+        self::assertSame(['erin@example.com'], array_map(static fn (Invitation $invitation): string => $invitation->getEmail(), $invitations->findOpenOfGarden($allotment)));
+        self::assertSame($this->gardens->invitation->getId()->toRfc4122(), $invitations->findOneByToken(TwoGardens::INVITATION_TOKEN)?->getId()->toRfc4122(), 'Its link still works.');
+        self::assertSame([], $invitations->findBy(['email' => 'mallory@example.com']));
         $balcony = $this->gardens->balcony->getId();
         self::assertSame([], array_filter($this->runAgentMessages(), static fn (RunAgent $message): bool => $message->gardenId !== $balcony));
     }

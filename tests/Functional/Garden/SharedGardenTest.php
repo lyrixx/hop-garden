@@ -97,10 +97,16 @@ final class SharedGardenTest extends WebTestCase
         $crawler = $this->client->request('GET', '/garden');
         self::assertCount(0, $crawler->filter('.account-menu a[href="' . $settings . '"]'));
 
+        // Its members, he sees: no invitation, nobody to remove
+        $crawler = $this->client->request('GET', '/gardens/' . $this->gardens->allotment->getId() . '/members');
+        self::assertResponseIsSuccessful();
+        self::assertSame(['Alice Propriétaire', 'Bob (vous) Membre'], $crawler->filter('.member .member-name')->each(static fn (Crawler $member): string => trim(preg_replace('/\s+depuis.*$/u', '', $member->text()) ?? '')));
+        self::assertCount(0, $crawler->filter('form.invitation-form, form[action$="/remove"], .garden-invitations'));
+
         $this->as('alice');
         $crawler = $this->client->request('GET', $settings);
         self::assertResponseIsSuccessful();
-        self::assertSame(['Alice · Owner', 'Bob · Member'], $crawler->filter('.garden-members li')->each(static fn (Crawler $member): string => $member->text()));
+        self::assertSame('Its 2 members and its invitations', $crawler->filter('.garden-settings-members a')->text());
         $this->client->submit($crawler->filter('form.garden-place-form')->form(), ['garden[name]' => 'Our allotment']);
         self::assertResponseRedirects($settings, 303);
         $this->client->followRedirect();
