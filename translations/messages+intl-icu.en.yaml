@@ -1,0 +1,393 @@
+# Keep the same keys in every language: tests/Unit/Translation/CatalogsTest.php checks them.
+# ICU MessageFormat: {name} for a parameter, {count, plural, ...} and {value, select, ...}; ’ for an apostrophe, never '.
+action:
+    add_to_my_garden: "Add to my garden"
+    cancel: "Cancel"
+    close: "Close"
+    create_the_space: "Create the space"
+    edit: "Edit"
+    retry: "Retry"
+    review: "Review"
+    save: "Save"
+    see_my_plant: "See my plant"
+    see_the_space: "See the space"
+    validate: "Validate"
+answer:
+    no: "No"
+    yes: "Yes"
+care_sheet:
+    edit:
+        heading: "Edit {species}"
+        title: "Edit {name}"
+        verified: "A value you change counts as verified (high confidence)."
+    form:
+        hardiness: "Hardiness (°C)"
+        notes: "Notes"
+    review:
+        heading: "Review {species}"
+        page_heading: "Review the draft of {species}"
+        reminders_wait: "Its reminders wait until you validate the draft."
+        title: "Review {name}"
+    save_the_draft: "Save the draft"
+care_sheet_field:
+    cutting_advice: "Cutting advice"
+    cutting_months: "Cuttings"
+    deadheading_months: "Deadheading"
+    exposure: "Exposure"
+    frost_sensitive: "Frost sensitive"
+    min_temperature_c: "Hardiness"
+    pruning_advice: "Pruning advice"
+    pruning_months: "Pruning"
+    watering: "Watering"
+care_task:
+    feeding: "Fed"
+    frost_protection: "Sheltered from frost"
+    mulching: "Mulched"
+    pruning: "Pruned"
+    watering: "Watered"
+chat:
+    draft_gone: "This draft no longer exists."
+    error:
+        failed: "The assistant could not answer: {reason}"
+        unknown: "The assistant could not answer, see the logs of the worker."
+    heading: "Your gardening assistant"
+    loading_card: "Loading the card…"
+    loading_draft: "Loading the draft…"
+    message:
+        draft_new_species: "Draft the care sheet of a new species"
+        draft_species: "Draft the care sheet of {species}"
+    new_conversation: "New conversation"
+    placeholder: "A plant name, or a question about your garden…"
+    send: "Send"
+    send_error: "The message could not be sent. Reload the page and try again."
+    silence: "No answer yet: is the worker running? (castor start-workers)"
+    subtitle: "Name a plant: the assistant identifies it, drafts its care sheet with Trefle and its own knowledge, and you validate it."
+    suggestion:
+        hydrangea: "hortensia"
+        label: "Try"
+        lavender: "lavender"
+        prune: "What should I prune this month?"
+    title: "Assistant"
+confidence:
+    high: "high"
+    low: "low"
+    medium: "medium"
+    title: "Confidence of the assistant: {confidence}"
+exposure:
+    part_shade: "Part shade"
+    shade: "Shade"
+    sun: "Full sun"
+flash:
+    planting:
+        added_drafting: "{name} is in your garden. The assistant drafts its care sheet."
+        added_with_care_sheet: "{name} is in your garden, with the care sheet of {species}."
+        linked: "{name} now follows the care sheet of {species}."
+        not_same_species: "This care sheet is not a validated one of the same species."
+        saved: "The garden info of {name} is saved."
+    space:
+        added: "{name} is one of your spaces. Place your plants there from their garden info."
+        saved: "{name} is saved."
+    species:
+        draft_ready: "The draft of {name} is ready: fill in its care sheet, then validate it."
+        draft_updated: "Draft updated: validate it when it looks right."
+        exists: "{species} has its care sheet already: here it is."
+        reminder_needs_validation: "Validate its care sheet first: reminders are set on a validated care sheet only."
+        updated: "Care sheet updated."
+        validated: "{name} is validated. Pick its reminders below."
+footer:
+    demo_mode: "Demo mode: Trefle and Open-Meteo answer from recorded responses."
+    plant_data: "Plant data: {trefle}."
+    plates: "Plates: {library}, public domain."
+    reviewed: "Care data filled by an LLM is reviewed by a human before being saved."
+    weather_data: "Weather data by {open_meteo}, under {license}."
+forecast:
+    at_risk: "At risk:"
+    credit: "Weather data by {open_meteo} (CC BY 4.0)"
+    down_to: ", down to {temperature}"
+    hint: "The minimum of each day, and the plants at risk: colder than their hardiness plus 2 °C, or 0 °C if frost sensitive."
+    no_plant_at_risk: "No plant at risk"
+    title: "Frost forecast"
+    unavailable: "The frost forecast is unavailable: Open-Meteo did not answer. Try again in a few minutes."
+form:
+    name: "Name"
+garden:
+    add_a_plant: "Add a plant"
+    drafts: "Species drafts waiting for your review"
+    empty: "Nothing planted yet. {first}Add your first plant{first_end}, or {assistant}ask the assistant{assistant_end}."
+    subtitle: "Each of my plants where it grows: its photo, the care it got, and the species it belongs to, with its care sheet and its reminders."
+hardiness:
+    caption: "Scale of hardiness, in °C"
+    label: "Hardy down to {coldest} °C, frost alert below {threshold} °C"
+    threshold: "frost alert {threshold} °C"
+list:
+    and: "{items} and {last}"
+locale:
+    banner:
+        available: "Hop Garden is available in English"
+        label: "Language"
+        stay: "Stay in {current, select, fr {French} other {English}}"
+        switch: "Switch to English"
+    switch:
+        label: "Language of the interface"
+nav:
+    assistant: "Assistant"
+    garden: "My garden"
+    notifications: "Notifications"
+    spaces: "My spaces"
+    species: "Species"
+notification:
+    coming_up:
+        empty: "No reminder coming up. Turn reminders on from the card of a species."
+        hint: "The enabled reminders of the next {weeks} weeks, and the frost alerts of the forecast."
+        no_forecast: "Frost alerts are left out: no forecast for now."
+        title: "Coming up"
+    received:
+        empty: "Nothing yet. Reminders are checked every day at 7:00."
+        title: "Received"
+    subtitle: "Pruning, deadheading and cuttings on the first day of their months, frost when the forecast gets colder than a plant can bear."
+plant_card:
+    check_on: "Check on {rhs} or {snhf}"
+    fill_in: "Fill in the highlighted values, then validate. A value left as is stays highlighted, even when it is right."
+    hardiness: "Hardiness"
+    llm_only: "Trefle does not know this plant: every value comes from the assistant. Please verify."
+    plate_credit: "Figure after {depicts}, {work} ({published})."
+    plate_library: "{library}, public domain."
+    review: "Review the highlighted values: the assistant is not sure of them."
+    schematic_credit: "Schematic figure: the Biodiversity Heritage Library has no plate of this species yet."
+    sources: "Sources:"
+    validate_for_reminders: "Validate the card to set reminders."
+planting:
+    care_done: "Care done"
+    care_record: "{task} on {date}"
+    choose_space: "choose one"
+    diseases: "Diseases or pests"
+    draft_waiting: "The draft of its care sheet is waiting for your review, on the page of its species. Validate it to get the recommendations."
+    drafting: "The assistant is drafting the care sheet of {name}, through MCP."
+    drafting_failed: "The assistant ended without drafting a care sheet. What you entered is kept."
+    edit:
+        breadcrumb: "Edit garden info"
+        intro: "Where and how it grows in your garden."
+        species_stays: "Its species stays {species}, with its care sheet."
+        title: "Edit the garden info of {name}"
+    form:
+        care_records:
+            hint: "The last time, if you remember. A pruning counts for its season only: next year, Hop Garden reminds you again."
+            label: "Care already done"
+        diseases:
+            placeholder: "Powdery mildew on the lower leaves…"
+        name:
+            placeholder: "Hortensia, rose by the gate…"
+        photo:
+            help: "JPEG, PNG or WebP, up to 10 MB. Without a photo, a picto stands in."
+            help_replace: "JPEG, PNG or WebP, up to 10 MB. A new photo replaces the current one."
+            label: "Photo"
+        space:
+            help: "Where it grows today: it gets the exposure and the soil of the space, and the plants there are its neighbours."
+    label: "My plant"
+    neighbours: "Neighbours"
+    new:
+        breadcrumb: "New plant"
+        intro: "Describe it as it grows in your garden. Hop Garden compares it with the care sheet of its species."
+        intro_of_species: "Name your plant and say where it grows. It follows the care sheet of {name}, with its reminders."
+        title: "Add a plant to your garden"
+        title_of_species: "Add {species} to your garden"
+    no_care_sheet: "No care sheet yet."
+    no_neighbour: "None yet in {space}"
+    no_space: "Not in a space yet: {link}, for its exposure, its soil and its neighbours."
+    none_recorded: "None recorded"
+    same_species: "Or use a care sheet you already validated for {species}:"
+    since: "In your garden since {date}."
+    use_the_sheet_of: "Use the sheet of {name}"
+plate:
+    schematic_alt: "Schematic figure of a flowering shrub"
+plate_part:
+    bud: "Bud"
+    flower: "Flower"
+    leaf: "Leaf"
+    shoot: "Shoot"
+    stem: "Stem"
+proposal:
+    planting:
+        care_sheet_gone: "This care sheet no longer exists. Ask the assistant again."
+        form:
+            name: "Its name in your garden"
+        intro: "Your assistant proposes this plant. Nothing is added until you tap the card."
+        space_gone: "This space no longer exists. Ask the assistant again."
+        title: "Add {name} to my garden"
+        validate_first: "Validate the care sheet of this species first."
+    space:
+        heading: "Create a space"
+        intro: "Your assistant proposes this space. Pick its exposure and its soil: nothing is created until you tap the card."
+        title: "Create {name}"
+recommendation:
+    exposure:
+        close: "It prefers {preferred, select, sun {full sun} part_shade {part shade} other {shade}} and gets {actual, select, sun {full sun} part_shade {part shade} other {shade}} here: it should cope, but would do better in {preferred, select, sun {full sun} part_shade {part shade} other {shade}}."
+        far: "It needs {preferred, select, sun {full sun} part_shade {part shade} other {shade}} and gets {actual, select, sun {full sun} part_shade {part shade} other {shade}} here: move it to a spot in {preferred, select, sun {full sun} part_shade {part shade} other {shade}}, in autumn or early spring."
+        no_space: "Tell us where it grows, with \"{button}\": its care sheet asks for {preferred, select, sun {full sun} part_shade {part shade} other {shade}}."
+        suits: "{actual, select, sun {Full sun} part_shade {Part shade} other {Shade}} suits it."
+        unknown: "Tell us the exposure of {space}, in \"{page}\": its care sheet asks for {preferred, select, sun {full sun} part_shade {part shade} other {shade}}."
+    frost:
+        bring_indoors: "{expected}. It is frost sensitive: bring it indoors or shelter it."
+        cover: "{expected}, colder than its hardiness ({hardiness} °C): cover it with a winter fleece."
+        expected_from: "Frost expected from {first}, down to {temperature} on {coldest}"
+        expected_on: "Frost expected on {date} ({temperature})"
+        hardy: "Hardy down to {hardiness} °C."
+        hardy_above_forecast: "Hardy down to {hardiness} °C: the forecast stays above."
+        sensitive_before_autumn: "Frost sensitive (hardy down to {hardiness} °C): bring it indoors or shelter it before the first autumn frost."
+        sensitive_unprotected: "Frost sensitive (hardy down to {hardiness} °C), and no frost protection recorded this winter: bring it indoors or shelter it."
+        sheltered: "Sheltered from frost on {date}."
+        sheltered_check: "{expected}. Sheltered on {date}: check that the protection holds."
+    pruning:
+        done: "Pruned on {date}: done for this season. Next time in {months}."
+        in: "Prune it in {months}."
+        last: "Last pruned on {date}."
+        none: "No regular pruning in its care sheet."
+        now: "Time to prune it ({months})."
+    source: "From the care sheet of {species}, compared with what you described."
+    title: "Recommendations"
+    watering:
+        high: "It needs plenty of water: keep the soil moist, especially in summer."
+        high_in_sun: "It needs plenty of water and gets full sun here: water it often in summer, and mulch the soil to keep it moist."
+        last: "Last watered on {date}."
+        low: "It needs little water: water it only during long droughts, and never leave it in soggy soil."
+        low_in_shade: "It needs little water, and the shade keeps the soil moist: water it only during long droughts."
+        medium: "Water it during dry spells."
+recommendation_level:
+    action: "To do"
+    info: "Advice"
+    ok: "All good"
+    warning: "Warning"
+recommendation_subject:
+    exposure: "Exposure"
+    frost: "Frost"
+    pruning: "Pruning"
+    watering: "Watering"
+reminder:
+    disable: "Disable {type}"
+    enable: "Enable {type}"
+    frost_threshold: "Alert below {threshold} °C in the forecast"
+    label: "Reminders"
+    message:
+        cutting: "Time to take cuttings of {name}."
+        deadheading: "Time to deadhead {name}: cut the faded flowers."
+        frost_coldest: "Down to {temperature} on {date}."
+        frost_cover: "Frost expected on {date} ({temperature}): cover {name}."
+        frost_indoors: "Frost expected on {date} ({temperature}): bring {name} indoors."
+        pruning: "Time to prune {name}."
+    no_month: "No month to remind"
+    none: "No reminder"
+    none_short: "None"
+    on_the_first: "Reminder on the 1st of {months}"
+reminder_type:
+    cutting: "Cuttings"
+    deadheading: "Deadheading"
+    frost: "Frost alert"
+    pruning: "Pruning"
+soil:
+    chalky: "Chalky"
+    clay: "Clay"
+    loamy: "Loamy"
+    peaty: "Peaty"
+    sandy: "Sandy"
+    silty: "Silty"
+source:
+    llm_knowledge: "LLM knowledge"
+space:
+    add: "Add a space"
+    add_the_space: "Add the space"
+    added_on: "Added on {date}."
+    conditions:
+        exposure_and_soil: "{exposure}, {soil_lower}"
+        soil_only: "{soil} soil"
+    conditions_not_recorded: "Exposure and soil not recorded"
+    edit:
+        button: "Edit the space"
+        intro: "Its exposure and its soil apply to every plant growing there."
+        title: "Edit {name}"
+    exposure: "Exposure"
+    form:
+        exposure:
+            help: "The sun it gets on a summer day."
+        name:
+            placeholder: "Balcony, north bed, vegetable patch…"
+        not_sure: "Not sure"
+    growing_there: "Growing there"
+    index:
+        empty: "No space yet. {link}Add your first one{link_end}: the balcony, the north bed, the vegetable patch…"
+        subtitle: "The spots of your garden: each gives its exposure and its soil to the plants growing there, and makes them neighbours."
+        title: "Your spaces"
+    label: "Space"
+    mine: "My space"
+    new: "New space"
+    new_intro: "A spot of your garden, as the balcony or the north bed. The plants growing there share its exposure and its soil, and are neighbours."
+    no_plant_yet: "No plant yet"
+    none: "Not in a space yet"
+    not_recorded: "Not recorded"
+    show:
+        empty: "No plant in {space} yet. Choose this space in the garden info of a plant, or {link}add a plant{link_end}."
+    soil: "Soil"
+species:
+    all: "All species"
+    create_the_draft: "Create the draft"
+    form:
+        name:
+            help: "Common or Latin: Trefle finds the species."
+            placeholder: "Hortensia, Rosa canina…"
+    hardy_down_to: "Hardy down to {temperature} °C"
+    hardy_down_to_frost_sensitive: "Hardy down to {temperature} °C, frost sensitive"
+    index:
+        drafts: "Drafts waiting for your review"
+        empty: "No species yet. {link}Create the first one{link_end}, or add a plant to your garden: its species follows."
+        no_planting: "None of your plants follows it."
+        no_planting_draft: "No plant of yours yet: validate it, then add your plant to the garden."
+        or_ask: "or {link}ask the assistant to draft it{link_end}"
+        plantings: "{count, plural, one {# plant} other {# plants}} in your garden"
+        subtitle: "The care sheet of each species, its plate and its Latin name, and my plants that follow it."
+        validated: "Validated care sheets"
+    label: "Species"
+    new: "New species"
+    new_intro: "Pick it with Trefle, then fill in its care sheet yourself and validate it. Then add your plant to the garden."
+    review_and_validate: "Review and validate the care sheet"
+    sheet_and_reminders: "Species sheet and reminders"
+    show:
+        no_planting: "None of your plants follows this care sheet."
+        no_planting_draft: "Validate the card, then add your plant to the garden."
+        shared: "They share this care sheet, and so its reminders."
+        title: "{name}, the species"
+    unknown: "Unknown"
+    validate_for_reminders: "Validate its care sheet to set reminders."
+    watering: "{watering, select, low {Low watering} medium {Medium watering} other {High watering}}"
+species_picker:
+    ask_the_assistant: "Ask the assistant to draft it"
+    change: "Change"
+    rather_not: "Rather not fill in its care sheet yourself?"
+    unavailable: "Trefle does not answer: your name is kept as is."
+    unavailable_required: "Trefle does not answer: try again in a moment."
+    unknown: "Trefle does not know this name: it is kept as is."
+    unknown_required: "Trefle does not know this name: try its Latin name."
+    which: "Which species is it?"
+    which_optional: "Which species is it? (optional)"
+specimen:
+    alt: "{species}, hand-coloured plate (Biodiversity Heritage Library)"
+    number: "No. {number, number, ::group-off}"
+status:
+    added: "Added"
+    care_sheet: "Care sheet"
+    care_sheet_in_progress: "Care sheet in progress"
+    care_sheet_validated: "Care sheet validated"
+    created: "Created"
+    draft: "Draft"
+    draft_to_review: "Draft to review"
+    draft_to_validate: "Draft to validate"
+    in_garden: "In your garden"
+    validated: "Validated"
+toast:
+    frost: "Frost alert"
+    reminder: "Reminder"
+    see: "See {name}"
+unit:
+    celsius: "{temperature} °C"
+watering:
+    high: "High"
+    low: "Low"
+    medium: "Medium"

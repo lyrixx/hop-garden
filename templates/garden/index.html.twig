@@ -1,26 +1,26 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}My garden · Hop Garden{% endblock %}
+{% block title %}{{ 'nav.garden'|trans }} · Hop Garden{% endblock %}
 
 {% block body %}
 <div class="with-specimen">
 <div>
-    <twig:PlateHead tab="II" title="My garden" subtitle="Each of my plants where it grows: its photo, the care it got, and the species it belongs to, with its care sheet and its reminders."/>
-    <p><twig:Button href="{{ path('garden_new') }}" icon="sprout" :iconSize="18" class="button-light button-next">Add a plant</twig:Button></p>
+    <twig:PlateHead tab="II" :title="'nav.garden'|trans" :subtitle="'garden.subtitle'|trans"/>
+    <p><twig:Button href="{{ path('garden_new') }}" icon="sprout" :iconSize="18" class="button-light button-next">{{ 'garden.add_a_plant'|trans }}</twig:Button></p>
 
     {% if drafts is not empty %}
         <section class="drafts">
-            <h2>Species drafts waiting for your review</h2>
+            <h2>{{ 'garden.drafts'|trans }}</h2>
             <ul class="card plant-list">
                 {% for plant in drafts %}
-                    <li><span class="page-label page-label-species">Species</span> <a href="{{ path('plant_show', {id: plant.id}) }}">{{ plant.commonName }}</a> <em>{{ plant.scientificName }}</em> <twig:Status/></li>
+                    <li><span class="page-label page-label-species">{{ 'species.label'|trans }}</span> <a href="{{ path('plant_show', {id: plant.id}) }}">{{ plant.commonName }}</a> <em>{{ plant.scientificName }}</em> <twig:Status/></li>
                 {% endfor %}
             </ul>
         </section>
     {% endif %}
 
     {% if plantings is empty %}
-        <p class="callout">Nothing planted yet. <a href="{{ path('garden_new') }}">Add your first plant</a>, or <a href="{{ path('chat') }}">ask the assistant</a>.</p>
+        <p class="callout">{{ 'garden.empty'|trans({first: '<a href="' ~ path('garden_new') ~ '">', first_end: '</a>', assistant: '<a href="' ~ path('chat') ~ '">', assistant_end: '</a>'})|raw }}</p>
     {% else %}
         <ul class="plant-grid">
             {% for planting in plantings %}

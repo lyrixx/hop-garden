@@ -5,12 +5,12 @@
 {% props day, plantingIds %}
 <li class="forecast-day {{ day.plantsAtRisk is empty ? '' : 'is-at-risk' }}">
     {# A forecast day is in the timezone of the garden #}
-    <time class="forecast-date" datetime="{{ day.minimum.date|date('Y-m-d', false) }}">{{ day.minimum.date|date('l j F', false) }}</time>
-    <span class="forecast-min">{{ day.minimum.minTemperatureC|number_format(1) }} °C</span>
+    <time class="forecast-date" datetime="{{ day.minimum.date|date('Y-m-d', false) }}">{{ day.minimum.date|day_and_month }}</time>
+    <span class="forecast-min">{{ day.minimum.minTemperatureC|temperature }}</span>
     {% if day.plantsAtRisk is empty %}
-        <p class="forecast-plants">No plant at risk</p>
+        <p class="forecast-plants">{{ 'forecast.no_plant_at_risk'|trans }}</p>
     {% else %}
-        <p class="forecast-plants"><span class="visually-hidden">At risk:</span>
+        <p class="forecast-plants"><span class="visually-hidden">{{ 'forecast.at_risk'|trans }}</span>
             {% for plant in day.plantsAtRisk %}
                 <span class="tag tag-frost"><twig:Icon name="snowflake" :size="12"/><twig:Reminder:PlantLink :plant="plant" :plantingIds="plantingIds"/></span>
             {% endfor %}

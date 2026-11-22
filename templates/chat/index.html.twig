@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Assistant · Hop Garden{% endblock %}
+{% block title %}{{ 'chat.title'|trans }} · Hop Garden{% endblock %}
 
 {# A live conversation: never shown from the cache of Turbo Drive, which would replay an old state #}
 {% block head %}{{ turbo_exempts_page_from_cache() }}{% endblock %}
@@ -12,10 +12,10 @@
         {{ turbo_stream_from(topic) }}
 
         <div class="chat-header">
-            <twig:PlateHead tab="I" title="Your gardening assistant" subtitle="Name a plant: the assistant identifies it, drafts its care sheet with Trefle and its own knowledge, and you validate it."/>
+            <twig:PlateHead tab="I" :title="'chat.heading'|trans" :subtitle="'chat.subtitle'|trans"/>
             <form method="post" action="{{ path('chat_new') }}">
                 <input type="hidden" name="_token" value="{{ csrf_token('chat') }}">
-                <twig:Button class="button-light">New conversation</twig:Button>
+                <twig:Button class="button-light">{{ 'chat.new_conversation'|trans }}</twig:Button>
             </form>
         </div>
 
@@ -44,14 +44,14 @@
 
         {# Shown by the page itself: the message as soon as it is sent, and what goes wrong before the worker answers #}
         <template data-chat-target="sentMessage"><twig:Chat:Bubble kind="user" text="" :arriving="true"/></template>
-        <template data-chat-target="sendError"><twig:Chat:Bubble kind="error" text="The message could not be sent. Reload the page and try again."/></template>
-        <template data-chat-target="silence"><twig:Chat:Bubble kind="error" text="No answer yet: is the worker running? (castor start-workers)"/></template>
+        <template data-chat-target="sendError"><twig:Chat:Bubble kind="error" :text="'chat.send_error'|trans"/></template>
+        <template data-chat-target="silence"><twig:Chat:Bubble kind="error" :text="'chat.silence'|trans"/></template>
 
         <form class="chat-form" method="post" action="{{ path('chat_send') }}" data-chat-target="form"
               data-action="chat#send turbo:submit-start->chat#sending turbo:before-fetch-response->chat#received turbo:submit-end->chat#sent">
             <input type="hidden" name="_token" value="{{ csrf_token('chat') }}">
-            <input type="text" name="text" value="{{ app.request.query.get('message') }}" maxlength="500" required autocomplete="off" placeholder="A plant name, or a question about your garden…" data-chat-target="input" autofocus>
-            <twig:Button data-chat-target="submit">Send</twig:Button>
+            <input type="text" name="text" value="{{ app.request.query.get('message') }}" maxlength="500" required autocomplete="off" placeholder="{{ 'chat.placeholder'|trans }}" data-chat-target="input" autofocus>
+            <twig:Button data-chat-target="submit">{{ 'chat.send'|trans }}</twig:Button>
         </form>
     </section>
 {% endblock %}

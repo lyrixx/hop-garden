@@ -9,7 +9,8 @@ import * as Turbo from '@hotwired/turbo';
  */
 export default class extends Controller {
     static targets = ['pending', 'drafted', 'failure', 'failureMessage'];
-    static values = { drafting: Boolean, statusUrl: String };
+    // silence: what to say when the worker does not answer, in the language of the page
+    static values = { drafting: Boolean, statusUrl: String, silence: String };
 
     connect() {
         this.source = this.element.querySelector('turbo-mercure-stream-source');
@@ -47,7 +48,7 @@ export default class extends Controller {
             return;
         }
         clearTimeout(this.timeout);
-        this.timeout = setTimeout(() => this.fail('No answer yet: is the worker running? (castor start-workers)'), 120000);
+        this.timeout = setTimeout(() => this.fail(this.silenceValue), 120000);
     }
 
     fail(message) {

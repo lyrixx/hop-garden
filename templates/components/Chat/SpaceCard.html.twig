@@ -6,6 +6,6 @@
 {%- props proposal, arriving = false -%}
 <div class="chat-card chat-proposal{{ arriving ? ' is-arriving' }}">
     <turbo-frame id="space-proposal-{{ proposal.proposalId }}" src="{{ path('space_proposal', proposal.toArray()) }}" data-action="turbo:frame-load->chat#scroll:once">
-        <p class="callout">Loading the card…</p>
+        <p class="callout">{{ 'chat.loading_card'|trans }}</p>
     </turbo-frame>
 </div>

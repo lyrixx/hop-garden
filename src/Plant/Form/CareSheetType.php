@@ -2,8 +2,9 @@
 
 namespace App\Plant\Form;
 
-use App\Plant\CareSheetPresenter;
+use App\Locale\IntlFormatter;
 use App\Plant\Form\Model\CareSheetFormData;
+use App\Plant\Model\CareSheetField;
 use App\Plant\Model\Exposure;
 use App\Plant\Model\Watering;
 use Symfony\Component\Form\AbstractType;
@@ -21,25 +22,32 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 final class CareSheetType extends AbstractType
 {
+    public function __construct(
+        private readonly IntlFormatter $formatter,
+    ) {
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $months = [];
         foreach (range(1, 12) as $month) {
-            $months[CareSheetPresenter::monthName($month)] = $month;
+            $months[$this->formatter->monthName($month)] = $month;
         }
+        // In the language of the page already
+        $monthOptions = ['choices' => $months, 'choice_translation_domain' => false, 'multiple' => true, 'expanded' => true];
 
         $builder
-            ->add('commonName', TextType::class, ['label' => 'Name', 'empty_data' => ''])
-            ->add('minTemperatureC', IntegerType::class, ['label' => 'Hardiness (°C)'])
-            ->add('frostSensitive', CheckboxType::class, ['label' => 'Frost sensitive', 'required' => false])
-            ->add('exposure', EnumType::class, ['class' => Exposure::class, 'choice_label' => static fn (Exposure $exposure): string => $exposure->label()])
-            ->add('watering', EnumType::class, ['class' => Watering::class, 'choice_label' => static fn (Watering $watering): string => $watering->label()])
-            ->add('pruningMonths', ChoiceType::class, ['label' => 'Pruning', 'choices' => $months, 'multiple' => true, 'expanded' => true])
-            ->add('deadheadingMonths', ChoiceType::class, ['label' => 'Deadheading', 'choices' => $months, 'multiple' => true, 'expanded' => true])
-            ->add('cuttingMonths', ChoiceType::class, ['label' => 'Cuttings', 'choices' => $months, 'multiple' => true, 'expanded' => true])
-            ->add('pruningAdvice', TextareaType::class, ['label' => 'Pruning advice', 'required' => false])
-            ->add('cuttingAdvice', TextareaType::class, ['label' => 'Cutting advice', 'required' => false])
-            ->add('notes', TextareaType::class, ['required' => false])
+            ->add('commonName', TextType::class, ['label' => 'form.name', 'empty_data' => ''])
+            ->add('minTemperatureC', IntegerType::class, ['label' => 'care_sheet.form.hardiness'])
+            ->add('frostSensitive', CheckboxType::class, ['label' => CareSheetField::FrostSensitive, 'required' => false])
+            ->add('exposure', EnumType::class, ['label' => CareSheetField::Exposure, 'class' => Exposure::class])
+            ->add('watering', EnumType::class, ['label' => CareSheetField::Watering, 'class' => Watering::class])
+            ->add('pruningMonths', ChoiceType::class, ['label' => CareSheetField::PruningMonths, ...$monthOptions])
+            ->add('deadheadingMonths', ChoiceType::class, ['label' => CareSheetField::DeadheadingMonths, ...$monthOptions])
+            ->add('cuttingMonths', ChoiceType::class, ['label' => CareSheetField::CuttingMonths, ...$monthOptions])
+            ->add('pruningAdvice', TextareaType::class, ['label' => CareSheetField::PruningAdvice, 'required' => false])
+            ->add('cuttingAdvice', TextareaType::class, ['label' => CareSheetField::CuttingAdvice, 'required' => false])
+            ->add('notes', TextareaType::class, ['label' => 'care_sheet.form.notes', 'required' => false])
         ;
     }
 

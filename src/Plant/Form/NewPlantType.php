@@ -19,10 +19,10 @@ final class NewPlantType extends AbstractType
     {
         $builder
             ->add('name', TextType::class, [
-                'label' => 'Name',
+                'label' => 'form.name',
                 'empty_data' => '',
-                'attr' => ['placeholder' => 'Hortensia, Rosa canina…', 'autocomplete' => 'off'],
-                'help' => 'Common or Latin: Trefle finds the species.',
+                'attr' => ['placeholder' => 'species.form.name.placeholder', 'autocomplete' => 'off'],
+                'help' => 'species.form.name.help',
             ])
             // Filled by the species picker, rendered as hidden inputs: their errors show at the head of the form
             ->add('trefleId', IntegerType::class, ['required' => false, 'error_bubbling' => true])

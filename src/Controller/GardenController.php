@@ -29,6 +29,7 @@ use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
+use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\Component\Uid\UuidV7;
 
 final class GardenController extends AbstractController
@@ -81,10 +82,10 @@ final class GardenController extends AbstractController
             if (null !== $sameSpeciesPlant) {
                 $planting->linkTo($sameSpeciesPlant);
                 $this->entityManager->flush();
-                $this->addFlash('success', \sprintf('%s is in your garden, with the care sheet of %s.', $planting->getName(), $sameSpeciesPlant->getCommonName()));
+                $this->addFlash('success', new TranslatableMessage('flash.planting.added_with_care_sheet', ['name' => $planting->getName(), 'species' => $sameSpeciesPlant->getCommonName()]));
             } else {
                 $this->draftCareSheet($planting);
-                $this->addFlash('success', \sprintf('%s is in your garden. The assistant drafts its care sheet.', $planting->getName()));
+                $this->addFlash('success', new TranslatableMessage('flash.planting.added_drafting', ['name' => $planting->getName()]));
             }
 
             return $this->redirectToRoute('garden_show', ['id' => $planting->getId()], Response::HTTP_SEE_OTHER);
@@ -115,7 +116,7 @@ final class GardenController extends AbstractController
                 $photoStorage->remove($previousPhotoFilename);
             }
 
-            $this->addFlash('success', \sprintf('The garden info of %s is saved.', $planting->getName()));
+            $this->addFlash('success', new TranslatableMessage('flash.planting.saved', ['name' => $planting->getName()]));
 
             return $this->redirectToRoute('garden_show', ['id' => $planting->getId()], Response::HTTP_SEE_OTHER);
         }
@@ -191,13 +192,13 @@ final class GardenController extends AbstractController
                 $planting->linkTo($plant);
                 $this->entityManager->flush();
 
-                $this->addFlash('success', \sprintf('%s now follows the care sheet of %s.', $planting->getName(), $plant->getCommonName()));
+                $this->addFlash('success', new TranslatableMessage('flash.planting.linked', ['name' => $planting->getName(), 'species' => $plant->getCommonName()]));
 
                 return $this->redirectToRoute('garden_show', ['id' => $planting->getId()], Response::HTTP_SEE_OTHER);
             }
         }
 
-        $this->addFlash('warning', 'This care sheet is not a validated one of the same species.');
+        $this->addFlash('warning', new TranslatableMessage('flash.planting.not_same_species'));
 
         return $this->redirectToRoute('garden_show', ['id' => $planting->getId()], Response::HTTP_SEE_OTHER);
     }

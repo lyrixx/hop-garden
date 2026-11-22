@@ -22,7 +22,7 @@ final class NewPlantFormData implements SpeciesPickerData
     #[Assert\Length(max: 100)]
     public string $name = '';
 
-    #[Assert\NotNull(message: 'Pick its species among the ones Trefle finds.')]
+    #[Assert\NotNull(message: 'species.not_picked')]
     #[Assert\Positive]
     public ?int $trefleId = null;
 

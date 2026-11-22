@@ -8,6 +8,7 @@ use App\Plant\Model\Exposure;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * A spot of the user's garden (the balcony, the north bed...): its exposure and its soil are those of the plants
@@ -72,15 +73,15 @@ class Space
     /**
      * Its exposure and soil in a few words ("Full sun, clay"), or null when neither is known.
      */
-    public function describeConditions(): ?string
+    public function describeConditions(TranslatorInterface $translator): ?string
     {
         if (null === $this->exposure) {
-            return null !== $this->soil ? \sprintf('%s soil', $this->soil->label()) : null;
+            return null !== $this->soil ? $translator->trans('space.conditions.soil_only', self::soilParameters($this->soil, $translator)) : null;
         }
 
         return null !== $this->soil
-            ? \sprintf('%s, %s', $this->exposure->label(), mb_strtolower($this->soil->label()))
-            : $this->exposure->label();
+            ? $translator->trans('space.conditions.exposure_and_soil', ['exposure' => $this->exposure->trans($translator), ...self::soilParameters($this->soil, $translator)])
+            : $this->exposure->trans($translator);
     }
 
     /**
@@ -144,5 +145,17 @@ class Space
         usort($plantings, static fn (Planting $a, Planting $b): int => strcasecmp($a->getName(), $b->getName()));
 
         return $plantings;
+    }
+
+    /**
+     * Its label as is, and in lower case within a sentence: "Clay soil", "Sol argileux", "Full sun, clay".
+     *
+     * @return array{soil: string, soil_lower: string}
+     */
+    private static function soilParameters(Soil $soil, TranslatorInterface $translator): array
+    {
+        $label = $soil->trans($translator);
+
+        return ['soil' => $label, 'soil_lower' => mb_strtolower($label)];
     }
 }

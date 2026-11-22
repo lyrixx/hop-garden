@@ -2,7 +2,10 @@
 
 namespace App\Garden\Model;
 
-enum CareTask: string
+use Symfony\Contracts\Translation\TranslatableInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+enum CareTask: string implements TranslatableInterface
 {
     case Pruning = 'pruning';
     case FrostProtection = 'frost_protection';
@@ -10,14 +13,11 @@ enum CareTask: string
     case Feeding = 'feeding';
     case Mulching = 'mulching';
 
-    public function label(): string
+    /**
+     * Its label, in translations/messages+intl-icu.*.yaml.
+     */
+    public function trans(TranslatorInterface $translator, ?string $locale = null): string
     {
-        return match ($this) {
-            self::Pruning => 'Pruned',
-            self::FrostProtection => 'Sheltered from frost',
-            self::Watering => 'Watered',
-            self::Feeding => 'Fed',
-            self::Mulching => 'Mulched',
-        };
+        return $translator->trans('care_task.' . $this->value, locale: $locale);
     }
 }

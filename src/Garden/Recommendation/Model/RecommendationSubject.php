@@ -2,21 +2,22 @@
 
 namespace App\Garden\Recommendation\Model;
 
-enum RecommendationSubject: string
+use Symfony\Contracts\Translation\TranslatableInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+enum RecommendationSubject: string implements TranslatableInterface
 {
     case Exposure = 'exposure';
     case Watering = 'watering';
     case Frost = 'frost';
     case Pruning = 'pruning';
 
-    public function label(): string
+    /**
+     * Its label, in translations/messages+intl-icu.*.yaml.
+     */
+    public function trans(TranslatorInterface $translator, ?string $locale = null): string
     {
-        return match ($this) {
-            self::Exposure => 'Exposure',
-            self::Watering => 'Watering',
-            self::Frost => 'Frost',
-            self::Pruning => 'Pruning',
-        };
+        return $translator->trans('recommendation_subject.' . $this->value, locale: $locale);
     }
 
     /**

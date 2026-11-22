@@ -11,5 +11,5 @@ use Symfony\Component\Validator\Constraint;
 #[\Attribute(\Attribute::TARGET_PROPERTY)]
 final class NewSpaceName extends Constraint
 {
-    public string $message = 'The garden has a space named "{{ name }}" already.';
+    public string $message = 'space.name.taken';
 }

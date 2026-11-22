@@ -1,12 +1,12 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Add a space · Hop Garden{% endblock %}
+{% block title %}{{ 'space.add'|trans }} · Hop Garden{% endblock %}
 
 {% block body %}
     <header class="plate-head">
-        <nav class="breadcrumb"><a href="{{ path('spaces') }}">My spaces</a> › New space</nav>
-        <h1>Add a space</h1>
-        <p>A spot of your garden, as the balcony or the north bed. The plants growing there share its exposure and its soil, and are neighbours.</p>
+        <nav class="breadcrumb"><a href="{{ path('spaces') }}">{{ 'nav.spaces'|trans }}</a> › {{ 'space.new'|trans }}</nav>
+        <h1>{{ 'space.add'|trans }}</h1>
+        <p>{{ 'space.new_intro'|trans }}</p>
     </header>
 
     {{ form_start(form, {attr: {class: 'card crowned care-sheet-form garden-form'}}) }}
@@ -14,8 +14,8 @@
         {{ include('space/_form.html.twig') }}
 
         <div class="actions">
-            <twig:Button href="{{ path('spaces') }}" class="button-secondary">Cancel</twig:Button>
-            <twig:Button icon="grid" :iconSize="18">Add the space</twig:Button>
+            <twig:Button href="{{ path('spaces') }}" class="button-secondary">{{ 'action.cancel'|trans }}</twig:Button>
+            <twig:Button icon="grid" :iconSize="18">{{ 'space.add_the_space'|trans }}</twig:Button>
         </div>
     {{ form_end(form) }}
 {% endblock %}

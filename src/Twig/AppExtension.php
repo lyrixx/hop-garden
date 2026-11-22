@@ -33,12 +33,6 @@ final readonly class AppExtension
         return $this->frostRiskEvaluator->thresholdOf($careSheet);
     }
 
-    #[AsTwigFunction('month_name')]
-    public function monthName(int $month): string
-    {
-        return CareSheetPresenter::monthName($month);
-    }
-
     #[AsTwigFilter('chat_markdown', isSafe: ['html'])]
     public function chatMarkdown(string $text): string
     {

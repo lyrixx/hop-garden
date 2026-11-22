@@ -2,12 +2,12 @@
 {% set months = this.months %}
 {% set to_review = this.toReview %}
 <tr class="row-{{ row.field.value }} {{ to_review ? 'needs-review' }}">
-    <th scope="row">{{ row.field.label }}</th>
+    <th scope="row">{{ row.field|trans }}</th>
     <td>
         {% if months is not null %}
             <span class="month-ruler" aria-hidden="true">
                 {%- for month in 1..12 -%}
-                    <span class="{{ month in months ? 'is-on' }}">{{ month_name(month)|first }}</span>
+                    <span class="{{ month in months ? 'is-on' }}">{{ month_initial(month) }}</span>
                 {%- endfor -%}
             </span>
             <span class="month-ruler-text">{{ row.value }}</span>

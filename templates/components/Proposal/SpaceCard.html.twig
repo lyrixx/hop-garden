@@ -8,27 +8,28 @@
 {%- props proposal, space = null, form = null -%}
 <turbo-frame id="space-proposal-{{ proposal.proposalId }}">
 <article class="card proposal-card {{ space ? 'is-done' }}"
+    {#- In English whatever the language: the agent reads it (config/agent/gardener.md) #}
     {%- if space %} data-chat-notice="I created the space {{ space.name }}."{% endif %}>
     <header class="proposal-card-head">
         <span class="proposal-card-figure"><twig:Icon name="grid" :size="28"/></span>
         <div>
-            <p class="kicker">{{ space ? 'My space' : 'New space' }}</p>
+            <p class="kicker">{{ (space ? 'space.mine' : 'space.new')|trans }}</p>
             <h3>{{ space ? space.name : proposal.name }}</h3>
         </div>
-        {% if space %}<twig:Status :validated="true">Created</twig:Status>{% endif %}
+        {% if space %}<twig:Status :validated="true">{{ 'status.created'|trans }}</twig:Status>{% endif %}
     </header>
 
     {% if space %}
         <twig:Space:Conditions :space="space"/>
         <div class="actions">
-            <twig:Button href="{{ path('space_show', {id: space.id}) }}" icon="grid" class="button-next" data-turbo-frame="_top">See the space</twig:Button>
+            <twig:Button href="{{ path('space_show', {id: space.id}) }}" icon="grid" class="button-next" data-turbo-frame="_top">{{ 'action.see_the_space'|trans }}</twig:Button>
         </div>
     {% elseif form %}
         {{ form_start(form, {attr: {class: 'proposal-form', 'data-chat-follow-up': ''}}) }}
             {{ form_errors(form) }}
             {{ include('space/_form.html.twig') }}
             <div class="actions">
-                <twig:Button icon="grid" :iconSize="18">Create the space</twig:Button>
+                <twig:Button icon="grid" :iconSize="18">{{ 'action.create_the_space'|trans }}</twig:Button>
             </div>
         {{ form_end(form) }}
     {% endif %}

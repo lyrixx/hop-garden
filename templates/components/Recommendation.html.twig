@@ -7,8 +7,8 @@
     <span class="pict {{ {exposure: 'pict-sun', watering: 'pict-water', frost: 'pict-frost'}[recommendation.subject.value] ?? '' }}"><twig:Icon :name="recommendation.subject.pictogram" :size="18"/></span>
     <div>
         <p class="recommendation-heading">
-            <strong>{{ recommendation.subject.label }}</strong>
-            <span class="tag">{{ recommendation.level.label }}</span>
+            <strong>{{ recommendation.subject|trans }}</strong>
+            <span class="tag">{{ recommendation.level|trans }}</span>
         </p>
         <p>{{ recommendation.message }}</p>
     </div>

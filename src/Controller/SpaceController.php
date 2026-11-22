@@ -12,6 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Translation\TranslatableMessage;
 
 /**
  * The spots of the garden: each carries the exposure and the soil of the plants growing there.
@@ -42,7 +43,7 @@ final class SpaceController extends AbstractController
             $this->spaceRepository->add($space);
             $this->entityManager->flush();
 
-            $this->addFlash('success', \sprintf('%s is one of your spaces. Place your plants there from their garden info.', $space->getName()));
+            $this->addFlash('success', new TranslatableMessage('flash.space.added', ['name' => $space->getName()]));
 
             return $this->redirectToRoute('space_show', ['id' => $space->getId()], Response::HTTP_SEE_OTHER);
         }
@@ -67,7 +68,7 @@ final class SpaceController extends AbstractController
             $data->applyTo($space);
             $this->entityManager->flush();
 
-            $this->addFlash('success', \sprintf('%s is saved.', $space->getName()));
+            $this->addFlash('success', new TranslatableMessage('flash.space.saved', ['name' => $space->getName()]));
 
             return $this->redirectToRoute('space_show', ['id' => $space->getId()], Response::HTTP_SEE_OTHER);
         }

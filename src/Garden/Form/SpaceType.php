@@ -19,21 +19,19 @@ final class SpaceType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('name', TextType::class, ['label' => 'Name', 'empty_data' => '', 'attr' => ['placeholder' => 'Balcony, north bed, vegetable patch…', 'autocomplete' => 'off']])
+            ->add('name', TextType::class, ['label' => 'form.name', 'empty_data' => '', 'attr' => ['placeholder' => 'space.form.name.placeholder', 'autocomplete' => 'off']])
             ->add('exposure', EnumType::class, [
                 'class' => Exposure::class,
                 'expanded' => true,
                 'required' => false,
-                'placeholder' => 'Not sure',
-                'choice_label' => static fn (Exposure $exposure): string => $exposure->label(),
-                'help' => 'The sun it gets on a summer day.',
+                'placeholder' => 'space.form.not_sure',
+                'help' => 'space.form.exposure.help',
             ])
             ->add('soil', EnumType::class, [
                 'class' => Soil::class,
                 'expanded' => true,
                 'required' => false,
-                'placeholder' => 'Not sure',
-                'choice_label' => static fn (Soil $soil): string => $soil->label(),
+                'placeholder' => 'space.form.not_sure',
             ])
         ;
     }

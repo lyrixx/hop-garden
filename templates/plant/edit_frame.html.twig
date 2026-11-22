@@ -4,8 +4,8 @@
         {% block heading %}
             <header class="care-sheet-form-head">
                 <p class="kicker">Tab. {{ plant.id }}<span>{{ plant.family }}</span></p>
-                <h3>{{ plant.validated ? 'Edit' : 'Review' }} <em>{{ plant.scientificName }}</em></h3>
-                <p class="hint">A value you change counts as verified (high confidence).{% if not plant.validated %} Its reminders wait until you validate the draft.{% endif %}</p>
+                <h3>{{ (plant.validated ? 'care_sheet.edit.heading' : 'care_sheet.review.heading')|trans({species: '<em>' ~ plant.scientificName|e ~ '</em>'})|raw }}</h3>
+                <p class="hint">{{ 'care_sheet.edit.verified'|trans }}{% if not plant.validated %} {{ 'care_sheet.review.reminders_wait'|trans }}{% endif %}</p>
             </header>
         {% endblock %}
     {% endembed %}

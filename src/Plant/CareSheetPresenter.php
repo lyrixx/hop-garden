@@ -2,15 +2,24 @@
 
 namespace App\Plant;
 
+use App\Locale\IntlFormatter;
 use App\Plant\Entity\CareSheet;
 use App\Plant\Model\CareSheetField;
 use App\Plant\Model\CareSheetRow;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * Human-readable values of a care sheet, shared by the web card and the MCP Markdown resource.
+ * Human-readable values of a care sheet, shared by the web card and the MCP Markdown resource, in the language of the
+ * translator.
  */
 final readonly class CareSheetPresenter
 {
+    public function __construct(
+        private TranslatorInterface $translator,
+        private IntlFormatter $formatter,
+    ) {
+    }
+
     /**
      * @return list<CareSheetRow>
      */
@@ -27,26 +36,16 @@ final readonly class CareSheetPresenter
     public function valueOf(CareSheet $careSheet, CareSheetField $field): string
     {
         return match ($field) {
-            CareSheetField::MinTemperatureC => \sprintf('%d °C', $careSheet->getMinTemperatureC()),
-            CareSheetField::FrostSensitive => $careSheet->isFrostSensitive() ? 'Yes' : 'No',
-            CareSheetField::Exposure => $careSheet->getExposure()->label(),
-            CareSheetField::Watering => $careSheet->getWatering()->label(),
+            CareSheetField::MinTemperatureC => $this->translator->trans('unit.celsius', ['temperature' => $careSheet->getMinTemperatureC()]),
+            CareSheetField::FrostSensitive => $this->translator->trans($careSheet->isFrostSensitive() ? 'answer.yes' : 'answer.no'),
+            CareSheetField::Exposure => $careSheet->getExposure()->trans($this->translator),
+            CareSheetField::Watering => $careSheet->getWatering()->trans($this->translator),
             CareSheetField::PruningMonths => $this->months($careSheet->getPruningMonths()),
             CareSheetField::DeadheadingMonths => $this->months($careSheet->getDeadheadingMonths()),
             CareSheetField::CuttingMonths => $this->months($careSheet->getCuttingMonths()),
             CareSheetField::PruningAdvice => $this->text($careSheet->getPruningAdvice()),
             CareSheetField::CuttingAdvice => $this->text($careSheet->getCuttingAdvice()),
         };
-    }
-
-    public static function monthName(int $month): string
-    {
-        $date = \DateTimeImmutable::createFromFormat('!n', (string) $month);
-        if (false === $date) {
-            throw new \LogicException(\sprintf('Invalid month %d.', $month));
-        }
-
-        return $date->format('F');
     }
 
     /**
@@ -68,6 +67,6 @@ final readonly class CareSheetPresenter
             return '—';
         }
 
-        return implode(', ', array_map(self::monthName(...), $months));
+        return implode(', ', array_map($this->formatter->monthName(...), $months));
     }
 }
