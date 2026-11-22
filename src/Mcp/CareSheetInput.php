@@ -45,12 +45,12 @@ final class CareSheetInput
             CareSheetField::PruningAdvice->value => [
                 'type' => 'string',
                 'maxLength' => 500,
-                'description' => 'One or two sentences: how to prune. Example: "Cut last year\'s stems back to two pairs of buds."',
+                'description' => 'One or two sentences, in the language of the common name: how to prune. Example: "Cut last year\'s stems back to two pairs of buds."',
             ],
             CareSheetField::CuttingAdvice->value => [
                 'type' => 'string',
                 'maxLength' => 500,
-                'description' => 'One or two sentences: how to take cuttings. Empty string when not relevant.',
+                'description' => 'One or two sentences, in the language of the common name: how to take cuttings. Empty string when not relevant.',
             ],
             'confidence' => [
                 'type' => 'object',

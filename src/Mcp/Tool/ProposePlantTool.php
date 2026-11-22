@@ -50,7 +50,7 @@ final readonly class ProposePlantTool
      * @return array<string, mixed>
      */
     public function __invoke(
-        #[Schema(description: 'Common name in the language of the user. Example: "Panicled hydrangea".', minLength: 1, maxLength: 100)]
+        #[Schema(description: 'Common name, in the language of the interface of Hop Garden when you know it, else of the user. Example: "Panicled hydrangea".', minLength: 1, maxLength: 100)]
         string $common_name,
         #[Schema(description: 'Scientific name. Example: "Hydrangea paniculata".', minLength: 3, maxLength: 150)]
         string $scientific_name,
@@ -62,7 +62,7 @@ final readonly class ProposePlantTool
         ?int $trefle_id = null,
         #[Schema(description: 'Image URL from search_plant, if any.', format: 'uri', maxLength: 2048)]
         ?string $image_url = null,
-        #[Schema(description: 'Anything the user should know about this plant, in one or two sentences.', maxLength: 1000)]
+        #[Schema(description: 'Anything the user should know about this plant, in one or two sentences, in the language of the common name.', maxLength: 1000)]
         ?string $notes = null,
     ): array {
         try {
