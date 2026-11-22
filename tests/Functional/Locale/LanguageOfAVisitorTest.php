@@ -44,6 +44,29 @@ final class LanguageOfAVisitorTest extends WebTestCase
         self::assertNull(self::getContainer()->get(SettingsRepository::class)->findTheSettings(), 'Not for the others.');
     }
 
+    /**
+     * Before the accounts, the banner of the public page changed the language of every visitor and of the reminder
+     * check: it wrote the settings of the application.
+     */
+    public function testTheChoiceOfAVisitorChangesNothingForTheOthers(): void
+    {
+        $settings = new Settings();
+        $settings->choosePreferredLocale(SupportedLocale::English);
+        self::getContainer()->get(SettingsRepository::class)->add($settings);
+        self::getContainer()->get(EntityManagerInterface::class)->flush();
+
+        $crawler = $this->client->request('GET', '/', server: ['HTTP_ACCEPT_LANGUAGE' => 'fr-FR']);
+        $this->client->submit($crawler->selectButton('Passer en français')->form());
+        $this->client->followRedirect();
+        self::assertSelectorTextSame('h1', 'Savoir quand tailler. Être prévenu avant le gel.');
+
+        self::assertSame(SupportedLocale::English, self::getContainer()->get(SettingsRepository::class)->findTheSettings()?->getPreferredLocale(), 'Not the application.');
+        $this->client->restart();
+        $crawler = $this->client->request('GET', '/', server: ['HTTP_ACCEPT_LANGUAGE' => 'fr-FR']);
+        self::assertSame('en', $crawler->filter('html')->attr('lang'), 'Nor another visitor.');
+        self::assertSame('Hop Garden existe en français', $crawler->filter('.locale-banner p')->text(), 'Who still has the choice.');
+    }
+
     public function testAVisitorWhoDidNotChooseGetsTheLanguageOfTheApplication(): void
     {
         $settings = new Settings();
