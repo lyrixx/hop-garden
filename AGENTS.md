@@ -182,5 +182,5 @@ After any PHP/Twig code change: `castor qa:cs --dry-run`,
     (`validated()`, `withEnabledReminders()`, `of()`, `inSpace()`, `linkedTo()`, `drafting()`...), never through a
     setter or the reflection, and its dates are explicit. The tests get Foundry from its PHPUnit extension, without
     trait: no persistence in `tests/Unit`, and DAMA still rolls each test back.
-15. A named service is injected with `#[Target('name')]` (see `debug:autowiring`), `#[Autowire(service:)]` only when no
+16. A named service is injected with `#[Target('name')]` (see `debug:autowiring`), `#[Autowire(service:)]` only when no
     target exists.
