@@ -124,10 +124,10 @@ Without option, the `default` context applies.
   their password. Password reset: `Entity\PasswordResetRequest`, its token hashed, one hour, one per user. The pages pay
   no attention to whether an address has an account: the email tells its owner (`AccountMailer::sendAddressInUse()`).
   Accounts are created by `app:user:create` too (`castor app:user:create`)
-- Security (`config/packages/security.yaml`): `form_login` on `/login`, remember me, `login_throttling` (5 attempts in 15
-  minutes), logout on `/logout`. `access_control` denies by default (`ROLE_USER`): public are `/`, the routes `legal_*`,
-  `/login`, `/register…`, `/reset-password…`, `/locale`, and `/_mcp` (until OAuth) with `/_mcp/agent` (the worker,
-  until a token per run)
+- Security (`config/packages/security.yaml`): `form_login` on `/login`, which leads to `/assistant`, remember me,
+  `login_throttling` (5 attempts in 15 minutes), logout on `/logout`, which leads to `/`. `access_control` denies by
+  default (`ROLE_USER`, the chat included): public are the routes `home` and `legal_*`, `/login`, `/register…`,
+  `/reset-password…`, `/locale`, and `/_mcp` (until OAuth) with `/_mcp/agent` (the worker, until a token per run)
 - Mailer: Twig emails in `templates/email/`, translated, sent at once after the flush. In dev, Mailpit catches them
   (`MAILER_DSN` of `.env.dev`, its inbox on `mail.<root_domain>`, listed by `castor about`); in the tests,
   `null://null` and the email assertions of Symfony
