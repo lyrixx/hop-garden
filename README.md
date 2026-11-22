@@ -123,9 +123,12 @@ them. In `castor demo:reset`, Alice and Bob share "The allotment" (Alice is its 
 - Deleting an account deletes the gardens its owner was the only member of, with their photos and conversations; a
   shared garden stays with the others, the oldest of them its owner.
 
-Before the gardens, a database had none: `castor app:garden:adopt-orphans --email=you@example.com --name="My garden"
---city=Lyon` gives its rows to a new garden of that member (an approved account, `castor app:user:create ... --approved`),
-between the two migrations that add the gardens (`castor migrate` stops before the second one and says so).
+Before the gardens, a database had none, and `castor migrate` refuses it: the migration that requires a garden for
+every row names the task that gives them one, and nothing is migrated. `castor app:garden:adopt-orphans
+--email=you@example.com --name="My garden" --city=Lyon` runs the migrations up to the gardens, gives every row to a new
+garden of that member, then runs the others. The member is an approved account: from a database of before the accounts
+too, run the task once (it migrates, then asks for them), create them with `castor app:user:create ... --approved`, and
+run it again.
 
 ### Accounts and the waiting list
 
@@ -344,7 +347,7 @@ agent runs too), `DATABASE_URL`, `DEFAULT_URI` (the Mercure topics live under it
 (the hosts of the MCP server: its domain, and the one the worker reaches it by), and the mailer ones (`MAILER_DSN`,
 `MAILER_FROM`). One volume, shared by the web and the worker: `var/share/` (`APP_SHARE_DIR`: the sessions, so the
 conversation of the chat survives a deployment, the `cache.app` pool with the quotas and the login throttling, and the
-photos of the plantings in `var/share/uploads/plantings`, served by the application to the members of their garden
+photos of the plantings in `var/share/prod/uploads/plantings` (the share directory of the environment), served by the application to the members of their garden
 only). The first administrator, once the migrations ran:
 `bin/console app:user:create --email=... --name=... --password=... --admin`.
 

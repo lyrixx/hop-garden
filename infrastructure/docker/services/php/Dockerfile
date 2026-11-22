@@ -137,7 +137,7 @@ COPY ./prod/php.ini $PHP_INI_DIR/conf.d/app-prod.ini
 COPY ./frontend/etc/. /etc/
 
 # The persistent volume, created here to belong to "app": var/share (APP_SHARE_DIR: the sessions,
-# the cache.app pool, and the photos of the plantings in var/share/uploads, served by the
+# the cache.app pool, and the photos of the plantings in var/share/prod/uploads, served by the
 # application to the members of their garden only)
 RUN groupadd -g 1000 app \
     && useradd -M -u 1000 -g 1000 -s /bin/false app \

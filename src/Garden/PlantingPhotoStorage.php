@@ -7,8 +7,9 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
- * The photos of the plantings, out of public/: in the share directory (APP_SHARE_DIR, a volume in production, shared by
- * the web and the worker), served to the members of their garden only by GardenController::photo().
+ * The photos of the plantings, out of public/: in the share directory of the environment (var/share/<env>/, a volume
+ * in production, shared by the web and the worker), served to the members of their garden only by
+ * GardenController::photo().
  */
 final readonly class PlantingPhotoStorage
 {

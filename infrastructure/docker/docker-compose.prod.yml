@@ -25,7 +25,7 @@ x-app-env: &app-env
 
 volumes:
     postgres-data: {}
-    # The sessions, the cache.app pool and the photos of the plantings (var/share/uploads)
+    # The sessions, the cache.app pool and the photos of the plantings (var/share/prod/uploads)
     share: {}
 
 services:
