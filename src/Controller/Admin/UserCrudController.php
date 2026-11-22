@@ -65,6 +65,6 @@ final class UserCrudController extends AbstractCrudController
 
     public function configureFilters(Filters $filters): Filters
     {
-        return $filters->add(ChoiceFilter::new('accessStatus', new TranslatableMessage('admin.user.access_status'))->setChoices(AccessStatus::cases()));
+        return $filters->add(ChoiceFilter::new('accessStatus', new TranslatableMessage('admin.user.access_status'))->setTranslatableChoices(AccessStatus::cases()));
     }
 }

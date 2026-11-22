@@ -153,6 +153,22 @@ final class WaitingListTest extends WebTestCase
         self::assertCount(0, $crawler->filter('form[action*="/approve"]'), 'Decided on the waiting list only.');
     }
 
+    public function testTheAccountsByAccess(): void
+    {
+        UserFactory::new()->verified()->create(['displayName' => 'Dave']);
+        $carol = UserFactory::new()->refused()->create(['displayName' => 'Carol']);
+        $this->logIn($this->client, UserFactory::new()->admin()->create(['displayName' => 'Admin']));
+
+        $crawler = $this->client->request('GET', '/admin/users', ['filters' => ['accessStatus' => ['comparison' => '=', 'value' => 'refused']]]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(['Carol'], $this->names($crawler));
+
+        $this->client->request('GET', '/admin/users/' . $carol->getId());
+        self::assertResponseIsSuccessful();
+        self::assertAnySelectorTextSame('.badge, [class*="badge"]', 'Refused');
+    }
+
     /**
      * @return list<string>
      */
