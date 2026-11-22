@@ -1,0 +1,9 @@
+{#
+    The links to the legal pages, at the foot of every page: of the application, the public pages and the back-office.
+    No prop.
+#}
+<nav class="footer-links" aria-label="{{ 'footer.legal'|trans }}">
+    <a href="{{ path('legal_notice') }}">{{ 'legal.notice.title'|trans }}</a>
+    <a href="{{ path('legal_terms') }}">{{ 'legal.terms.title'|trans }}</a>
+    <a href="{{ path('legal_privacy') }}">{{ 'legal.privacy.title'|trans }}</a>
+</nav>

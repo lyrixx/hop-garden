@@ -80,8 +80,9 @@ Without option, the `default` context applies.
   extend `templates/public/layout.html.twig`: their own top bar (the language, *Log in* to `/login` and *Join the
   waiting list* to `/register`; for a member, *Open my garden* instead: `Public:JoinButton`), without the navigation of
   the application or the notification stream. A blank of the publisher on a legal page is a `Legal:ToComplete`, never a
-  made-up value. The footer of `base.html.twig` links the legal pages on every page. The application starts at
-  `/assistant` (route `chat`), where a login leads, and `/?message=` redirects there. The privacy policy says the session cookie is the only one, and
+  made-up value. The footer of `base.html.twig` links the legal pages on every page (`Legal:Links`, at the foot of the
+  back-office too: `templates/admin/layout.html.twig`). The application starts at `/assistant` (route `chat`), where a
+  login leads, and `/?message=` redirects there. The privacy policy says the session cookie is the only one, and
   `LegalPagesTest::testThePrivacyPolicyNamesTheOnlyCookie()` checks it: a new cookie (remember me...) goes in the policy.
   The captures of `assets/images/home/` (a draft care sheet, the reminder board) exist in each language: retake both
   when the card or the board changes

@@ -47,6 +47,7 @@ final class WaitingListTest extends WebTestCase
         $crawler = $this->client->followRedirect();
         self::assertSelectorTextSame('h1', 'Waiting list');
         self::assertSame(['Waiting list', 'Accounts', 'Back to Hop Garden'], $crawler->filter('.ea-sidebar-item-label')->each(static fn (Crawler $label): string => $label->text()));
+        self::assertSame(['/legal-notice', '/terms', '/privacy'], $crawler->filter('.content-footer .footer-links a')->each(static fn (Crawler $link): ?string => $link->attr('href')), 'The legal links too.');
     }
 
     public function testTheWaitingListShowsTheVerifiedAccountsWithoutDecision(): void

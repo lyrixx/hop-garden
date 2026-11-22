@@ -6,6 +6,7 @@ use App\Account\Entity\User;
 use App\Account\UserRepository;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Theme;
@@ -45,6 +46,11 @@ final class DashboardController extends AbstractDashboardController
     public function configureAssets(): Assets
     {
         return Assets::new()->addCssFile('styles/admin.css');
+    }
+
+    public function configureCrud(): Crud
+    {
+        return parent::configureCrud()->overrideTemplate('layout', 'admin/layout.html.twig');
     }
 
     public function configureMenuItems(): iterable

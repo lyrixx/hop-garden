@@ -63,11 +63,7 @@
         </main>
 
         <footer class="footer">
-            <nav class="footer-links" aria-label="{{ 'footer.legal'|trans }}">
-                <a href="{{ path('legal_notice') }}">{{ 'legal.notice.title'|trans }}</a>
-                <a href="{{ path('legal_terms') }}">{{ 'legal.terms.title'|trans }}</a>
-                <a href="{{ path('legal_privacy') }}">{{ 'legal.privacy.title'|trans }}</a>
-            </nav>
+            <twig:Legal:Links/>
             <p>
                 {{ 'footer.plant_data'|trans({trefle: '<a href="https://trefle.io">Trefle</a>'})|raw }}
                 {{ 'footer.weather_data'|trans({open_meteo: '<a href="https://open-meteo.com/">Open-Meteo.com</a>', license: '<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>'})|raw }}

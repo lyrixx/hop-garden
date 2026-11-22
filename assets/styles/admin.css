@@ -22,3 +22,7 @@
 
 /* The count of the waiting list, in anise as the pills of the application */
 .ea-sidebar-badge { background: #b5d35a; color: #073d27; }
+
+/* The legal links at the foot of each page (templates/admin/layout.html.twig) */
+.content-footer .footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: .2rem 1.4rem; font-size: .85rem; }
+.content-footer .footer-links a { color: var(--text-muted); font-weight: 600; }
