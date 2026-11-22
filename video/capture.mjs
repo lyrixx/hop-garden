@@ -28,7 +28,7 @@ const FRAMES_DIR = join(OUT_DIR, 'frames');
 // 1920×1080 frames of a page zoomed 1.5×: the app reads like on a 1280×720 screen
 const VIEWPORT = { width: 1920, height: 1080 };
 const ZOOM = 1.5;
-// Keep in sync with the space of src/DataFixtures/DemoFixtures.php, and the option of the species with the candidates
+// Keep in sync with the space of src/Story/DemoStory.php, and the option of the species with the candidates
 // of fixtures/http/trefle/search/hydrangea.json
 const MESSAGE = 'I just planted a hydrangea on the terrace';
 const SPACE = 'Terrace';
