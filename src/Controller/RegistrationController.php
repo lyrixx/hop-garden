@@ -61,8 +61,8 @@ final class RegistrationController extends AbstractController
             if (null !== $owner) {
                 $this->accountMailer->sendAddressInUse($owner, $locale);
             } else {
-                // The language they register in, until they choose another
-                $this->registerNew($data->toUser($passwordHash, $locale, $this->clock->now()), $locale);
+                // The language chosen as a visitor; null otherwise, and the browser is offered after the login
+                $this->registerNew($data->toUser($passwordHash, $this->preferredLocale->isChosen() ? $locale : null, $this->clock->now()), $locale);
             }
 
             return $this->redirectToRoute('register_check_email', status: Response::HTTP_SEE_OTHER);

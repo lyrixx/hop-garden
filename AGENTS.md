@@ -88,7 +88,7 @@ Without option, the `default` context applies.
   with the `LocaleSwitcher`, and only the reminder check, without recipient, reads `PreferredLocale` in its handler (and
   in `app:reminders:run`).
   - `App\Locale\UserPreferredLocale`: the `preferredLocale` of the member logged in (null until chosen; a registration
-    keeps the language of its page), else the `locale` cookie of a visitor, else the one of the application, a row of
+    keeps the choice of the visitor), else the `locale` cookie of a visitor, else the one of the application, a row of
     `App\Settings\Entity\Settings` that no page writes (the reminder check), emptied by `castor demo:reset`. A choice
     goes to the account and to the cookie. `App\Locale\RequestLocaleListener` applies it after the firewall (7), which
     knows the member. Until one is chosen, `LocaleBanner` offers the language of the browser; the footer switch

@@ -82,8 +82,7 @@ A card keeps its outcome: reload the page and it still says *Added* or *Created*
 Hop Garden speaks English and French. The language is a setting of each member, never of the URL: with a browser in
 French, the pages stay in English until you choose, under a band in French, *Passer en français* or *Rester en
 anglais*. The band does not come back, and the footer or *My account* switches the language later. A visitor's choice
-stays in a cookie, and an account keeps the language it registered in. In `castor demo:reset`, Alice speaks English and
-Bob French.
+stays in a cookie, and goes to the account they register. In `castor demo:reset`, Alice speaks English and Bob French.
 
 - The assistant answers in the language you write in, and in the one of the interface when a tap on a choice does not
   tell. A tapped card tells it in the language of the interface (*J’ai créé l’espace Balcon.*). The care sheets it

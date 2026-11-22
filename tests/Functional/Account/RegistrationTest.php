@@ -50,7 +50,7 @@ final class RegistrationTest extends WebTestCase
         $user = $this->user('alice@example.com');
         self::assertSame('Alice', $user->getDisplayName());
         self::assertFalse($user->isEmailVerified());
-        self::assertSame(SupportedLocale::English, $user->getPreferredLocale(), 'The language it registered in.');
+        self::assertNull($user->getPreferredLocale(), 'Not chosen: the browser is offered after the login.');
         self::assertTrue(password_verify(self::PASSWORD, $user->getPassword()), 'Hashed.');
 
         $this->client->followRedirect();
