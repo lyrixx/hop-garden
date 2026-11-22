@@ -73,6 +73,7 @@ final class AccessTest extends WebTestCase
         self::assertSelectorNotExists('.nav a[href="/garden"]', 'Nor the tabs of the garden.');
         self::assertSelectorNotExists('#notifications-stream', 'Nor its notifications.');
         self::assertSame(['/login', '/register'], $crawler->filter('.nav-visitor a')->each(static fn ($link): ?string => $link->attr('href')));
+        self::assertSame('/', $crawler->filter('.topbar .brand')->attr('href'), 'The public page: the chat would send back here.');
     }
 
     public function testAMemberOnTheWaitingListGetsNothingEvenWithASession(): void
@@ -91,6 +92,7 @@ final class AccessTest extends WebTestCase
         $crawler = $this->client->request('GET', '/garden');
 
         self::assertResponseIsSuccessful();
+        self::assertSame('/assistant', $crawler->filter('.topbar .brand')->attr('href'));
         self::assertSame('Alice', $crawler->filter('.account-menu a[href="/account"]')->text());
         self::assertSelectorNotExists('.account-menu a[href="/admin"]');
 

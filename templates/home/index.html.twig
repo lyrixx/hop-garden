@@ -79,9 +79,12 @@
         </div>
     </section>
 
-    <section class="card crowned home-join">
-        <h2>{{ 'home.join.heading'|trans }}</h2>
-        <p>{{ 'home.join.text'|trans }}</p>
-        <twig:Public:JoinButton class="button-next"/>
-    </section>
+    {# A member is in already: their garden is in the top bar and the hero #}
+    {% if not is_granted('ROLE_USER') %}
+        <section class="card crowned home-join">
+            <h2>{{ 'home.join.heading'|trans }}</h2>
+            <p>{{ 'home.join.text'|trans }}</p>
+            <twig:Public:JoinButton class="button-next"/>
+        </section>
+    {% endif %}
 {% endblock %}

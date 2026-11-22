@@ -546,6 +546,7 @@ public:
     join: "Join the waiting list"
     log_in: "Log in"
     nav: "Account"
+    open_garden: "Open my garden"
 recommendation:
     exposure:
         close: "It prefers {preferred, select, sun {full sun} part_shade {part shade} other {shade}} and gets {actual, select, sun {full sun} part_shade {part shade} other {shade}} here: it should cope, but would do better in {preferred, select, sun {full sun} part_shade {part shade} other {shade}}."

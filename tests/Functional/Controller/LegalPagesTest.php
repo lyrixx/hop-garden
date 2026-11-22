@@ -57,14 +57,21 @@ final class LegalPagesTest extends WebTestCase
         yield 'politique de confidentialité' => ['/privacy', 'fr', 'Politique de confidentialité', 'À compléter'];
     }
 
-    #[TestWith(['/'])]
-    #[TestWith(['/assistant'])]
-    #[TestWith(['/garden'])]
-    #[TestWith(['/notifications'])]
-    #[TestWith(['/privacy'])]
-    public function testTheFooterLinksToThemOnEveryPage(string $url): void
+    #[TestWith(['/', false])]
+    #[TestWith(['/privacy', false])]
+    #[TestWith(['/login', false])]
+    #[TestWith(['/register', false])]
+    #[TestWith(['/reset-password', false])]
+    #[TestWith(['/', true])]
+    #[TestWith(['/assistant', true])]
+    #[TestWith(['/garden', true])]
+    #[TestWith(['/notifications', true])]
+    #[TestWith(['/account', true])]
+    public function testTheFooterLinksToThemOnEveryPage(string $url, bool $member): void
     {
-        $this->logIn($this->client);
+        if ($member) {
+            $this->logIn($this->client);
+        }
         $crawler = $this->client->request('GET', $url);
 
         $links = $crawler->filter('.footer .footer-links a');

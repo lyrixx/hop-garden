@@ -95,6 +95,7 @@ final class RegistrationTest extends WebTestCase
     {
         $crawler = $this->client->request('GET', '/register');
         self::assertSame('I accept the terms of sale.', $crawler->filter('label[for="registration_acceptsTerms"]')->text());
+        self::assertSame('/terms', $crawler->filter('label[for="registration_acceptsTerms"] a')->attr('href'));
 
         $this->client->submit($crawler->selectButton('Join the waiting list')->form(), [
             'registration[email]' => 'alice@example.com',

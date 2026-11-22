@@ -18,8 +18,8 @@
         <div>
             <div class="form-check">
                 {{ form_widget(form.acceptsTerms) }}
-                {# TODO The terms of sale of the saas-public branch: path('legal_terms'), once merged #}
-                <label for="{{ form.acceptsTerms.vars.id }}">{{ 'registration.terms'|trans({link: '<a href="#">', link_end: '</a>'})|raw }}</label>
+                {# In a new tab: the form keeps what is typed #}
+                <label for="{{ form.acceptsTerms.vars.id }}">{{ 'registration.terms'|trans({link: '<a href="' ~ path('legal_terms') ~ '" target="_blank">', link_end: '</a>'})|raw }}</label>
             </div>
             {{ form_errors(form.acceptsTerms) }}
         </div>

@@ -546,6 +546,7 @@ public:
     join: "Rejoindre la liste d’attente"
     log_in: "Se connecter"
     nav: "Compte"
+    open_garden: "Ouvrir mon jardin"
 recommendation:
     exposure:
         close: "Elle préfère {preferred, select, sun {le plein soleil} part_shade {la mi-ombre} other {l’ombre}} et se trouve ici {actual, select, sun {en plein soleil} part_shade {à la mi-ombre} other {à l’ombre}} : elle devrait s’en accommoder, mais serait mieux {preferred, select, sun {en plein soleil} part_shade {à la mi-ombre} other {à l’ombre}}."

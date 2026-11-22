@@ -4,6 +4,7 @@ namespace App\Tests\Functional\Controller;
 
 use App\Locale\UserPreferredLocale;
 use App\Tests\Utils\Security\LogInTrait;
+use PHPUnit\Framework\Attributes\TestWith;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\BrowserKit\Cookie;
@@ -65,11 +66,42 @@ final class HomeControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/');
 
         self::assertSame('/', $crawler->filter('.topbar .brand')->attr('href'));
-        self::assertSelectorTextSame('.public-nav-link', 'Log in');
-        self::assertSelectorTextSame('.public-nav .button', 'Join the waiting list');
+        self::assertSame(['Log in', '/login'], [$crawler->filter('.public-nav-link')->text(), $crawler->filter('.public-nav-link')->attr('href')]);
+        self::assertSame(['Join the waiting list', '/register'], [$crawler->filter('.public-nav .button')->text(), $crawler->filter('.public-nav .button')->attr('href')]);
         self::assertSame(['EN', 'FR'], $crawler->filter('.public-nav .locale-switch button')->each(static fn (Crawler $button): string => $button->text()));
         self::assertSelectorNotExists('.nav', 'Not the navigation of the application.');
         self::assertSelectorNotExists('turbo-mercure-stream-source', 'No reminder toast on a public page.');
+    }
+
+    public function testEveryCallToJoinLeadsToTheRegistration(): void
+    {
+        $crawler = $this->client->request('GET', '/');
+
+        $calls = $crawler->filter('a.button')->each(static fn (Crawler $link): array => [$link->text(), $link->attr('href')]);
+        self::assertSame(array_fill(0, 3, ['Join the waiting list', '/register']), $calls, 'The top bar, the hero, the end of the page.');
+
+        $this->client->click($crawler->filter('.home-join a.button')->link());
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextSame('h1', 'Join Hop Garden');
+    }
+
+    /**
+     * A member sees the public page too (the logout leads there): their garden instead of the calls to join.
+     */
+    #[TestWith(['/'])]
+    #[TestWith(['/privacy'])]
+    public function testAMemberIsOfferedTheirGarden(string $url): void
+    {
+        $this->logIn($this->client);
+
+        $crawler = $this->client->request('GET', $url);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('.public-nav-link', 'Logged in already.');
+        self::assertSelectorNotExists('.home-join');
+        $calls = $crawler->filter('a.button')->each(static fn (Crawler $link): array => [$link->text(), $link->attr('href')]);
+        self::assertContains(['Open my garden', '/assistant'], $calls);
+        self::assertNotContains('/register', array_column($calls, 1));
     }
 
     public function testTheTopBarSwitchesTheLanguage(): void
