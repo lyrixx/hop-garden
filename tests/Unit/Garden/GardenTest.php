@@ -53,6 +53,20 @@ final class GardenTest extends TestCase
         $garden->leave($alice);
     }
 
+    public function testItsOwnerRemovesAMemberNeverThemselves(): void
+    {
+        [$alice, $bob] = [UserFactory::createOne(['email' => 'alice@example.com']), UserFactory::createOne(['email' => 'bob@example.com'])];
+        $garden = self::garden($alice);
+        $garden->join($bob, new \DateTimeImmutable('2026-10-02'));
+        $owner = $garden->membershipOf($alice) ?? self::fail();
+
+        $garden->remove($garden->membershipOf($bob) ?? self::fail());
+
+        self::assertSame([$alice], $garden->getMembers());
+        $this->expectException(\LogicException::class);
+        $garden->remove($owner);
+    }
+
     public function testAMemberJoinsOnce(): void
     {
         $alice = UserFactory::createOne();

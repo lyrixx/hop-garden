@@ -7,17 +7,16 @@ use App\Garden\Model\MembershipRole;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * A member of a garden: created and changed by its garden only (Garden::create(), join(), leave()).
+ * A member of a garden: created and changed by its garden only (Garden::create(), join(), leave(), remove()).
  */
 #[ORM\Entity]
 #[ORM\UniqueConstraint(fields: ['garden', 'user'])]
 class Membership
 {
-    // Only Doctrine reads it
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null; // @phpstan-ignore property.onlyWritten
+    private ?int $id = null;
 
     /**
      * @internal only for Garden
@@ -42,6 +41,11 @@ class Membership
     public function takeOver(): void
     {
         $this->role = MembershipRole::Owner;
+    }
+
+    public function getId(): int
+    {
+        return $this->id ?? throw new \LogicException('The membership has not been persisted yet.');
     }
 
     public function getGarden(): Garden

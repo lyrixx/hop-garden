@@ -5,6 +5,7 @@ namespace App\Factory;
 use App\Reminder\Entity\Notification;
 use App\Reminder\Entity\Reminder;
 use Zenstruck\Foundry\Factory;
+use Zenstruck\Foundry\Object\Instantiator;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
@@ -28,7 +29,7 @@ final class NotificationFactory extends PersistentObjectFactory
 
     protected function initialize(): static
     {
-        return $this->beforeInstantiate(static function (array $attributes): array {
+        return $this->instantiateWith(Instantiator::namedConstructor('remind'))->beforeInstantiate(static function (array $attributes): array {
             // Made first, for the owner of its garden
             if (($attributes['reminder'] ?? null) instanceof Factory) {
                 $attributes['reminder'] = $attributes['reminder']->create();

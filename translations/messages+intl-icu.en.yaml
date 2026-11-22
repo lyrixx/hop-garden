@@ -172,6 +172,13 @@ email:
         expiry: "This link works for one hour. Not you? Ignore this email: nothing changes."
         intro: "Confirm that this is the new address of your Hop Garden account:"
         subject: "Confirm your new email"
+    invitation:
+        button: "Join {garden}"
+        expiry: "This link works until {date}, once. Not expecting it? Ignore this email: nothing happens without you."
+        hello: "Hello,"
+        intro: "{inviter} invites you to garden together in {garden}, on Hop Garden: you share its plants, their care sheets and their reminders."
+        no_waiting: "No waiting list with this invitation: create your account, or log in, and you are in."
+        subject: "{inviter} invites you to {garden} on Hop Garden"
     layout:
         copy_link: "Or copy this link into your browser:"
         footer: "Hop Garden: the plants of your garden, with an AI agent."
@@ -185,6 +192,7 @@ email:
         button: "Verify my email"
         expiry: "This link works for 48 hours. Not you? Ignore this email: no account is created without it."
         intro: "Thank you for joining Hop Garden. Verify your email: your account then joins the waiting list."
+        intro_invited: "Thank you for joining Hop Garden. Verify your email, then log in: your invitation lets you in, no waiting list."
         subject: "Verify your email for Hop Garden"
 exposure:
     part_shade: "Part shade"
@@ -203,6 +211,18 @@ flash:
     garden:
         created: "{name} is ready. Tell the assistant what grows in it."
         saved: "{name} is saved."
+    invitation:
+        closed: "The invitation of {email} was accepted or revoked meanwhile."
+        joined: "Welcome to {garden}: you are one of its members now."
+        new_link: "A new link for {email}: the one before no longer works."
+        resent: "Invitation sent again to {email}, with a new link: the one before no longer works."
+        revoked: "The invitation of {email} is revoked: its link no longer works."
+        sent: "Invitation sent to {email}. Its link is below too: send it another way if you like."
+        verify_first: "Your account is ready, and a member of {garden}. Verify your email with the link we just sent, then log in."
+    member:
+        left: "You left {garden}."
+        only_member: "You are the only member of {garden}: it goes with your account if you delete it."
+        removed: "{name} is no longer a member of {garden}."
     planting:
         added_drafting: "{name} is in your garden. The assistant drafts its care sheet."
         added_quota_reached: "{name} is in your garden. Its care sheet waits: the assistant has worked enough for your garden today, retry tomorrow."
@@ -212,8 +232,10 @@ flash:
         saved: "The garden info of {name} is saved."
     quota:
         agent_runs: "The assistant has worked enough for your garden today: retry tomorrow."
+        invitations: "Your garden has sent enough invitations today: retry tomorrow."
     registration:
         link_expired: "This link has expired. Choose a new password: its link verifies your email too."
+        verified: "Your email is verified: log in."
     reset_password:
         done: "Your password is changed: log in with it."
         invalid_link: "This link does not work, or has expired: ask for a new one."
@@ -265,9 +287,41 @@ garden:
         place:
             label: "Which one?"
         search: "Find"
+    members:
+        intro: "Its members share its plants, its care sheets, its spaces and its reminders. Each of them may leave it."
+        invitation:
+            copied: "Copied"
+            copy: "Copy"
+            expired_on: "expired on {date}"
+            expires_on: "expires on {date}"
+            link: "Its link, to send another way"
+            new_link: "Copy a new link"
+            new_link_help: "A new link, without email: the one sent before stops working."
+            resend: "Send again"
+            revoke: "Revoke"
+            revoke_confirm: "Revoke the invitation of {email}? Its link stops working."
+            sent_on: "Invited on {date} by {name}"
+        invitations: "Invitations waiting"
+        invite:
+            email: "Their email"
+            help: "We email them a link to join the garden, valid 14 days. It shows here too, to send another way."
+            placeholder: "name@example.com"
+            submit: "Invite"
+            title: "Invite somebody"
+        leave: "Leave the garden"
+        leave_confirm: "Leave {garden}? You will no longer see its plants."
+        leave_confirm_owner: "Leave {garden}? {name} becomes its owner, and you will no longer see its plants."
+        no_invitation: "No invitation waiting."
+        only_member: "You are its only member: invite somebody to garden with you."
+        remove: "Remove"
+        remove_confirm: "Remove {name} from {garden}? They will no longer see its plants."
+        since: "since {date}"
+        tab: "Members"
+        title: "Members"
+        you: "(you)"
     settings:
         intro: "It grows in {place} ({timezone}). Search another city to move it."
-        members: "Its members"
+        members: "{count, plural, one {Its member and its invitations} other {Its # members and its invitations}}"
         tab: "Settings"
         title: "Garden settings"
     subtitle: "Each of my plants where it grows: its photo, the care it got, and the species it belongs to, with its care sheet and its reminders."
@@ -326,6 +380,34 @@ home:
     problems:
         heading: "What Hop Garden takes care of"
     title: "Hop Garden · Pruning reminders and frost alerts for your garden"
+invitation:
+    accept: "Join {garden}"
+    accept_other_account: "Join with this account"
+    create_account: "Create my account"
+    intro: "{inviter} invites you to garden together: you share its plants, their care sheets and their reminders."
+    log_in: "I have an account: log in"
+    log_out: "Use another account"
+    member:
+        body: "You are a member of {garden} already."
+        open: "Open {garden}"
+        title: "Already in {garden}"
+    no_waiting: "No waiting list with this invitation: create your account, or log in, and you are in."
+    other_account: "This invitation was sent to {email}, and you use the account {current}. Join with this account, or log out to use another one."
+    register:
+        email_help: "The address invited lets you in at once. With another one, verify it first."
+        submit: "Create my account and join {garden}"
+        subtitle: "To join {garden}, at the invitation of {inviter}: no waiting list."
+        title: "Create your account"
+    sent_to: "Invitation for {email}"
+    tab: "Invitation"
+    title: "Join {garden}"
+    unavailable:
+        accepted: "This invitation was used already: each one lets one person in."
+        ask: "Ask the person who sent it to you for a new one."
+        expired: "This invitation has expired."
+        revoked: "This invitation was withdrawn."
+        title: "This invitation no longer works"
+        unknown: "This invitation does not exist, or no longer does: check the link. Its garden may have been deleted."
 legal:
     draft_note: "This page is a draft: the parts marked “To be completed” wait for the information of the publisher."
     last_updated: "Last updated:"
@@ -508,6 +590,7 @@ nav:
     assistant: "Assistant"
     garden: "My garden"
     garden_current: "Your garden"
+    garden_members: "The members of {garden}"
     garden_new: "New garden"
     garden_settings: "Garden settings"
     garden_switch: "Switch garden"
@@ -523,6 +606,10 @@ notification:
         hint: "The enabled reminders of the next {weeks} weeks, and the frost alerts of the forecast."
         no_forecast: "Frost alerts are left out: no forecast for now."
         title: "Coming up"
+    new_member:
+        message: "{name} joined {garden}."
+        other_address: "{name} joined {garden}, with the invitation sent to {email}."
+        tag: "New member"
     received:
         empty: "Nothing yet. Reminders are checked every day at 7:00."
         title: "Received"
@@ -801,6 +888,7 @@ toast:
     frost: "Frost alert"
     reminder: "Reminder"
     see: "See {name}"
+    see_members: "See the members"
 unit:
     celsius: "{temperature} °C"
 watering:

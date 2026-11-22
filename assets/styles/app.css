@@ -223,7 +223,7 @@ em { font-family: var(--serif); }
 .tags { display: flex; flex-wrap: wrap; gap: .3rem; }
 .tag { display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .55rem; border-radius: 999px; background: var(--cream); color: var(--muted); font-size: .75rem; font-weight: 600; }
 .tag-frost { background: var(--cerulean-soft); color: var(--cerulean-deep); }
-.tag-pruning, .tag-deadheading, .tag-cutting, .tag-validated, .status-validated { background: var(--forest-soft); color: var(--forest); }
+.tag-pruning, .tag-deadheading, .tag-cutting, .tag-validated, .tag-member, .status-validated { background: var(--forest-soft); color: var(--forest); }
 .tag-pending, .confidence-medium { background: var(--anise-soft); color: var(--olive); }
 .tag-draft, .status-draft, .confidence-low { background: var(--pink-soft); color: var(--crimson); }
 .status { display: inline-flex; align-items: center; gap: .3rem; padding: .35rem .8rem; border-radius: 999px; font-size: .74rem; font-weight: 800; letter-spacing: .03em; white-space: nowrap; }

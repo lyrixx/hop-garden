@@ -31,7 +31,7 @@ final readonly class InAppChannel implements ChannelInterface
             throw new \LogicException(\sprintf('The "%s" channel only sends reminder notifications to members, got "%s" for "%s".', self::NAME, $notification::class, $recipient::class));
         }
 
-        $this->notificationRepository->add(new Notification($recipient->user, $notification->reminder, $notification->getSubject(), $notification->createdAt));
+        $this->notificationRepository->add(Notification::remind($recipient->user, $notification->reminder, $notification->getSubject(), $notification->createdAt));
     }
 
     public function supports(NotifierNotification $notification, RecipientInterface $recipient): bool

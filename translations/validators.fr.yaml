@@ -14,6 +14,8 @@ garden:
         not_picked: "Choisissez le lieu de votre jardin parmi ceux trouvés."
         required: "Cherchez d’abord la ville de votre jardin."
         unavailable: "La recherche de lieux ne répond pas : réessayez dans un instant."
+invitation:
+    already_member: "{{ name }} est déjà membre du jardin."
 planting:
     photo:
         mime_types: "Envoyez une photo JPEG, PNG ou WebP."

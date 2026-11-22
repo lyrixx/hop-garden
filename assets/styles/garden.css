@@ -116,7 +116,8 @@
     .planting-card .care-sheet th { padding-right: .8rem; }
     .species-row { grid-template-columns: minmax(0, 1fr); grid-template-areas: "name" "status" "plantings"; padding: 1rem 1.1rem 1.1rem; }
     .species-row > .status { justify-self: start; }
-    .garden-members { padding: 1.5rem 1.2rem; border-radius: 26px; }
+    .garden-members, .garden-invitations { padding: 1.5rem 1.2rem; border-radius: 26px; }
+    .invitation-link-field { flex-direction: column; }
 }
 
 /* The spaces: templates/space/, templates/components/SpaceTile.html.twig and Space/ */
@@ -131,6 +132,24 @@
 .garden-city > :first-child { flex: 1; min-width: 12rem; }
 .garden-city .button { margin-bottom: 1.6rem; }
 .garden-places .choice { width: 100%; }
-/* Its members, under the form of its owner: templates/gardens/settings.html.twig */
-.garden-members { margin-top: 1.2rem; padding: 2rem 2.2rem; border-radius: 32px; }
-.garden-members ul { margin: .6rem 0 0; padding-left: 1.2rem; }
+/* Its members and its invitations: templates/gardens/members.html.twig, linked from its settings */
+.garden-settings-members { margin-top: 1.2rem; }
+.garden-members, .garden-invitations { margin-top: var(--crown-room); padding: 2rem 2.2rem; border-radius: 32px; }
+.garden-invitations, .invitation-form { margin-top: 1.2rem; }
+.garden-members h2, .garden-invitations h2, .invitation-form h2 { margin-bottom: .3rem; }
+.member-list, .invitation-list { margin: .6rem 0 0; padding: 0; list-style: none; }
+.member { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem .9rem; padding: .8rem 0; border-bottom: 1px solid var(--cream); }
+.member:last-child, .invitation:last-child { border-bottom: 0; }
+.member-name { flex: 1; min-width: 12rem; }
+.member-name p, .invitation-head p { margin: .2rem 0 0; }
+.member form, .invitation form { margin: 0; }
+.member .button, .invitation .button { padding: .45rem 1rem; font-size: .9rem; }
+.tag-owner { background: var(--anise-soft); color: var(--olive); }
+.invitation { display: flex; flex-direction: column; gap: .6rem; padding: .9rem 0; border-bottom: 1px solid var(--cream); }
+.invitation-head strong { overflow-wrap: anywhere; }
+.invitation.is-shown { margin: .3rem -1rem; padding: .9rem 1rem; border: 0; border-radius: 18px; background: var(--anise-soft); }
+.invitation-link label { display: block; margin-bottom: .3rem; font-size: .9rem; font-weight: 600; }
+.invitation-link-field { display: flex; gap: .5rem; }
+.invitation-link-field input { flex: 1; min-width: 0; padding: .6rem .9rem; border: 1.5px solid transparent; border-radius: 14px; background: var(--white); color: var(--ink); font: inherit; font-family: var(--mono); font-size: .85rem; }
+.invitation-link-field input:focus { border-color: var(--cerulean); outline: none; }
+.invitation-form .actions { justify-content: flex-start; }

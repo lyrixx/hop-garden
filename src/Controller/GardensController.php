@@ -75,7 +75,7 @@ final class GardensController extends AbstractController
     }
 
     /**
-     * Its name and its place, by its owner. Its members come with the invitations (phase 2).
+     * Its name and its place, by its owner. Its members: GardenMembersController.
      */
     #[Route('/gardens/{id}/settings', name: 'garden_settings', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
     #[IsGranted(GardenVoter::MANAGE, 'garden', statusCode: Response::HTTP_NOT_FOUND)]

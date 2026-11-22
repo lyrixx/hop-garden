@@ -15,7 +15,7 @@ framework:
 
     trusted_proxies: '%env(TRUSTED_PROXIES)%'
 
-    # The quotas of a garden, against the cost of the LLM (App\Garden\GardenQuotas)
+    # The quotas of a garden, against the cost of the LLM and the spam (App\Garden\GardenQuotas)
     rate_limiter:
         # The runs of its agent: the messages of the chat and the care sheets it drafts
         garden_agent_runs:
@@ -27,6 +27,12 @@ framework:
         garden_latin_names:
             policy: sliding_window
             limit: 100
+            interval: '1 day'
+            cache_pool: garden_quota.cache
+        # The invitations it emails, sent or sent again (App\Garden\Invitations)
+        garden_invitations:
+            policy: sliding_window
+            limit: 20
             interval: '1 day'
             cache_pool: garden_quota.cache
 

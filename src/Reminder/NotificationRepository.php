@@ -33,8 +33,9 @@ class NotificationRepository extends ServiceEntityRepository
         /** @var list<Notification> $notifications */
         $notifications = $this->createQueryBuilder('n')
             ->addSelect('r', 'p')
-            ->join('n.reminder', 'r')
-            ->join('r.plant', 'p')
+            // A new member has no reminder
+            ->leftJoin('n.reminder', 'r')
+            ->leftJoin('r.plant', 'p')
             ->andWhere('n.recipient = :recipient')
             ->andWhere('n.garden = :garden')
             ->setParameter('recipient', $recipient)

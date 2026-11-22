@@ -2,7 +2,7 @@
 
 {% block title %}{{ 'garden.settings.title'|trans }} · Hop Garden{% endblock %}
 
-{# By its owner only (GARDEN_MANAGE): its name, and its place, kept unless a city is searched #}
+{# By its owner only (GARDEN_MANAGE): its name, and its place, kept unless a city is searched. Its members: their page #}
 {% block body %}
     <header class="plate-head">
         <span class="plate-tab">{{ 'garden.settings.tab'|trans }}</span>
@@ -12,12 +12,7 @@
 
     {{ include('gardens/_form.html.twig', {submit: 'action.save'|trans}) }}
 
-    <section class="card account-section garden-members">
-        <h2>{{ 'garden.settings.members'|trans }}</h2>
-        <ul>
-            {% for membership in garden.memberships %}
-                <li>{{ membership.user.displayName }} · {{ membership.role|trans }}</li>
-            {% endfor %}
-        </ul>
-    </section>
+    <p class="callout garden-settings-members">
+        <a href="{{ path('garden_members', {id: garden.id}) }}">{{ 'garden.settings.members'|trans({count: garden.memberships|length}) }}</a>
+    </p>
 {% endblock %}

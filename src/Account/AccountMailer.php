@@ -3,6 +3,8 @@
 namespace App\Account;
 
 use App\Account\Entity\User;
+use App\Account\Model\AccessStatus;
+use App\Garden\Model\InvitationLink;
 use App\Locale\Model\SupportedLocale;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\MailerInterface;
@@ -11,7 +13,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * The emails of the accounts, in templates/email/: each in one language, the one of the page that sends it, or the
- * preferred one of its recipient when somebody else sends it (the administrator). Sent at once, after the flush.
+ * preferred one of its recipient when somebody else sends it (the administrator, a member who invites). Sent at once,
+ * after the flush.
  */
 final readonly class AccountMailer
 {
@@ -23,11 +26,15 @@ final readonly class AccountMailer
     ) {
     }
 
+    /**
+     * Then the waiting list, unless an invitation let them in already.
+     */
     public function sendEmailVerification(User $user, SupportedLocale $locale): void
     {
         $this->send($user->getEmail(), 'verify_email', $locale, [
             'name' => $user->getDisplayName(),
             'url' => $this->signedLinks->emailVerification($user),
+            'admitted' => AccessStatus::Approved === $user->getAccessStatus(),
         ]);
     }
 
@@ -67,6 +74,22 @@ final readonly class AccountMailer
         ]);
     }
 
+    /**
+     * To the address invited into a garden: its link, valid until the date it expires in the timezone of the garden.
+     */
+    public function sendInvitation(InvitationLink $link, SupportedLocale $locale): void
+    {
+        $invitation = $link->invitation;
+        $garden = $invitation->getGarden();
+
+        $names = ['inviter' => $invitation->getInvitedBy()->getDisplayName(), 'garden' => $garden->getName()];
+        $this->send($invitation->getEmail(), 'invitation', $locale, [
+            ...$names,
+            'url' => $this->url('invitation', ['token' => $link->token]),
+            'expires_at' => $garden->localTime($invitation->getExpiresAt()),
+        ], $names);
+    }
+
     public function sendEmailChange(User $user, string $newEmail, SupportedLocale $locale): void
     {
         $this->send(User::normalizeEmail($newEmail), 'confirm_new_email', $locale, [
@@ -76,14 +99,15 @@ final readonly class AccountMailer
     }
 
     /**
-     * @param array<string, string> $context
+     * @param array<string, string|bool|\DateTimeImmutable> $context
+     * @param array<string, string>                         $subjectParameters
      */
-    private function send(string $to, string $template, SupportedLocale $locale, array $context): void
+    private function send(string $to, string $template, SupportedLocale $locale, array $context, array $subjectParameters = []): void
     {
         $this->mailer->send(
             new TemplatedEmail()
                 ->to($to)
-                ->subject($this->translator->trans("email.{$template}.subject", locale: $locale->value))
+                ->subject($this->translator->trans("email.{$template}.subject", $subjectParameters, locale: $locale->value))
                 ->htmlTemplate("email/{$template}.html.twig")
                 ->locale($locale->value)
                 ->context(['locale' => $locale->value, ...$context]),
