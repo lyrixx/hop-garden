@@ -6,11 +6,11 @@ use App\Account\Entity\User;
 use App\Garden\CurrentGarden;
 use App\Garden\Entity\Garden;
 use App\Garden\GardenRepository;
+use App\Mercure\SubscriberCookie;
 use App\Mercure\Topics;
 use App\Reminder\NotificationRepository;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\Mercure\Authorization;
 use Twig\Attribute\AsTwigFunction;
 
 /**
@@ -23,9 +23,9 @@ final readonly class NavigationExtension
         private CurrentGarden $currentGarden,
         private GardenRepository $gardenRepository,
         private NotificationRepository $notificationRepository,
-        private Topics $topics,
-        private Authorization $mercureAuthorization,
         private RequestStack $requestStack,
+        private SubscriberCookie $subscriberCookie,
+        private Topics $topics,
     ) {
     }
 
@@ -65,8 +65,8 @@ final readonly class NavigationExtension
     }
 
     /**
-     * The subscriber cookie of the Mercure hub, set by every page of a member: their topics, and the ones of their
-     * current garden (Topics::subscriberGrants()). The streams of a page merge their own topics into it.
+     * The subscriber cookie of the Mercure hub, set by every page of a member (SubscriberCookie). The streams of a page
+     * merge their own topics into it.
      */
     #[AsTwigFunction('grant_mercure_topics')]
     public function grantMercureTopics(): string
@@ -74,7 +74,7 @@ final readonly class NavigationExtension
         $user = $this->user();
         $request = $this->requestStack->getMainRequest();
         if (null !== $user && null !== $request) {
-            $this->mercureAuthorization->setCookie($request, $this->topics->subscriberGrants($user, $this->currentGarden->find()));
+            $this->subscriberCookie->set($request, $user);
         }
 
         return '';

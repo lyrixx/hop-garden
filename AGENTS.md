@@ -60,7 +60,8 @@ Without option, the `default` context applies.
   subscriber. The topics are URLs under `DEFAULT_URI` (`App\Mercure\Topics`): a conversation and the notifications of a
   member, the drafting of a care sheet of a garden. Every page of a member sets the subscriber cookie
   `mercure_access_token` (`grant_mercure_topics()`), for their topics and those of their current garden (URL patterns);
-  the streams are `turbo_stream_from(topic, private: true)`. The subscriber key is its own (`MERCURE_SUBSCRIBER_JWT_KEY`)
+  the streams are `turbo_stream_from(topic, private: true)`. The cookie lasts an hour: a page left open renews it
+  (`mercure_cookie_controller.js`). The subscriber key is its own (`MERCURE_SUBSCRIBER_JWT_KEY`)
 - Symfony Messenger: `async` transport (Doctrine, `use_notify: true`, no retry: a chat message must not be
   answered twice) and `scheduler_default`, both consumed by the `worker_messenger` container
   (`castor start-workers` / `castor stop-workers`)

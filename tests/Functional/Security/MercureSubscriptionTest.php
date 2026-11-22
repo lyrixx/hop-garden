@@ -72,6 +72,42 @@ final class MercureSubscriptionTest extends WebTestCase
         self::assertSame(0, $crawler->filter('turbo-mercure-stream-source:not([private])')->count());
     }
 
+    /**
+     * The hub closes a stream when its cookie expires: a page left open renews it, for the topics of its streams.
+     */
+    public function testAPageLeftOpenRenewsItsCookie(): void
+    {
+        $this->logIn($this->client, $this->gardens->bob);
+        $crawler = $this->client->request('GET', '/garden');
+        self::assertSame('/mercure/cookie', $crawler->filter('body')->attr('data-mercure-cookie-url-value'));
+        $topics = array_map(static fn (string $src): string => rawurldecode(explode('match=', $src)[1]), $crawler->filter('turbo-mercure-stream-source')->extract(['src']));
+        $this->client->getCookieJar()->expire(self::COOKIE, '/.well-known/mercure');
+
+        $this->client->request('POST', '/mercure/cookie');
+
+        self::assertResponseStatusCodeSame(204);
+        $grants = $this->grantsOf($this->gardens->bob);
+        self::assertSame(
+            [
+                ['urlpattern', \sprintf('https://hop-garden.test/users/%d/*', $this->gardens->bob->getId())],
+                ['urlpattern', \sprintf('https://hop-garden.test/gardens/%d/*', $this->gardens->allotment->getId())],
+            ],
+            $grants,
+        );
+        self::assertNotSame([], $topics);
+        foreach ($topics as $topic) {
+            self::assertTrue(self::grants($grants, $topic), $topic);
+        }
+    }
+
+    public function testNobodyElseGetsACookie(): void
+    {
+        $this->client->request('POST', '/mercure/cookie');
+
+        self::assertResponseRedirects('/login');
+        self::assertNull($this->client->getCookieJar()->get(self::COOKIE, '/.well-known/mercure'));
+    }
+
     private function conversationTopicOf(User $member): string
     {
         $this->client->getCookieJar()->clear();

@@ -12,7 +12,7 @@
         {% block head %}{% endblock %}
         {% block importmap %}{{ importmap('app') }}{% endblock %}
     </head>
-    <body>
+    <body{% if app.user %} {{ stimulus_controller('mercure-cookie', {url: path('mercure_cookie')}) }}{% endif %}>
         <twig:LocaleBanner/>
 
         {# The navigation of the application; a public page has its own (templates/public/layout.html.twig) #}
