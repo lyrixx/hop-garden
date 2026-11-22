@@ -11,7 +11,7 @@
 //   BASE_URL        https://hop-garden.test (the chat is on /assistant)
 //   RESET_COMMAND   castor demo:reset
 //   FROST_COMMAND   castor demo:frost
-//   LOGIN_EMAIL     alice@hop-garden.test, a member of the demo
+//   LOGIN_EMAIL     alice@hop-garden.test, of the demo: the owner of "The allotment", which Bob shares
 //   LOGIN_PASSWORD  hop-garden-demo
 //   CHROMIUM_PATH   a Chromium binary, when Playwright's own is not installed
 import { exec, execSync } from 'node:child_process';

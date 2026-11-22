@@ -24,10 +24,11 @@ castor app:db:migrate                        # Doctrine migrations (alias: casto
 castor app:db:fixtures                       # the demo story, as demo:reset does (alias: castor fixtures)
 castor postgres                              # psql shell on the app database (alias: castor pg)
 castor postgres -- select 1 from foobar      # one-off command database query
-castor demo:reset                            # new database: 4 accounts (printed), 2 validated plants, 3 plantings in 3 spaces (one empty)
+castor demo:reset                            # new database: 5 accounts (printed), Alice and Bob share a garden, Carol has hers
+castor app:garden:adopt-orphans --email=... --name=... --city=...   # the data of before the gardens, to a new garden of a member
 castor app:user:create --email=... --name=... --password=... [--admin|--approved]   # an account, e.g. the administrator
 castor demo:frost [--date=YYYY-MM-DD]        # reminder check with the recorded frost forecast
-castor mcp:stdio                             # MCP server over STDIO (Claude Desktop, Claude Code...)
+castor mcp:stdio --user=alice@hop-garden.test   # MCP server over STDIO, as a member, in their garden (Claude Desktop, Claude Code...)
 ```
 
 Docker / workers:
@@ -55,7 +56,11 @@ Without option, the `default` context applies.
 ## Stack
 
 - Symfony at the repo root (docroot = `public/`)
-- FrankenPHP (service `frontend`), embeds the Mercure hub at `/.well-known/mercure`
+- FrankenPHP (service `frontend`), embeds the Mercure hub at `/.well-known/mercure`: every update private, no anonymous
+  subscriber. The topics are URLs under `DEFAULT_URI` (`App\Mercure\Topics`): a conversation and the notifications of a
+  member, the drafting of a care sheet of a garden. Every page of a member sets the subscriber cookie
+  `mercure_access_token` (`grant_mercure_topics()`), for their topics and those of their current garden (URL patterns);
+  the streams are `turbo_stream_from(topic, private: true)`. The subscriber key is its own (`MERCURE_SUBSCRIBER_JWT_KEY`)
 - Symfony Messenger: `async` transport (Doctrine, `use_notify: true`, no retry: a chat message must not be
   answered twice) and `scheduler_default`, both consumed by the `worker_messenger` container
   (`castor start-workers` / `castor stop-workers`)
@@ -65,8 +70,17 @@ Without option, the `default` context applies.
   Twig Components: anonymous in `templates/components/`, classes in `src/Twig/Components/`; one Live Component,
   `SpeciesPicker`
 - Symfony AI: the `gardener` agent (`config/packages/ai.yaml`, prompt in `config/agent/gardener.md`) gets its
-  tools from the MCP client `chat`, connected to this application's own MCP server on `/_mcp/agent`
-- MCP bundle: server `default` (`/_mcp` and STDIO) and server `agent` (`/_mcp/agent`). Both have the tools of
+  tools from the MCP client `chat`, connected to this application's own MCP server on `/_mcp/agent`. Each request of
+  that client carries the token of its run (`App\Mcp\Agent\AgentRunTokens`: user, garden, conversation, 15 minutes,
+  signed with a key derived from `APP_SECRET`), issued when the request dispatches `RunAgent` or `DraftCareSheet`, sent by
+  `App\Mcp\Agent\AgentRunHttpClient` (the `http_client` of the client, decorating `psr18.http_client`; in the tests,
+  `KernelHttpClient`)
+- MCP bundle: server `default` (`/_mcp` and STDIO: `app:mcp:stdio --user=<email> [--garden=<id>]`, as a member) and
+  server `agent` (`/_mcp/agent`). Both stateless firewalls answer 401 without token (`App\Mcp\Security\McpEntryPoint`):
+  `mcp_agent` takes the token of a run (`App\Mcp\Agent\Security\AgentRunAuthenticator`), `mcp` none until OAuth
+  (phase 3, see `.claude/tmp/mcp-oauth-study.md`), whose authenticator will bind its token to the garden chosen, as
+  `CurrentGarden::TOKEN_ATTRIBUTE` says; in the tests, `App\Tests\Utils\Mcp\McpClientAuthenticator` stands for it. Both
+  have the tools of
   `src/Mcp/Tool/`, among them `list_spaces`, `propose_space` and `propose_planting` (their result carries a
   `validation_url`, the card for an external client). `default` adds `confirm_plant` (`src/Mcp/Confirmation/`),
   `agent` adds `offer_choices` (`src/Mcp/Chat/`). Resources in `src/Mcp/Resource/`, the prompt in `src/Mcp/Prompt/`
@@ -92,14 +106,26 @@ Without option, the `default` context applies.
   (`PlantRepository::findAllWithPlantings()`); `/plants/new` creates a draft by hand with `SpeciesPicker` (any form
   whose data implements `SpeciesPickerData`), re-checked against Trefle (`PickedSpecies`), with a `CareSheet::blank()`
   of low confidence; a species with a care sheet already redirects to it
+- Gardens, the tenant: `App\Garden\Entity\Garden` (its name, its `GardenLocation`: a place found by the geocoding of
+  Open-Meteo, `App\DataSource\OpenMeteo\GeocodingClient`, with its position and its timezone) and its members,
+  `Membership` (`owner` or `member`, the oldest first). Every space, care sheet (`Plant`), plant (`Planting`), reminder (by
+  its care sheet) and notification (one per member) belongs to one; a conversation of the chat to a member in one
+  (`App\Chat\Entity\Conversation`, next to the table of the bundle). `App\Garden\CurrentGarden` is the only way to read
+  it (`UserCurrentGarden`): the one bound to the token (an agent run, STDIO, OAuth later), else the one of the session,
+  chosen in the menu (`GardenSwitcher`), else the one they joined first; none in the worker, whose messages carry it. A
+  member without garden is sent to the wizard (`/gardens/new`, `NoGardenListener`). Its owner manages it
+  (`/gardens/{id}/settings`); its members come with the invitations (phase 2). Deleting an account deletes its gardens
+  of its own, with their photos and conversations, and leaves the shared ones to the oldest other member
+  (`App\Account\AccountDeletion`). The quotas of the LLM count per garden (`App\Garden\GardenQuotas`, rate limiters
+  `garden_agent_runs` and `garden_latin_names`)
 - Spaces: `App\Garden\Entity\Space` carries the exposure and the soil; a `Planting` has an optional space (`SET NULL`),
   and its neighbours are the other plantings of its space. Pages `/spaces`, `/spaces/new`, `/spaces/{id}` and
   `/spaces/{id}/edit` (`SpaceController`); `RecommendationEngine` reads the exposure of the space
 - Languages: English (default) and French (`App\Locale\Model\SupportedLocale`), a setting, never in the URL.
-  `App\Locale\PreferredLocale` (`get()`, `set()`, `isChosen()`) is the only way to read or change it, while the messages
-  a request dispatches (`RunAgent`, `DraftCareSheet`) carry the locale captured when sent, which their handler applies
-  with the `LocaleSwitcher`, and only the reminder check, without recipient, reads `PreferredLocale` in its handler (and
-  in `app:reminders:run`).
+  `App\Locale\PreferredLocale` (`get()`, `of($member)`, `set()`, `isChosen()`) is the only way to read or change it,
+  while the messages a request dispatches (`RunAgent`, `DraftCareSheet`) carry the locale captured when sent, which their
+  handler applies with the `LocaleSwitcher`. The reminder check writes each notification, and renders each toast, in
+  `PreferredLocale::of()` its recipient.
   - `App\Locale\UserPreferredLocale`: the `preferredLocale` of the member logged in (null until chosen; a registration
     keeps the choice of the visitor), else the `locale` cookie of a visitor, else the one of the application, a row of
     `App\Settings\Entity\Settings` that no page writes (the reminder check), emptied by `castor demo:reset`. A choice
@@ -127,17 +153,19 @@ Without option, the `default` context applies.
 - Security (`config/packages/security.yaml`): `form_login` on `/login`, which leads to `/assistant`, remember me,
   `login_throttling` (5 attempts in 15 minutes), logout on `/logout`, which leads to `/`. `access_control` denies by
   default (`ROLE_USER`, the chat included): public are the routes `home` and `legal_*`, `/login`, `/register…`,
-  `/reset-password…`, `/locale`, and `/_mcp` (until OAuth) with `/_mcp/agent` (the worker, until a token per run)
+  `/reset-password…` and `/locale`. `/_mcp` and `/_mcp/agent` have their own stateless firewalls, before `main`
 - Mailer: Twig emails in `templates/email/`, translated, sent at once after the flush. In dev, Mailpit catches them
   (`MAILER_DSN` of `.env.dev`, its inbox on `mail.<root_domain>`, listed by `castor about`); in the tests,
   `null://null` and the email assertions of Symfony
 - Demo accounts of `castor demo:reset`, password `hop-garden-demo` (`App\Factory\UserFactory::PASSWORD`):
-  `admin@hop-garden.test` (the administrator), `alice@hop-garden.test` (English), `bob@hop-garden.test` (French),
+  `admin@hop-garden.test` (the administrator, no garden), `alice@hop-garden.test` (English) and `bob@hop-garden.test`
+  (French), who share "The allotment" (Alice its owner), `carol@hop-garden.test` (English, "Carol's balcony"),
   `dave@hop-garden.test` (on the waiting list)
 - PostgreSQL 16: user/pass/db = `app`/`app`, DATABASE_URL already configured
 - Traefik router, HTTPS on `<root_domain>` (see `castor.php`)
 - Production: one image, `app` (the "Production stages" of the Dockerfile, `.dockerignore` at the root). A new
-  environment variable read in production goes in the "Production image" section of `README.md`
+  environment variable read in production goes in the "Production image" section of `README.md`. The photos of the
+  plantings are private, in `var/share/uploads/plantings` (`PlantingPhotoStorage`), served by `GardenController::photo()`
 - AssetMapper/importmap only, no Node/yarn tooling in the application. The demo video (`video/`, Remotion and
   Playwright) is a host tool apart: `castor video:install`, `video:capture`, `video:render`
 
@@ -219,6 +247,22 @@ After any PHP/Twig code change: `castor qa:cs --dry-run`,
 16. A named service is injected with `#[Target('name')]` (see `debug:autowiring`), `#[Autowire(service:)]` only when no
     target exists.
 17. Private by default: a new route needs `ROLE_USER`, an approved member, unless it joins the public ones of
-    `access_control`. A functional test logs a member in with `App\Tests\Utils\Security\LogInTrait` (`loginUser()`),
-    a live component with `actingAs()`. A page about an address (registration, password reset, email change) answers
-    the same whether it has an account or not.
+    `access_control`. A functional test logs a member in with `App\Tests\Utils\Security\LogInTrait` (`logIn()`: the
+    owner of the garden of the test, or a member who joins it; `logInWithoutGarden()`; `gardenOfTheTest()`), a live
+    component with `actingAs()`. A page about an address (registration, password reset, email change) answers the same
+    whether it has an account or not.
+18. Nobody sees the garden of another (the tenancy):
+    - A repository takes the garden explicitly (`findAllByName(Garden)`, `findOneInGarden(Garden, id)`...): no Doctrine
+      filter, a forgotten garden shows in the code. The garden comes from `CurrentGarden` in a request or a tool, from the
+      message in the worker.
+    - A resource of a garden reached by id goes through a voter (`GardenResourceVoter`, `GardenVoter`,
+      `PlantValidationVoter`: "the human validates"), refused by default, and answers 404 when refused, the same as a
+      resource that does not exist: `#[IsGranted(..., statusCode: Response::HTTP_NOT_FOUND)]`, declared before
+      `#[IsCsrfTokenValid]` so that a form sent to it says nothing either. A tool answers the error of an id that does not
+      exist.
+    - The messages of the worker carry the user and the garden (and the token of their run); their handler checks the
+      user is still a member. The scheduler checks each garden at its position and in its timezone.
+    - `tests/Functional/Security/GardenIsolationTest.php` lists every route, `tests/Integration/Mcp/GardenIsolationMcpTest.php`
+      every MCP tool: a new one fails them until it says what a member of another garden gets. Their data comes from
+      `App\Tests\Utils\Garden\TwoGardens`; the factories put what they make in the garden of the test
+      (`App\Story\DefaultGardenStory`) unless told.

@@ -28,11 +28,11 @@ git clone https://github.com/lyrixx/hop-garden.git && cd hop-garden
 echo '127.0.0.1 hop-garden.test' | sudo tee -a /etc/hosts
 echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env.local
 castor start
-castor demo:reset   # the demo accounts, a rose and a lemon tree, with their reminders, and 3 spaces
+castor demo:reset   # the demo accounts and their two gardens: a rose and a lemon tree, with their reminders, in 3 spaces
 ```
 
 Open <https://hop-garden.test/assistant>, log in as `alice@hop-garden.test` (password `hop-garden-demo`) and type
-`hortensia`.
+`hortensia`. Bob (`bob@hop-garden.test`) shares her garden, in French; Carol (`carol@hop-garden.test`) has her own.
 
 That's all: the demo mode is on by default, so Trefle and Open-Meteo answer from the responses
 stored in [`fixtures/http/`](fixtures/http/). Only the LLM key is needed. Hop Garden speaks English and French: see
@@ -106,6 +106,27 @@ bar (the language, *Log in*, *Join the waiting list*, or *Open my garden* once l
 page; their blanks, marked *To be completed*, wait for the information of the publisher. The application starts at
 `/assistant`, the chat.
 
+### Gardens
+
+Each garden has its members, who share its care sheets, its spaces, its plants and its reminders: nobody else sees any of
+them. In `castor demo:reset`, Alice and Bob share "The allotment" (Alice is its owner), and Carol has "Carol's balcony".
+
+- A new member makes their first garden in a small wizard, <https://hop-garden.test/gardens/new>: its name and its city,
+  found by the [geocoding of Open-Meteo](https://open-meteo.com/en/docs/geocoding-api) (a city with homonyms offers them,
+  one to pick). Its position gives the frost forecast, its timezone the hour of the reminders: every day from 7:00, its
+  time.
+- With several gardens, the menu switches between them; the chat has a conversation per garden. Its owner renames or
+  moves a garden in its settings. Inviting members comes next: until then, `castor demo:reset` gives the demo theirs.
+- Every member gets the notifications of the garden, in their language, and the frost toast, live.
+- The assistant has a quota per garden and per day (its runs, and the Latin names of the species search): spent, the
+  chat says so.
+- Deleting an account deletes the gardens its owner was the only member of, with their photos and conversations; a
+  shared garden stays with the others, the oldest of them its owner.
+
+Before the gardens, a database had none: `castor app:garden:adopt-orphans --email=you@example.com --name="My garden"
+--city=Lyon` gives its rows to a new garden of that member (an approved account, `castor app:user:create ... --approved`),
+between the two migrations that add the gardens (`castor migrate` stops before the second one and says so).
+
 ### Accounts and the waiting list
 
 Hop Garden opens to a few gardeners at a time. Everything but the public pages, the login, the registration and the
@@ -126,9 +147,10 @@ of `castor demo:reset`, all with the password `hop-garden-demo`:
 | Email | |
 |---|---|
 | `admin@hop-garden.test` | The administrator, of the back-office too |
-| `alice@hop-garden.test` | A member, in English |
-| `bob@hop-garden.test` | A member, in French |
-| `dave@hop-garden.test` | On the waiting list, in French: approve him |
+| `alice@hop-garden.test` | A member, in English, owner of "The allotment" |
+| `bob@hop-garden.test` | A member, in French, who shares "The allotment" |
+| `carol@hop-garden.test` | A member, in English, owner of "Carol's balcony" |
+| `dave@hop-garden.test` | On the waiting list, in French: approve him, then he makes his garden |
 
 On a new installation, create the administrator:
 
@@ -172,16 +194,19 @@ flowchart LR
     external -- "HTTP or STDIO" --> mcp
 ```
 
-- Sending a message dispatches a Messenger message. The worker runs the agent and pushes Turbo Streams (the tokens,
-  the tool calls, then the draft card as a frame the browser loads) through the Mercure hub embedded in FrankenPHP,
-  rendered with Twig from the same components as the pages, without polling
-  (same model as [lyrixx/async-messenger-mercure](https://github.com/lyrixx/async-messenger-mercure)).
+- Sending a message dispatches a Messenger message, for the member and their garden. The worker runs the agent and
+  pushes Turbo Streams (the tokens, the tool calls, then the draft card as a frame the browser loads) through the
+  Mercure hub embedded in FrankenPHP, rendered with Twig from the same components as the pages, without polling
+  (same model as [lyrixx/async-messenger-mercure](https://github.com/lyrixx/async-messenger-mercure)). Every update is
+  private: the page of a member subscribes with a cookie that grants their topics, and those of their current garden.
 - The agent ([Symfony AI](https://symfony.com/doc/current/ai/index.html)) gets its tools from the
   [MCP bundle](https://symfony.com/doc/current/ai/bundles/mcp-bundle.html) client, connected to this application's
-  own MCP server: no PHP service is called directly. The conversation is stored with the Doctrine message store,
-  one per session.
-- Reminders: the Scheduler dispatches a check every day at 7:00; notifications go through the Notifier to an in-app
-  channel and a toast pushed with Mercure. The *Notifications* page lists them under the reminders coming up and the
+  own MCP server: no PHP service is called directly. Each request carries a token signed for the run: the tools answer
+  in the garden of whoever wrote the message. The conversation is stored with the Doctrine message store, one per
+  session and garden.
+- Reminders: the Scheduler dispatches a check every hour, and each garden is checked once a day from 7:00 in its
+  timezone, with the forecast at its position (cached by position, rounded); notifications go through the Notifier to
+  an in-app channel and a toast pushed with Mercure, one per member, in their language. The *Notifications* page lists them under the reminders coming up and the
   frost forecast with the plants at risk: by hand, what `upcoming_reminders` and `get_frost_forecast` give the agent.
 - Everything reads the time from `ClockInterface`: `app:reminders:run --date=2026-12-01` simulates a day.
 - Accounts: Symfony Security (`form_login`, remember me, `login_throttling`), denied by default; a `UserChecker` lets
@@ -196,8 +221,12 @@ flowchart LR
 
 | Endpoint | For | Validates plants |
 |---|---|---|
-| `https://hop-garden.test/_mcp`, or STDIO with `castor mcp:stdio` | External clients | Yes, with `confirm_plant` (the care sheet only) |
-| `http://frontend/_mcp/agent` | The chat agent of the web UI | No |
+| STDIO with `castor mcp:stdio --user=<email>` | External clients, as a member, in their garden | Yes, with `confirm_plant` (the care sheet only) |
+| `https://hop-garden.test/_mcp` | External clients: a 401 until OAuth comes | — |
+| `http://frontend/_mcp/agent` | The chat agent of the web UI, with the token of its run (401 without) | No |
+
+The tools see one garden: the one of the member over STDIO (`--garden=<id>` for another of theirs), the one of the
+message for the agent.
 
 ### Tools
 
@@ -228,18 +257,14 @@ Run `castor builder -- bin/console debug:mcp` to list them with their input sche
 
 Start the stack first (`castor start`).
 
-Claude Code, over HTTP:
+Until OAuth, over STDIO, as a member of the demo:
 
 ```bash
-claude mcp add --transport http hop-garden https://hop-garden.test/_mcp
+claude mcp add hop-garden -- castor --castor-file /path/to/hop-garden/castor.php mcp:stdio --user=alice@hop-garden.test
 ```
 
-If the certificate of `hop-garden.test` is not trusted by Node.js (no [mkcert](https://github.com/FiloSottile/mkcert)),
-start Claude Code with `NODE_EXTRA_CA_CERTS` pointing to the CA, or use STDIO:
-
-```bash
-claude mcp add hop-garden -- castor --castor-file /path/to/hop-garden/castor.php mcp:stdio
-```
+`https://hop-garden.test/_mcp` answers 401 to any client until then: the connection in one click (OAuth) is the next
+step.
 
 Claude Desktop or Cursor (`claude_desktop_config.json`, `.cursor/mcp.json`):
 
@@ -248,7 +273,7 @@ Claude Desktop or Cursor (`claude_desktop_config.json`, `.cursor/mcp.json`):
     "mcpServers": {
         "hop-garden": {
             "command": "castor",
-            "args": ["--castor-file", "/path/to/hop-garden/castor.php", "mcp:stdio"]
+            "args": ["--castor-file", "/path/to/hop-garden/castor.php", "mcp:stdio", "--user=alice@hop-garden.test"]
         }
     }
 }
@@ -268,12 +293,13 @@ reads the environment when it starts.
 | `AI_PLATFORM` / `AI_MODEL` | `anthropic` / `claude-sonnet-5-5` | Provider and model of the chat agent. |
 | `APP_DEMO` | `1` | Recorded responses instead of Trefle and Open-Meteo; `0` to use the real services. |
 | `TREFLE_TOKEN` | | Free token from [trefle.io](https://trefle.io), when `APP_DEMO=0`. |
-| `GARDEN_LATITUDE` / `GARDEN_LONGITUDE` | `46.6` / `2.4` (center of France) | Location of the frost forecast. |
-| `GARDEN_TIMEZONE` | `Europe/Paris` | Timezone of the 7:00 check. |
 | `MAILER_DSN` | `null://null`, Mailpit in dev | How the emails of the accounts leave: an SMTP server or a [provider](https://symfony.com/doc/current/mailer.html#using-a-3rd-party-transport). |
 | `MAILER_FROM` | `Hop Garden <hello@hop-garden.test>` | Their sender. |
 
-The answers of the external APIs are cached: 7 days for plants, 1 hour (and the current day) for forecasts.
+The location of the frost forecast and the timezone of the reminders are those of each garden, picked by its owner:
+`GARDEN_LATITUDE`, `GARDEN_LONGITUDE` and `GARDEN_TIMEZONE` are gone. The answers of the external APIs are cached: 7
+days for plants, 30 days for places, 1 hour (and the current day) for forecasts, by position rounded to a tenth of a
+degree.
 
 ## Development
 
@@ -311,14 +337,21 @@ castor stop -c prod
 castor docker:push -c prod --tag="$(git rev-parse --short=7 HEAD)" --tag=latest   # by hand, after a docker login to ghcr.io
 ```
 
-Besides the variables of [Configuration](#configuration), the image needs `APP_SECRET`, `DATABASE_URL`,
-`DEFAULT_URI`, the Mercure ones (`MERCURE_URL`, `MERCURE_PUBLIC_URL`, `MERCURE_JWT_ISSUER`,
-`MERCURE_PUBLISHER_JWT_KEY`, `MERCURE_SUBSCRIBER_JWT_KEY`), `MCP_AGENT_URL`, `MCP_ALLOWED_HOSTS` (the hosts
-of the MCP server: its domain, and the one the worker reaches it by), and the mailer ones (`MAILER_DSN`,
-`MAILER_FROM`). Two volumes, shared by the web and the worker: `public/uploads/` (the photos of the plantings) and
-`var/share/` (`APP_SHARE_DIR`: the sessions, so the conversation of the chat survives a deployment, the `cache.app` pool
-and the login throttling). The first administrator, once the migrations ran:
+Besides the variables of [Configuration](#configuration), the image needs `APP_SECRET` (it signs the tokens of the
+agent runs too), `DATABASE_URL`, `DEFAULT_URI` (the Mercure topics live under it), the Mercure ones (`MERCURE_URL`,
+`MERCURE_PUBLIC_URL`, its audience too, `MERCURE_JWT_ISSUER`, `MERCURE_PUBLISHER_JWT_KEY`, and
+`MERCURE_SUBSCRIBER_JWT_KEY`, another key: the hub has no anonymous subscriber), `MCP_AGENT_URL`, `MCP_ALLOWED_HOSTS`
+(the hosts of the MCP server: its domain, and the one the worker reaches it by), and the mailer ones (`MAILER_DSN`,
+`MAILER_FROM`). One volume, shared by the web and the worker: `var/share/` (`APP_SHARE_DIR`: the sessions, so the
+conversation of the chat survives a deployment, the `cache.app` pool with the quotas and the login throttling, and the
+photos of the plantings in `var/share/uploads/plantings`, served by the application to the members of their garden
+only). The first administrator, once the migrations ran:
 `bin/console app:user:create --email=... --name=... --password=... --admin`.
+
+From a database of before the gardens: `bin/console doctrine:migrations:migrate 'DoctrineMigrations\Version20261122212315'`,
+`bin/console app:garden:adopt-orphans --email=... --name=... --city=...`, then `bin/console doctrine:migrations:migrate`.
+The photos used to be public, in a volume on `public/uploads/`: mount it there once more for the deployment that makes
+them private, run `bin/console app:plantings:move-photos`, then drop it.
 
 ## Credits and licenses
 
@@ -338,11 +371,9 @@ Hop Garden is released under the [MIT license](LICENSE).
 - **LLM-filled care data is reviewed by a human before being saved.** Nothing joins the garden without your
   tap, but the values you validate are only as good as your review.
 - The care data assumes a temperate Western European climate.
-- Accounts, but one garden: every member sees the same plants, spaces and notifications, until the gardens of the
-  next step. The MCP endpoints and the Mercure topics are open to whoever reaches the server.
+- Gardens shared by their members, but no invitation yet: `castor demo:reset` gives the demo its members. The external
+  MCP clients connect over STDIO only, until OAuth.
 - The responses in `fixtures/http/` are hand-written samples in the format of each API, not real records; their
   Trefle ids are made up. Set `APP_DEMO=0` and `TREFLE_TOKEN` in `.env.local` to use the real services.
-- One garden location for the frost forecast.
-- The reminders have no recipient yet: they are written in the language of the application (its settings, English
-  until set). A notification keeps the language it was sent in, and the data of `castor demo:reset` is in English.
+- A notification keeps the language it was sent in, and the data of `castor demo:reset` is in English.
 - E-mail notifications are not implemented: notifications stay in the application.
