@@ -19,3 +19,6 @@
 }
 
 .main-header .logo, .sidebar .logo { font-family: "Literata Variable", Georgia, serif; font-weight: 800; letter-spacing: -.02em; }
+
+/* The count of the waiting list, in anise as the pills of the application */
+.ea-sidebar-badge { background: #b5d35a; color: #073d27; }

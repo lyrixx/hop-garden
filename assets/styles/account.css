@@ -40,6 +40,5 @@
     .nav-visitor { display: flex; width: auto; }
     .nav-visitor a { flex-direction: row; padding: .4rem .8rem; font-size: .85rem; }
     .account-menu-item { padding: .45rem .6rem; }
-    .auth-form, .auth-note { margin-top: 90px; }
     .auth-note { padding: 1.3rem 1.2rem; }
 }

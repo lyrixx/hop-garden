@@ -50,9 +50,9 @@ admin:
         refuse: "Refuser"
         refuse_confirmation: "Refuser ce compte ? Son titulaire reçoit un email."
     flash:
-        already_decided: "{name} a déjà une réponse."
-        approved: "{name} est approuvé, et reçoit l’email."
-        refused: "{name} est refusé, et reçoit l’email."
+        already_decided: "Le compte de {name} a déjà une réponse."
+        approved: "Le compte de {name} est approuvé : l’email est parti."
+        refused: "Le compte de {name} est refusé : l’email est parti."
     menu:
         back: "Retour à Hop Garden"
         users: "Comptes"
