@@ -3,9 +3,9 @@
 {% block title %}{{ 'garden.members.title'|trans }} · {{ garden.name }} · Hop Garden{% endblock %}
 
 {#
-    Every member sees them. Its owner (form, not null: GARDEN_MANAGE) invites, and manages the invitations waiting
-    (App\Controller\GardenMembersController). shown_link: the link of an invitation just sent or renewed, shown once,
-    copied at once when asked (copy)
+    Every member sees them, and may leave unless they are its only one. Its owner (form, not null: GARDEN_MANAGE) invites,
+    removes a member, and manages the invitations waiting (App\Controller\GardenMembersController). shown_link: the link
+    of an invitation just sent or renewed, shown once, copied at once when asked (copy)
 #}
 {% block body %}
 <div class="with-specimen">
@@ -28,9 +28,25 @@
                         <strong>{{ member.displayName }}</strong>{% if member == app.user %} <span class="meta member-you">{{ 'garden.members.you'|trans }}</span>{% endif %}
                         <p class="meta"><span class="tag {{ membership.owner ? 'tag-owner' }}">{{ membership.role|trans }}</span> {{ 'garden.members.since'|trans({date: membership.joinedAt|long_date}) }}</p>
                     </div>
+                    {% if member == app.user and memberships|length > 1 %}
+                        {# Its owner leaves it to the oldest of the others: Garden::leave() #}
+                        {% set successor = (memberships|filter(other => other.user != app.user)|first).user %}
+                        <form method="post" action="{{ path('garden_leave', {id: garden.id}) }}" data-turbo-confirm="{{ (membership.owner ? 'garden.members.leave_confirm_owner' : 'garden.members.leave_confirm')|trans({garden: garden.name, name: successor.displayName}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('garden_leave') }}">
+                            <twig:Button class="button-secondary">{{ 'garden.members.leave'|trans }}</twig:Button>
+                        </form>
+                    {% elseif form and not membership.owner %}
+                        <form method="post" action="{{ path('garden_member_remove', {id: garden.id, membershipId: membership.id}) }}" data-turbo-confirm="{{ 'garden.members.remove_confirm'|trans({name: member.displayName, garden: garden.name}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('garden_member') }}">
+                            <twig:Button class="button-secondary">{{ 'garden.members.remove'|trans }}</twig:Button>
+                        </form>
+                    {% endif %}
                 </li>
             {% endfor %}
         </ul>
+        {% if memberships|length == 1 %}
+            <p class="hint">{{ 'garden.members.only_member'|trans }}</p>
+        {% endif %}
     </section>
 
     {% if form %}

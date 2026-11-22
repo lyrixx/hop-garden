@@ -219,6 +219,10 @@ flash:
         revoked: "L’invitation de {email} est révoquée : son lien ne marche plus."
         sent: "Invitation envoyée à {email}. Son lien est aussi ci-dessous : envoyez-le autrement si vous voulez."
         verify_first: "Votre compte est prêt, et membre de {garden}. Vérifiez votre adresse avec le lien que nous venons d’envoyer, puis connectez-vous."
+    member:
+        left: "Vous avez quitté {garden}."
+        only_member: "Vous êtes l’unique membre de {garden} : il part avec votre compte si vous le supprimez."
+        removed: "{name} n’est plus membre de {garden}."
     planting:
         added_drafting: "{name} est dans votre jardin. L’assistant rédige sa fiche de culture."
         added_quota_reached: "{name} est dans votre jardin. Sa fiche attend : l’assistant a assez travaillé pour votre jardin aujourd’hui, réessayez demain."
@@ -284,7 +288,7 @@ garden:
             label: "Laquelle ?"
         search: "Chercher"
     members:
-        intro: "Ses membres partagent ses plantes, ses fiches de culture, ses espaces et ses rappels."
+        intro: "Ses membres partagent ses plantes, ses fiches de culture, ses espaces et ses rappels. Chaque membre peut le quitter."
         invitation:
             copied: "Copié"
             copy: "Copier"
@@ -304,7 +308,13 @@ garden:
             placeholder: "nom@exemple.fr"
             submit: "Inviter"
             title: "Inviter quelqu’un"
+        leave: "Quitter le jardin"
+        leave_confirm: "Quitter {garden} ? Vous ne verrez plus ses plantes."
+        leave_confirm_owner: "Quitter {garden} ? {name} en devient propriétaire, et vous ne verrez plus ses plantes."
         no_invitation: "Aucune invitation en attente."
+        only_member: "Vous en êtes l’unique membre : invitez quelqu’un à jardiner avec vous."
+        remove: "Retirer"
+        remove_confirm: "Retirer {name} de {garden} ? Cette personne ne verra plus ses plantes."
         since: "depuis le {date}"
         tab: "Membres"
         title: "Membres"

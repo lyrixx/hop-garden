@@ -219,6 +219,10 @@ flash:
         revoked: "The invitation of {email} is revoked: its link no longer works."
         sent: "Invitation sent to {email}. Its link is below too: send it another way if you like."
         verify_first: "Your account is ready, and a member of {garden}. Verify your email with the link we just sent, then log in."
+    member:
+        left: "You left {garden}."
+        only_member: "You are the only member of {garden}: it goes with your account if you delete it."
+        removed: "{name} is no longer a member of {garden}."
     planting:
         added_drafting: "{name} is in your garden. The assistant drafts its care sheet."
         added_quota_reached: "{name} is in your garden. Its care sheet waits: the assistant has worked enough for your garden today, retry tomorrow."
@@ -284,7 +288,7 @@ garden:
             label: "Which one?"
         search: "Find"
     members:
-        intro: "Its members share its plants, its care sheets, its spaces and its reminders."
+        intro: "Its members share its plants, its care sheets, its spaces and its reminders. Each of them may leave it."
         invitation:
             copied: "Copied"
             copy: "Copy"
@@ -304,7 +308,13 @@ garden:
             placeholder: "name@example.com"
             submit: "Invite"
             title: "Invite somebody"
+        leave: "Leave the garden"
+        leave_confirm: "Leave {garden}? You will no longer see its plants."
+        leave_confirm_owner: "Leave {garden}? {name} becomes its owner, and you will no longer see its plants."
         no_invitation: "No invitation waiting."
+        only_member: "You are its only member: invite somebody to garden with you."
+        remove: "Remove"
+        remove_confirm: "Remove {name} from {garden}? They will no longer see its plants."
         since: "since {date}"
         tab: "Members"
         title: "Members"

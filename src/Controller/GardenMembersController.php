@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Account\Entity\User;
 use App\Garden\Entity\Garden;
 use App\Garden\Entity\Invitation;
+use App\Garden\Entity\Membership;
 use App\Garden\Form\InvitationType;
 use App\Garden\Form\Model\InvitationFormData;
 use App\Garden\GardenQuotas;
@@ -30,9 +31,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Translation\TranslatableMessage;
 
 /**
- * The members of a garden (GARDEN_VIEW), and its invitations: its owner invites by email, sends an invitation again or
- * shows a new link of it, and revokes it (GARDEN_MANAGE). An invitation is found in the garden of the URL only
- * (MapEntity): another one answers 404, as a garden of others does.
+ * The members of a garden, each of whom may leave it (GARDEN_VIEW), and its invitations: its owner invites by email,
+ * sends an invitation again or shows a new link of it, revokes it, and removes a member (GARDEN_MANAGE). An invitation or
+ * a member is found in the garden of the URL only (MapEntity): another one answers 404, as a garden of others does.
  */
 #[Route('/gardens/{id}', requirements: ['id' => Requirement::DIGITS])]
 final class GardenMembersController extends AbstractController
@@ -163,6 +164,54 @@ final class GardenMembersController extends AbstractController
         }
 
         return $this->redirectToRoute('garden_members', ['id' => $garden->getId()], Response::HTTP_SEE_OTHER);
+    }
+
+    /**
+     * By its owner, never themselves: they leave it.
+     */
+    #[Route('/members/{membershipId}/remove', name: 'garden_member_remove', requirements: ['membershipId' => Requirement::DIGITS], methods: ['POST'])]
+    #[IsGranted(GardenVoter::MANAGE, 'garden', statusCode: Response::HTTP_NOT_FOUND)]
+    #[IsCsrfTokenValid('garden_member', tokenKey: '_token')]
+    public function remove(
+        Garden $garden,
+        #[MapEntity(mapping: ['membershipId' => 'id', 'id' => 'garden'])]
+        Membership $membership,
+    ): Response {
+        if ($membership->isOwner()) {
+            throw $this->createNotFoundException('Its owner leaves a garden, never removed from it.');
+        }
+
+        $name = $membership->getUser()->getDisplayName();
+        $garden->remove($membership);
+        $this->entityManager->flush();
+
+        $this->addFlash('success', new TranslatableMessage('flash.member.removed', ['name' => $name, 'garden' => $garden->getName()]));
+
+        return $this->redirectToRoute('garden_members', ['id' => $garden->getId()], Response::HTTP_SEE_OTHER);
+    }
+
+    /**
+     * Any member, its owner too: the oldest of the others takes it over (Garden::leave()). Its only member does not
+     * leave it: it goes with their account.
+     */
+    #[Route('/leave', name: 'garden_leave', methods: ['POST'])]
+    #[IsGranted(GardenVoter::VIEW, 'garden', statusCode: Response::HTTP_NOT_FOUND)]
+    #[IsCsrfTokenValid('garden_leave', tokenKey: '_token')]
+    public function leave(Garden $garden, #[CurrentUser] User $user): Response
+    {
+        if ([$user] === $garden->getMembers()) {
+            $this->addFlash('warning', new TranslatableMessage('flash.member.only_member', ['garden' => $garden->getName()]));
+
+            return $this->redirectToRoute('garden_members', ['id' => $garden->getId()], Response::HTTP_SEE_OTHER);
+        }
+
+        $garden->leave($user);
+        $this->entityManager->flush();
+
+        // Their current garden is another one now, or none: the wizard
+        $this->addFlash('success', new TranslatableMessage('flash.member.left', ['garden' => $garden->getName()]));
+
+        return $this->redirectToRoute('garden', status: Response::HTTP_SEE_OTHER);
     }
 
     /**

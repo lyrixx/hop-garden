@@ -218,6 +218,7 @@ final class GardenIsolationTest extends WebTestCase
         $allotment = $gardens->allotment->getId();
         $balcony = $gardens->balcony->getId();
         $invitation = $gardens->invitation->getId()->toRfc4122();
+        $bob = ($gardens->allotment->membershipOf($gardens->bob) ?? self::fail('Bob is a member.'))->getId();
         $plantingCard = '/proposals/plantings/' . $gardens->proposedPlanting->getProposalId() . '?' . http_build_query(['plant_id' => $rose, 'space_id' => $terrace, 'name' => 'Rose of the card']);
         $spaceCard = '/proposals/spaces/' . $gardens->proposedSpace->getProposalId() . '?' . http_build_query(['name' => 'Space of the card']);
 
@@ -241,10 +242,12 @@ final class GardenIsolationTest extends WebTestCase
             'garden_settings' => [['GET', "/gardens/{$allotment}/settings", []], ['POST', "/gardens/{$allotment}/settings", ['garden' => ['name' => 'Taken']]]],
             'garden_members' => [['GET', "/gardens/{$allotment}/members", []]],
             'garden_invite' => [['POST', "/gardens/{$allotment}/invitations", ['invitation' => ['email' => 'mallory@example.com']]]],
+            'garden_leave' => [['POST', "/gardens/{$allotment}/leave", []]],
             // Theirs, through her own garden too, and one that does not exist
             'garden_invitation_resend' => self::throughBoth("/invitations/{$invitation}/resend", $allotment, $balcony),
             'garden_invitation_link' => self::throughBoth("/invitations/{$invitation}/link", $allotment, $balcony),
             'garden_invitation_revoke' => [...self::throughBoth("/invitations/{$invitation}/revoke", $allotment, $balcony), ['POST', "/gardens/{$balcony}/invitations/0196a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b/revoke", []]],
+            'garden_member_remove' => self::throughBoth("/members/{$bob}/remove", $allotment, $balcony),
         ];
     }
 
