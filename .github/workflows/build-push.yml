@@ -2,7 +2,9 @@ name: Build and push the production image
 
 "on":
     push:
-        branches: ["main"]
+        # main, and every other branch for a preview, with its own tags (GitHub refuses branches with
+        # branches-ignore: this one alone lets every other branch through)
+        branches-ignore: ["dependabot/**"]
 
 # One build at a time, the newer push cancelling the older one: "latest" follows the order of the
 # pushes, not of the end of the builds
@@ -38,6 +40,13 @@ jobs:
               with:
                   persist-credentials: false
 
-            # Tagged with the short commit sha, what a deployment references, and "latest"
+            # main: the short commit sha, what a deployment references, and "latest". Another branch:
+            # "pr-<branch>-<sha>" and "pr-<branch>", never "latest"
             - name: Build and push the image
-              run: castor docker:push --tag="${GITHUB_SHA::7}" --tag=latest
+              run: |
+                  if [ "$GITHUB_REF_NAME" = main ]; then
+                      castor docker:push --tag="${GITHUB_SHA::7}" --tag=latest
+                  else
+                      branch=$(printf '%s' "$GITHUB_REF_NAME" | tr -c 'a-zA-Z0-9_.-' '-')
+                      castor docker:push --tag="pr-${branch}-${GITHUB_SHA::7}" --tag="pr-${branch}"
+                  fi

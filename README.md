@@ -332,7 +332,8 @@ a database recreated from the migrations (the Messenger worker is stopped meanwh
 One image, `ghcr.io/lyrixx/hop-garden/app`, built from the "Production stages" of
 `infrastructure/docker/services/php/Dockerfile`: FrankenPHP serves the application, the Mercure hub and the MCP
 server on port 8080, in HTTP, and the same image runs the migrations and the worker. Every push to `main` builds it
-and pushes it, tagged with the short commit sha and `latest` (`.github/workflows/build-push.yml`).
+and pushes it, tagged with the short commit sha and `latest` (`.github/workflows/build-push.yml`). A push to another
+branch gets a preview image instead, tagged `pr-<branch>-<short sha>` and `pr-<branch>`, never `latest`.
 
 ```bash
 castor start -c prod        # the image in a minimal stack, in demo mode: http://127.0.0.1:8000
