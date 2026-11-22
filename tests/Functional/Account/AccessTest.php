@@ -10,7 +10,8 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
- * Private by default: only the pages of the login are public, and the MCP server until OAuth.
+ * Private by default: only the public pages, the pages of the login and the choice of a language are public, and the
+ * MCP server until OAuth.
  */
 final class AccessTest extends WebTestCase
 {
@@ -38,6 +39,7 @@ final class AccessTest extends WebTestCase
     {
         yield 'the chat' => ['GET', '/assistant'];
         yield 'a message' => ['POST', '/chat'];
+        yield 'a new conversation' => ['POST', '/chat/new'];
         yield 'the garden' => ['GET', '/garden'];
         yield 'the species' => ['GET', '/plants'];
         yield 'the spaces' => ['GET', '/spaces'];
@@ -57,6 +59,20 @@ final class AccessTest extends WebTestCase
         $this->logInWithTheForm($this->client, $member->getEmail());
 
         self::assertResponseRedirects('/spaces', 302, 'Where it was going.');
+    }
+
+    /**
+     * By the name of their routes (home, legal_*). The choice of a language: HomeControllerTest, LanguageOfAVisitorTest.
+     */
+    #[TestWith(['/'])]
+    #[TestWith(['/legal-notice'])]
+    #[TestWith(['/terms'])]
+    #[TestWith(['/privacy'])]
+    public function testThePublicPagesArePublic(string $url): void
+    {
+        $this->client->request('GET', $url);
+
+        self::assertResponseIsSuccessful();
     }
 
     #[TestWith(['/login'])]

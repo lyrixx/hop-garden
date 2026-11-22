@@ -42,13 +42,12 @@ security:
         # The MCP server of the external clients keeps its access until OAuth (phase 3)
         - { path: ^/_mcp/agent, roles: PUBLIC_ACCESS } # TODO The worker calls it: a short token signed for each run of the agent (next step)
         - { path: ^/_mcp, roles: PUBLIC_ACCESS }
-        # The public page and the legal pages, of the saas-public branch: the legal ones by the name of their routes,
-        # legal_*, whatever their paths. The chat still answers on / here: ChatController requires ROLE_USER itself
-        - { path: ^/$, roles: PUBLIC_ACCESS }
+        # The public page and the legal pages, by the name of their routes (home, legal_*), whatever their paths
+        - { route: ^home$, roles: PUBLIC_ACCESS }
         - { route: ^legal_, roles: PUBLIC_ACCESS }
         - { path: ^/(login|register|reset-password|locale)(/|$), roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }
-        # The chat, the garden, the species, the spaces, the notifications, the account, /_components...
+        # The chat (/assistant, /chat), the garden, the species, the spaces, the notifications, the account, /_components...
         - { path: ^/, roles: ROLE_USER }
 
 when@test:
