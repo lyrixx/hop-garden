@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'registration.title'|trans }} · Hop Garden{% endblock %}
+
+{% block body %}
+<div class="with-specimen auth">
+<div>
+    <header class="plate-head">
+        <h1>{{ 'registration.title'|trans }}</h1>
+        <p>{{ 'registration.subtitle'|trans }}</p>
+    </header>
+
+    {{ form_start(form, {attr: {class: 'card crowned care-sheet-form auth-form'}}) }}
+        {{ form_errors(form) }}
+        {{ form_row(form.email) }}
+        {{ form_row(form.displayName) }}
+        {{ form_row(form.plainPassword) }}
+        <div>
+            <div class="form-check">
+                {{ form_widget(form.acceptsTerms) }}
+                {# TODO The terms of sale of the saas-public branch: path('legal_terms'), once merged #}
+                <label for="{{ form.acceptsTerms.vars.id }}">{{ 'registration.terms'|trans({link: '<a href="#">', link_end: '</a>'})|raw }}</label>
+            </div>
+            {{ form_errors(form.acceptsTerms) }}
+        </div>
+        <div class="actions">
+            <twig:Button class="button-next">{{ 'registration.submit'|trans }}</twig:Button>
+        </div>
+    {{ form_end(form) }}
+
+    <p class="callout auth-aside">{{ 'registration.have_account'|trans({link: '<a href="' ~ path('login') ~ '">', link_end: '</a>'})|raw }}</p>
+</div>
+<twig:Specimen plate="tecoma-ceramensis"/>
+</div>
+{% endblock %}

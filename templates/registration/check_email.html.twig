@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'registration.check_email.title'|trans }} · Hop Garden{% endblock %}
+
+{% block body %}
+<div class="with-specimen auth">
+<div>
+    <header class="plate-head">
+        <h1>{{ 'registration.check_email.title'|trans }}</h1>
+    </header>
+
+    <section class="card crowned auth-note">
+        <span class="pict"><twig:Icon name="mail" :size="18"/></span>
+        <div>
+            <p>{{ 'registration.check_email.body'|trans }}</p>
+            <p class="hint">{{ 'registration.check_email.spam'|trans }}</p>
+        </div>
+    </section>
+</div>
+<twig:Specimen plate="tecoma-ceramensis"/>
+</div>
+{% endblock %}

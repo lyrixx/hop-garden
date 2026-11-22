@@ -1,0 +1,24 @@
+/*
+ * The back-office (App\Controller\Admin\DashboardController): the default theme of EasyAdmin, its sidebar on the green
+ * of Hop Garden, its primary colour the aubergine of the buttons (Theme::primaryColor()). Keep in sync with app.css.
+ */
+:root {
+    --sidebar-bg: #0b5b3a;
+    --sidebar-border-color: #0f6b45;
+    --sidebar-logo-color: #fff;
+    --sidebar-menu-color: #dcefe3;
+    --sidebar-menu-submenu-color: #b5d35a;
+    --sidebar-menu-header-color: #b5d35a;
+    --sidebar-menu-icon-color: #b5d35a;
+    --sidebar-menu-active-item-bg: #073d27;
+    --sidebar-menu-active-item-color: #fff;
+    --sidebar-menu-hover-color: #fff;
+    --sidebar-item-hover-bg: #0f6b45;
+    --responsive-header-bg: #0b5b3a;
+    --responsive-header-logo-color: #fff;
+}
+
+.main-header .logo, .sidebar .logo { font-family: "Literata Variable", Georgia, serif; font-weight: 800; letter-spacing: -.02em; }
+
+/* The count of the waiting list, in anise as the pills of the application */
+.ea-sidebar-badge { background: #b5d35a; color: #073d27; }

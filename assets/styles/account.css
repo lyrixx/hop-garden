@@ -1,0 +1,44 @@
+/*
+ * The pages of the accounts: the login, the registration and its waiting list, the password reset, the account. A
+ * form card crowned on the ground, a plate in the margin; the member at the end of the top bar.
+ */
+
+/* Narrower than a page of the garden: a form of a few fields */
+.auth { max-width: 860px; margin-inline: auto; }
+.auth-form { gap: 1.1rem; }
+.auth-form .actions { justify-content: flex-start; }
+.auth-aside { margin-top: 1.2rem; }
+.auth-aside a { color: var(--white); font-weight: 700; }
+.auth-note { display: flex; align-items: flex-start; gap: .9rem; margin-top: 110px; padding: 1.6rem 1.8rem; }
+.auth-note p { margin: 0 0 .5rem; }
+.auth-note p:last-child { margin-bottom: 0; }
+.form-check input[type="checkbox"] { width: 1.1rem; height: 1.1rem; margin: 0; accent-color: var(--aubergine); }
+
+/* The account: a card per change, under the crowned one */
+.account-section h2 { margin-bottom: 0; }
+.account-section + .account-section { margin-top: 1.2rem; }
+.account-section .actions { justify-content: flex-start; }
+.account-deletion { box-shadow: var(--shadow), inset 0 0 0 2px var(--pink-soft); }
+.button-danger { background: var(--crimson); }
+.button-danger:hover { background: #6d0f2b; }
+
+/* The member, at the end of the top bar: their account, the back-office, the logout */
+.account-menu { display: flex; align-items: center; gap: .25rem; }
+.account-menu form { margin: 0; }
+.account-menu-item { display: inline-flex; align-items: center; gap: .45rem; padding: .5rem .8rem; border: 0; border-radius: 999px; background: none; color: var(--white); font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; }
+.account-menu-item:hover { background: rgb(255 255 255 / 12%); }
+.account-menu-item.active { background: var(--white); color: var(--forest-deep); }
+
+@media (max-width: 1100px) {
+    /* Room for the five tabs: the pictograms only */
+    .account-menu-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+
+@media (max-width: 640px) {
+    /* The tabs go below, on a line of their own: the member stays next to the brand */
+    .topbar .nav { order: 3; }
+    .nav-visitor { display: flex; width: auto; }
+    .nav-visitor a { flex-direction: row; padding: .4rem .8rem; font-size: .85rem; }
+    .account-menu-item { padding: .45rem .6rem; }
+    .auth-note { padding: 1.3rem 1.2rem; }
+}

@@ -7,6 +7,7 @@ use App\Garden\Entity\Planting;
 use App\Garden\PlantingRepository;
 use App\Plant\PlantRepository;
 use App\Tests\Integration\Mcp\PlantToolsTest;
+use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\TestWith;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -17,6 +18,8 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  */
 final class McpEndpointTest extends WebTestCase
 {
+    use LogInTrait;
+
     private const string PROTOCOL_VERSION = '2025-06-18';
 
     private KernelBrowser $client;
@@ -56,6 +59,8 @@ final class McpEndpointTest extends WebTestCase
         self::assertStringStartsWith('https://hop-garden.test/proposals/plantings/', $url);
         self::assertSame([], self::getContainer()->get(PlantingRepository::class)->findBy(['plant' => $plantId]), 'Nothing until the user taps the card.');
 
+        // Opened in Hop Garden, by a member
+        $this->logIn($this->client);
         $crawler = $this->client->request('GET', $url);
         self::assertResponseIsSuccessful();
         self::assertSelectorTextSame('h1', 'Add to my garden');

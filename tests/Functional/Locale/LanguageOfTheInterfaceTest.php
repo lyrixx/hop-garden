@@ -2,15 +2,19 @@
 
 namespace App\Tests\Functional\Locale;
 
+use App\Account\Entity\User;
+use App\Account\UserRepository;
 use App\Factory\CareSheetFactory;
 use App\Factory\PlantFactory;
 use App\Factory\PlantingFactory;
 use App\Factory\SpaceFactory;
+use App\Factory\UserFactory;
 use App\Garden\Model\Soil;
 use App\Locale\Model\SupportedLocale;
-use App\Locale\PreferredLocale;
+use App\Locale\UserPreferredLocale;
 use App\Plant\Model\Exposure;
 use App\Reminder\Model\ReminderType;
+use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\TestWith;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -19,18 +23,22 @@ use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 use Symfony\Component\DomCrawler\Crawler;
 
 /**
- * The language is a setting of the application, never of the URL: until one is chosen, the interface stays in English
- * and offers the one of the browser.
+ * The language is a setting of the member, never of the URL: until they choose one, the interface stays in English and
+ * offers the one of the browser. A visitor: see LanguageOfAVisitorTest.
  */
 final class LanguageOfTheInterfaceTest extends WebTestCase
 {
     use ClockSensitiveTrait;
+    use LogInTrait;
 
     private KernelBrowser $client;
+
+    private User $member;
 
     protected function setUp(): void
     {
         $this->client = self::createClient();
+        $this->member = $this->logIn($this->client);
     }
 
     public function testABrowserInFrenchIsOfferedFrenchInFrench(): void
@@ -48,7 +56,7 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
         self::assertSame('/garden', $banner->filter('input[name="returnTo"]')->attr('value'));
         self::assertSame('en', $crawler->filter('html')->attr('lang'), 'Nothing changes without a tap.');
         self::assertSelectorTextContains('.nav', 'My garden');
-        self::assertFalse(self::getContainer()->get(PreferredLocale::class)->isChosen());
+        self::assertNull($this->member()->getPreferredLocale());
     }
 
     #[TestWith(['en-GB,en;q=0.9'])]
@@ -74,7 +82,8 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
         self::assertSelectorTextSame('.nav a[href="/garden"]', 'Mon jardin');
         self::assertSelectorTextSame('h1', 'Espèces');
         self::assertSelectorNotExists('.locale-banner', 'Chosen: it does not come back.');
-        self::assertSame(SupportedLocale::French, self::getContainer()->get(PreferredLocale::class)->get());
+        self::assertSame(SupportedLocale::French, $this->member()->getPreferredLocale(), 'In their account.');
+        self::assertSame('fr', $this->client->getCookieJar()->get(UserPreferredLocale::COOKIE)?->getValue(), 'And in the cookie, for the login page.');
     }
 
     public function testStayingInEnglishIsAChoiceToo(): void
@@ -86,7 +95,7 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
         $crawler = $this->client->followRedirect();
         self::assertSame('en', $crawler->filter('html')->attr('lang'));
         self::assertSelectorNotExists('.locale-banner');
-        self::assertTrue(self::getContainer()->get(PreferredLocale::class)->isChosen());
+        self::assertSame(SupportedLocale::English, $this->member()->getPreferredLocale());
     }
 
     public function testTheFooterSwitchesTheLanguage(): void
@@ -113,8 +122,8 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
     {
         $this->client->request('POST', '/locale', ['_token' => 'forged', 'locale' => 'fr', 'returnTo' => '/']);
 
-        self::assertResponseStatusCodeSame(401);
-        self::assertFalse(self::getContainer()->get(PreferredLocale::class)->isChosen());
+        self::assertResponseRedirects('/login');
+        self::assertNull($this->member()->getPreferredLocale());
     }
 
     #[TestWith(['de', '/'])]
@@ -128,7 +137,7 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
         $this->client->request('POST', '/locale', ['_token' => $token, 'locale' => $locale, 'returnTo' => $returnTo]);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertFalse(self::getContainer()->get(PreferredLocale::class)->isChosen());
+        self::assertNull($this->member()->getPreferredLocale());
     }
 
     public function testThePagesInFrench(): void
@@ -138,8 +147,7 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
         $draft = PlantFactory::createOne(['commonName' => 'Hortensia']);
         $space = SpaceFactory::createOne(['name' => 'Terrasse', 'exposure' => Exposure::PartShade, 'soil' => Soil::Loamy]);
         $planting = PlantingFactory::new()->of($rose)->inSpace($space)->create();
-        self::getContainer()->get(PreferredLocale::class)->set(SupportedLocale::French);
-        self::getContainer()->get(EntityManagerInterface::class)->flush();
+        $this->logIn($this->client, UserFactory::new()->approved()->create(['preferredLocale' => SupportedLocale::French]));
 
         $pages = [
             '/' => 'Ce que Hop Garden règle',
@@ -186,8 +194,7 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
 
     public function testAFrenchNameFindsItsSpeciesThroughItsLatinName(): void
     {
-        self::getContainer()->get(PreferredLocale::class)->set(SupportedLocale::French);
-        self::getContainer()->get(EntityManagerInterface::class)->flush();
+        $this->logIn($this->client, UserFactory::new()->approved()->create(['preferredLocale' => SupportedLocale::French]));
         $crawler = $this->client->request('GET', '/plants/new');
 
         // Trefle does not know "rosier": the recorded answer of the LLM gives Rosa, which it knows
@@ -201,19 +208,25 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
 
     public function testTheValidationMessagesInFrench(): void
     {
-        self::getContainer()->get(PreferredLocale::class)->set(SupportedLocale::French);
-        self::getContainer()->get(EntityManagerInterface::class)->flush();
+        $this->logIn($this->client, UserFactory::new()->approved()->create(['preferredLocale' => SupportedLocale::French]));
         $crawler = $this->client->request('GET', '/spaces/new');
 
         $this->client->submit($crawler->selectButton('Ajouter l’espace')->form(), ['space[name]' => '  ']);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertSelectorTextContains('form', 'Cette valeur ne doit pas être vide.', 'The messages of Symfony.');
+        self::assertSelectorTextContains('main form', 'Cette valeur ne doit pas être vide.', 'The messages of Symfony.');
         self::assertSelectorTextContains('form label[for="space_name"]', 'Nom');
 
         $crawler = $this->client->request('GET', '/plants/new');
         $this->client->submit($crawler->selectButton('Créer le brouillon')->form()->disableValidation(), ['new_plant[name]' => 'hortensia']);
 
-        self::assertSelectorTextContains('form', 'Choisissez son espèce parmi celles que Trefle trouve.', 'And ours.');
+        self::assertSelectorTextContains('main form', 'Choisissez son espèce parmi celles que Trefle trouve.', 'And ours.');
+    }
+
+    private function member(): User
+    {
+        self::getContainer()->get(EntityManagerInterface::class)->clear();
+
+        return self::getContainer()->get(UserRepository::class)->find($this->member->getId()) ?? self::fail('The member is gone.');
     }
 }

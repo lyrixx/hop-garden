@@ -387,7 +387,7 @@ em { font-family: var(--serif); }
 /* Forms: a white card, fields filled with a warm off-white, choices as pills */
 .care-sheet-form { display: flex; flex-direction: column; gap: 1.3rem; margin-top: 110px; padding: 2rem 2.2rem; border-radius: 32px; }
 :where(.care-sheet-form, .proposal-form) label { display: block; margin-bottom: .3rem; font-size: .9rem; font-weight: 600; }
-:is(.care-sheet-form, .proposal-form) :is(input[type="text"], input[type="number"], input[type="date"], input[type="file"], select, textarea) {
+:is(.care-sheet-form, .proposal-form) :is(input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="date"], input[type="file"], select, textarea) {
     width: 100%;
     padding: .7rem .95rem;
     border: 1.5px solid transparent;

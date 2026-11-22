@@ -12,6 +12,7 @@ use App\Factory\ReminderFactory;
 use App\Reminder\Model\ReminderType;
 use App\Reminder\NotificationRepository;
 use App\Tests\Utils\Http\UnavailableDataSources;
+use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -26,12 +27,14 @@ use Symfony\Component\HttpClient\Response\JsonMockResponse;
 final class NotificationControllerTest extends WebTestCase
 {
     use ClockSensitiveTrait;
+    use LogInTrait;
 
     private KernelBrowser $client;
 
     protected function setUp(): void
     {
         $this->client = self::createClient();
+        $this->logIn($this->client);
     }
 
     public function testNothingYet(): void

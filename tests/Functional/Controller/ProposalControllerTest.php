@@ -10,6 +10,7 @@ use App\Garden\PlantingRepository;
 use App\Garden\SpaceRepository;
 use App\Plant\Entity\Plant;
 use App\Plant\Model\Exposure;
+use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -21,11 +22,14 @@ use Symfony\Component\Uid\UuidV7;
  */
 final class ProposalControllerTest extends WebTestCase
 {
+    use LogInTrait;
+
     private KernelBrowser $client;
 
     protected function setUp(): void
     {
         $this->client = self::createClient();
+        $this->logIn($this->client);
     }
 
     public function testAPlantingCardInItsFrame(): void

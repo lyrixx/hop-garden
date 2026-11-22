@@ -2,9 +2,8 @@
 
 namespace App\Tests\Functional\Controller;
 
-use App\Locale\Model\SupportedLocale;
-use App\Locale\PreferredLocale;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Locale\UserPreferredLocale;
+use App\Tests\Utils\Security\LogInTrait;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestWith;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -18,6 +17,8 @@ use Symfony\Component\DomCrawler\Crawler;
  */
 final class LegalPagesTest extends WebTestCase
 {
+    use LogInTrait;
+
     private KernelBrowser $client;
 
     protected function setUp(): void
@@ -28,8 +29,7 @@ final class LegalPagesTest extends WebTestCase
     #[DataProvider('provideThePagesCases')]
     public function testThePages(string $url, string $locale, string $title, string $toComplete): void
     {
-        self::getContainer()->get(PreferredLocale::class)->set(SupportedLocale::from($locale));
-        self::getContainer()->get(EntityManagerInterface::class)->flush();
+        $this->client->getCookieJar()->set(new Cookie(UserPreferredLocale::COOKIE, $locale));
 
         $crawler = $this->client->request('GET', $url);
 
@@ -64,6 +64,7 @@ final class LegalPagesTest extends WebTestCase
     #[TestWith(['/privacy'])]
     public function testTheFooterLinksToThemOnEveryPage(string $url): void
     {
+        $this->logIn($this->client);
         $crawler = $this->client->request('GET', $url);
 
         $links = $crawler->filter('.footer .footer-links a');

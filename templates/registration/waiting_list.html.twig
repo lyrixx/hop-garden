@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'registration.waiting_list.title'|trans }} · Hop Garden{% endblock %}
+
+{% block body %}
+<div class="with-specimen auth">
+<div>
+    <header class="plate-head">
+        <span class="plate-tab">{{ 'registration.waiting_list.tab'|trans }}</span>
+        <h1>{{ 'registration.waiting_list.title'|trans }}</h1>
+    </header>
+
+    <section class="card crowned auth-note">
+        <span class="pict"><twig:Icon name="sprout" :size="18"/></span>
+        <div>
+            <p><strong>{{ 'registration.waiting_list.verified'|trans }}</strong></p>
+            <p>{{ 'registration.waiting_list.body'|trans }}</p>
+        </div>
+    </section>
+</div>
+<twig:Specimen plate="gonystylus-miquelianus"/>
+</div>
+{% endblock %}

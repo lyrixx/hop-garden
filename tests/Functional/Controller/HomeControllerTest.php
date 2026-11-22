@@ -2,11 +2,11 @@
 
 namespace App\Tests\Functional\Controller;
 
-use App\Locale\Model\SupportedLocale;
-use App\Locale\PreferredLocale;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Locale\UserPreferredLocale;
+use App\Tests\Utils\Security\LogInTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Component\DomCrawler\Crawler;
 
 /**
@@ -14,6 +14,8 @@ use Symfony\Component\DomCrawler\Crawler;
  */
 final class HomeControllerTest extends WebTestCase
 {
+    use LogInTrait;
+
     private KernelBrowser $client;
 
     protected function setUp(): void
@@ -46,8 +48,7 @@ final class HomeControllerTest extends WebTestCase
 
     public function testThePublicPageInFrench(): void
     {
-        self::getContainer()->get(PreferredLocale::class)->set(SupportedLocale::French);
-        self::getContainer()->get(EntityManagerInterface::class)->flush();
+        $this->client->getCookieJar()->set(new Cookie(UserPreferredLocale::COOKIE, 'fr'));
 
         $crawler = $this->client->request('GET', '/');
 
@@ -97,6 +98,7 @@ final class HomeControllerTest extends WebTestCase
 
     public function testALinkOfTheChatOnTheRootOpensTheAssistant(): void
     {
+        $this->logIn($this->client);
         $this->client->request('GET', '/?message=' . rawurlencode('Draft the care sheet of a new species'));
 
         self::assertResponseRedirects('/assistant?message=' . rawurlencode('Draft the care sheet of a new species'), 301);

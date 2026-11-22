@@ -6,6 +6,7 @@ use App\Plant\PlantRepository;
 use App\Tests\Utils\Chat\ScriptedGardener;
 use App\Tests\Utils\Chat\WorkerTrait;
 use App\Tests\Utils\Env\EnvVarsTrait;
+use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\TestWith;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -15,6 +16,7 @@ use Symfony\Component\DomCrawler\Crawler;
 final class ChatControllerTest extends WebTestCase
 {
     use EnvVarsTrait;
+    use LogInTrait;
     use WorkerTrait;
 
     private KernelBrowser $client;
@@ -22,6 +24,7 @@ final class ChatControllerTest extends WebTestCase
     protected function setUp(): void
     {
         $this->client = self::createClient();
+        $this->logIn($this->client);
     }
 
     public function testAnEmptyConversation(): void
@@ -103,7 +106,7 @@ final class ChatControllerTest extends WebTestCase
     {
         $this->client->request('POST', '/chat', ['text' => 'hortensia', '_token' => 'forged']);
 
-        self::assertResponseStatusCodeSame(401);
+        self::assertResponseRedirects('/login');
         self::assertSame([], $this->runAgentMessages());
     }
 
@@ -132,6 +135,7 @@ final class ChatControllerTest extends WebTestCase
         $this->setEnvVar('APP_DEMO', '0');
         self::ensureKernelShutdown();
         $this->client = self::createClient();
+        $this->logIn($this->client);
         $crawler = $this->client->request('GET', '/assistant');
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => 'paniculata']);
         $this->runTheWorker();
@@ -184,7 +188,7 @@ final class ChatControllerTest extends WebTestCase
 
         $this->client->request('POST', '/chat/new', ['_token' => 'forged']);
 
-        self::assertResponseStatusCodeSame(401);
+        self::assertResponseRedirects('/login');
         $crawler = $this->client->request('GET', '/assistant');
         self::assertSame($topic, $this->streamSource($crawler), 'The same conversation.');
     }

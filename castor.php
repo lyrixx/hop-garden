@@ -1,6 +1,7 @@
 <?php
 
 use Castor\Attribute\AsOption;
+use Castor\Attribute\AsRawTokens;
 use Castor\Attribute\AsTask;
 
 use function Castor\context;
@@ -13,8 +14,10 @@ use function docker\about;
 use function docker\build;
 use function docker\docker_compose;
 use function docker\docker_compose_run;
+use function docker\docker_exit_code;
 use function docker\get_project_url;
 use function docker\get_services;
+use function docker\has_router;
 use function docker\up;
 use function docker\workers_start;
 use function docker\workers_stop;
@@ -114,7 +117,18 @@ function fixtures(): void
     load_demo_story();
 }
 
-#[AsTask(description: 'Resets the demo data: 2 validated plants with their reminders, their plantings in 3 spaces, no notification', namespace: 'demo', name: 'reset')]
+/**
+ * @param list<string> $rawTokens
+ */
+#[AsTask(description: 'Creates an account: --email=... --name=... --password=..., with --admin for the administrator of a new installation (or --approved)', namespace: 'app:user', name: 'create')]
+function user_create(#[AsRawTokens] array $rawTokens = []): int
+{
+    io()->title('Creating an account');
+
+    return docker_exit_code(['bin/console', 'app:user:create', ...$rawTokens]);
+}
+
+#[AsTask(description: 'Resets the demo data: 4 accounts, 2 validated plants with their reminders, their plantings in 3 spaces, no notification', namespace: 'demo', name: 'reset')]
 function demo_reset(): void
 {
     io()->title('Resetting the demo data');
@@ -122,6 +136,18 @@ function demo_reset(): void
     load_demo_story();
 
     io()->success('Demo data loaded.');
+
+    // Keep in sync with App\Story\DemoStory, and App\Factory\UserFactory::PASSWORD
+    io()->section('Log in at ' . get_project_url(variable('root_domain')) . '/login');
+    io()->table(['Email', 'Password', 'Account'], [
+        ['admin@hop-garden.test', 'hop-garden-demo', 'the administrator, of the back-office too (/admin)'],
+        ['alice@hop-garden.test', 'hop-garden-demo', 'a member, in English'],
+        ['bob@hop-garden.test', 'hop-garden-demo', 'a member, in French'],
+        ['dave@hop-garden.test', 'hop-garden-demo', 'on the waiting list: approve him in the back-office'],
+    ]);
+    if (has_router()) {
+        io()->comment('Their emails land in Mailpit: ' . get_project_url('mail.' . variable('root_domain')));
+    }
 }
 
 /**

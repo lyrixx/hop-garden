@@ -7,8 +7,9 @@ use App\Settings\SettingsRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * The settings of the application: one row, created by the first choice. Hop Garden has no accounts yet; read them
- * through their role (App\Locale\PreferredLocale), so that they can move to the user later.
+ * The settings of the application: one row. Its preferred locale is the language of the application, read through its
+ * role (App\Locale\PreferredLocale): of a visitor who did not choose one, and of the reminder check, without recipient.
+ * The members choose theirs in their account.
  */
 #[ORM\Entity(repositoryClass: SettingsRepository::class)]
 class Settings

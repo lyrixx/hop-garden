@@ -1,0 +1,9 @@
+{% extends 'email/layout.html.twig' %}
+{% import 'email/_ui.html.twig' as ui %}
+
+{% block content %}
+    <p>{{ 'email.layout.hello'|trans({name: name}) }}</p>
+    <p>{{ 'email.confirm_new_email.intro'|trans }}</p>
+    {{ ui.button(url, 'email.confirm_new_email.button'|trans) }}
+    {{ ui.note('email.confirm_new_email.expiry'|trans) }}
+{% endblock %}

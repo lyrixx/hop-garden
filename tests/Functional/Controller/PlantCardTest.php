@@ -7,6 +7,7 @@ use App\Factory\PlantingFactory;
 use App\Plant\Entity\Plant;
 use App\Plate\Model\PlatePart;
 use App\Reminder\Model\ReminderType;
+use App\Tests\Utils\Security\LogInTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -15,11 +16,14 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  */
 final class PlantCardTest extends WebTestCase
 {
+    use LogInTrait;
+
     private KernelBrowser $client;
 
     protected function setUp(): void
     {
         $this->client = self::createClient();
+        $this->logIn($this->client);
     }
 
     public function testTheDraftCardShowsThePlateAndOneCardPerPart(): void

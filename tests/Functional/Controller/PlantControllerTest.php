@@ -17,6 +17,7 @@ use App\Plant\Model\Source;
 use App\Plant\PlantRepository;
 use App\Reminder\Model\ReminderType;
 use App\Tests\Utils\Http\UnavailableDataSources;
+use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\Bundle\DoctrineBundle\DataCollector\DoctrineDataCollector;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -27,12 +28,14 @@ use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 final class PlantControllerTest extends WebTestCase
 {
     use ClockSensitiveTrait;
+    use LogInTrait;
 
     private KernelBrowser $client;
 
     protected function setUp(): void
     {
         $this->client = self::createClient();
+        $this->logIn($this->client);
     }
 
     public function testTheDraftCardHighlightsTheValuesToVerify(): void
@@ -138,8 +141,8 @@ final class PlantControllerTest extends WebTestCase
 
         $this->client->request('POST', '/plants/' . $plant->getId() . '/validate', ['_token' => 'forged']);
 
-        // The security layer turns an invalid token into a 401
-        self::assertResponseStatusCodeSame(401);
+        // The firewall turns an invalid token into a login
+        self::assertResponseRedirects('/login');
         self::assertFalse($this->reload($plant)->isValidated());
     }
 
@@ -542,7 +545,7 @@ final class PlantControllerTest extends WebTestCase
 
         $this->client->request('POST', '/plants/' . $plant->getId() . '/reminders/frost', ['_token' => 'forged', 'enabled' => '1']);
 
-        self::assertResponseStatusCodeSame(401);
+        self::assertResponseRedirects('/login');
         self::assertSame([], $this->reload($plant)->getEnabledReminderTypes());
     }
 
