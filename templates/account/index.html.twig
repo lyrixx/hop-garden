@@ -1,0 +1,65 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'account.title'|trans }} · Hop Garden{% endblock %}
+
+{% block body %}
+<div class="with-specimen">
+<div>
+    <header class="plate-head">
+        <h1>{{ 'account.title'|trans }}</h1>
+        <p>{{ 'account.subtitle'|trans({date: user.createdAt|long_date}) }}</p>
+    </header>
+
+    {# One form per change, each posted to its own route (App\Controller\AccountController) #}
+    {{ form_start(profile_form, {attr: {class: 'card crowned care-sheet-form account-section', id: 'profile'}}) }}
+        <h2>{{ 'account.profile.title'|trans }}</h2>
+        {{ form_errors(profile_form) }}
+        {{ form_row(profile_form.displayName) }}
+        <fieldset class="choices">
+            <legend>{{ 'account.form.language'|trans }}</legend>
+            {% for choice in profile_form.preferredLocale %}
+                <label class="choice" lang="{{ choice.vars.value }}">{{ form_widget(choice) }}<span>{{ choice.vars.label }}</span></label>
+            {% endfor %}
+            {{ form_errors(profile_form.preferredLocale) }}
+        </fieldset>
+        <div class="actions">
+            <twig:Button>{{ 'action.save'|trans }}</twig:Button>
+        </div>
+    {{ form_end(profile_form) }}
+
+    {{ form_start(email_form, {attr: {class: 'card care-sheet-form account-section', id: 'email'}}) }}
+        <h2>{{ 'account.email.title'|trans }}</h2>
+        <p class="hint">{{ 'account.email.current'|trans({email: user.email}) }}</p>
+        {{ form_errors(email_form) }}
+        {{ form_row(email_form.newEmail) }}
+        {{ form_row(email_form.currentPassword) }}
+        <p class="help-text">{{ 'account.email.help'|trans }}</p>
+        <div class="actions">
+            <twig:Button class="button-secondary">{{ 'account.email.submit'|trans }}</twig:Button>
+        </div>
+    {{ form_end(email_form) }}
+
+    {{ form_start(password_form, {attr: {class: 'card care-sheet-form account-section', id: 'password'}}) }}
+        <h2>{{ 'account.password.title'|trans }}</h2>
+        {{ form_errors(password_form) }}
+        {{ form_row(password_form.currentPassword) }}
+        {{ form_row(password_form.newPassword) }}
+        <p class="help-text">{{ 'account.password.help'|trans }}</p>
+        <div class="actions">
+            <twig:Button class="button-secondary">{{ 'account.password.submit'|trans }}</twig:Button>
+        </div>
+    {{ form_end(password_form) }}
+
+    {{ form_start(deletion_form, {attr: {class: 'card care-sheet-form account-section account-deletion', id: 'deletion'}}) }}
+        <h2>{{ 'account.deletion.title'|trans }}</h2>
+        <p class="warning">{{ 'account.deletion.warning'|trans }}</p>
+        {{ form_errors(deletion_form) }}
+        {{ form_row(deletion_form.currentPassword) }}
+        <div class="actions">
+            <twig:Button class="button-danger">{{ 'account.deletion.submit'|trans }}</twig:Button>
+        </div>
+    {{ form_end(deletion_form) }}
+</div>
+<twig:Specimen plate="wormia-subsessilis"/>
+</div>
+{% endblock %}
