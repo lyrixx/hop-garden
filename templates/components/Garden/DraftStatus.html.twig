@@ -1,7 +1,6 @@
 {#
     Where the care sheet of a planting stands until it is validated: the assistant drafting it, then its draft waiting
-    for a review. No signed form: the page renders it, and the worker once the draft is proposed
-    (templates/chat/stream/care_sheet_drafted.stream.html.twig).
+    for a review. The worker refreshes the page once the draft is proposed (App\Garden\DraftCareSheetHandler).
     planting: App\Garden\Entity\Planting
 #}
 {% props planting %}

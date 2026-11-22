@@ -34,16 +34,8 @@ final class DraftCareSheetHandlerTest extends KernelTestCase
         $this->handle($planting);
 
         $events = $this->events($planting);
-        // The page of the planting shows the draft once it is linked to it, in place
-        self::assertSame(['start', 'tool_call', 'care_sheet_drafted', 'draft_card', 'answer', 'done'], array_values(array_unique(array_column($events, 'type'))));
-        $drafted = array_values(array_filter($events, static fn (array $event): bool => 'care_sheet_drafted' === $event['type']));
-        self::assertSame(
-            [['update', 'planting-' . $planting->getId() . '-draft-status'], ['update', 'planting-' . $planting->getId() . '-species'], ['remove', 'planting-' . $planting->getId() . '-same-species'], ['remove', 'planting-' . $planting->getId() . '-chosen-species']],
-            array_map(static fn (array $event): array => [$event['action'], $event['target']], $drafted),
-        );
-        self::assertStringContainsString('waiting for your review', (string) $drafted[0]['html']);
-        self::assertStringContainsString('Hydrangea paniculata', (string) $drafted[1]['html']);
-        self::assertStringNotContainsString('<form', (string) $drafted[1]['html'], 'Nothing to sign: the worker has no session.');
+        // The page of the planting shows the draft once it is linked to it: rendered again by each browser on it
+        self::assertSame(['start', 'tool_call', 'refresh', 'draft_card', 'answer', 'done'], array_values(array_unique(array_column($events, 'type'))));
         self::assertStringStartsWith('propose_plant(common_name: "Panicled hydrangea", scientific_name: "Hydrangea paniculata"', $events[1]['summary']);
 
         $prompt = self::getContainer()->get(ChatHistory::class)->entries(UuidV7::fromString($planting->getConversationId() ?? ''))[0]->text;

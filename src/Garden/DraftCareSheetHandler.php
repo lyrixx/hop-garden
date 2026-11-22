@@ -79,7 +79,8 @@ final readonly class DraftCareSheetHandler
                 if (null !== $planting) {
                     $planting->linkTo($this->plantRepository->get($garden, $plantId));
                     $this->entityManager->flush();
-                    $this->publisher->publish($topic, ChatEvent::CareSheetDrafted, ['planting' => $planting]);
+                    // Rendered again by the browser of each member on the page, in their language
+                    $this->publisher->publish($topic, ChatEvent::Refresh);
                 }
             });
         } finally {

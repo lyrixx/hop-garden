@@ -3,9 +3,9 @@ import * as Turbo from '@hotwired/turbo';
 
 /*
  * The page of a planting while the agent drafts its care sheet. Its tool calls come as Turbo Streams, then the worker
- * streams the summary of the draft, or refreshes the page with the failure (App\Garden\DraftCareSheetHandler). What
- * stays here belongs to the page: a run that may have ended before the page listened, and a worker that does not
- * answer.
+ * refreshes the page, with the draft or the failure (App\Garden\DraftCareSheetHandler): each member of the garden on
+ * it gets it in their language. What stays here belongs to the page: a run that may have ended before the page
+ * listened, and a worker that does not answer.
  */
 export default class extends Controller {
     static targets = ['pending', 'drafted', 'failure', 'failureMessage'];
@@ -25,7 +25,7 @@ export default class extends Controller {
         clearTimeout(this.timeout);
     }
 
-    // The draft came, streamed by the worker: nothing left to wait for
+    // The draft came: nothing left to wait for
     draftedTargetConnected() {
         this.draftingValue = false;
     }

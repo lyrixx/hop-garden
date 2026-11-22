@@ -21,8 +21,7 @@ enum ChatEvent: string
     case SpaceCard = 'space_card';
     case Done = 'done';
     case Error = 'error';
-    // The page of a planting shows its care sheet draft, see App\Garden\DraftCareSheetHandler
-    case CareSheetDrafted = 'care_sheet_drafted';
-    // The page of a planting shows its failure, with its Retry button, see App\Garden\DraftCareSheetHandler
+    // The page of a planting shows its care sheet draft, or its failure with its Retry button, rendered by the browser
+    // of each member of the garden in their language, see App\Garden\DraftCareSheetHandler
     case Refresh = 'refresh';
 }

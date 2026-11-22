@@ -68,15 +68,18 @@ final class InterfaceLanguageTest extends KernelTestCase
         );
     }
 
-    public function testTheCareSheetDraftedForAPlantingIsInTheLanguageOfTheMessage(): void
+    /**
+     * The members of a garden on the page of a planting may not share a language: the worker sends them no text of the
+     * page, each browser renders it again.
+     */
+    public function testTheDraftOfAPlantingIsRenderedByEachBrowserInItsLanguage(): void
     {
         $planting = PlantingFactory::new()->drafting()->create(['name' => 'Hortensia du portail', 'trefleId' => 191052, 'scientificName' => 'Hydrangea paniculata']);
 
         self::getContainer()->get(DraftCareSheetHandler::class)($this->draftCareSheetMessage($planting, 'fr'));
 
-        $drafted = array_values(array_filter($this->draftingStreams($planting), static fn (array $event): bool => 'care_sheet_drafted' === $event['type']));
-        self::assertStringContainsString('Le brouillon de sa fiche de culture attend votre relecture', (string) $drafted[0]['html']);
-        self::assertStringContainsString('Relire et valider la fiche de culture', (string) $drafted[1]['html']);
+        self::assertContains(['type' => 'refresh'], $this->draftingStreams($planting));
+        self::assertStringNotContainsString('planting-' . $planting->getId(), implode('', RecordingHub::published($this->draftingTopic($planting))));
     }
 
     public function testTheWorkerIsBackToTheDefaultLocaleAfterAMessage(): void

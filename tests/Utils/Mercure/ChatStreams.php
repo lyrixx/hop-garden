@@ -5,7 +5,7 @@ namespace App\Tests\Utils\Mercure;
 /**
  * What the page of a conversation does with the Turbo Streams of its topic (templates/chat/stream/), one entry per
  * stream: "start" and "done" for the waiting dots, "answer" in a "new" bubble or the "same" one, "tool_call",
- * "draft_card", "error", "refresh", and "care_sheet_drafted" on the page of a planting.
+ * "draft_card", "error", and "refresh" on the page of a planting.
  */
 final class ChatStreams
 {
@@ -33,7 +33,6 @@ final class ChatStreams
 
         return match (true) {
             'refresh' === $stream->action => ['type' => 'refresh'],
-            str_starts_with((string) $stream->target, 'planting-') => ['type' => 'care_sheet_drafted', 'action' => $stream->action, 'target' => $stream->target, 'html' => 'remove' !== $stream->action ? $stream->content->filter('body')->html() : null],
             'replace' === $stream->action && 'chat-run' === $stream->target => ['type' => 'true' === $element?->attr('data-busy') ? 'start' : 'done'],
             'update' === $stream->action => ['type' => 'answer', 'bubble' => 'same', 'html' => $stream->content->filter('body')->html()],
             'append' === $stream->action && '#chat-log, #drafting-tool-calls' === $stream->targets => ['type' => 'tool_call', 'summary' => $element?->filter('code')->text()],
