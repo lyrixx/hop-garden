@@ -136,13 +136,14 @@ RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 COPY ./prod/php.ini $PHP_INI_DIR/conf.d/app-prod.ini
 COPY ./frontend/etc/. /etc/
 
-# Persistent volumes, created here to belong to "app": public/uploads (the photos of the plantings)
-# and var/share (APP_SHARE_DIR: the sessions, and the cache.app pool)
+# The persistent volume, created here to belong to "app": var/share (APP_SHARE_DIR: the sessions,
+# the cache.app pool, and the photos of the plantings in var/share/uploads, served by the
+# application to the members of their garden only)
 RUN groupadd -g 1000 app \
     && useradd -M -u 1000 -g 1000 -s /bin/false app \
     && chown -R app:app /data /config \
-    && mkdir -p /var/www/public/uploads /var/www/var/share \
-    && chown app:app /var/www/public/uploads /var/www/var/share
+    && mkdir -p /var/www/var/share \
+    && chown app:app /var/www/var/share
 
 COPY --from=app-build --chown=app:app /var/www /var/www
 

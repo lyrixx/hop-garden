@@ -15,7 +15,7 @@ x-app-env: &app-env
     MERCURE_JWT_ISSUER: http://127.0.0.1:8000
     MERCURE_PUBLIC_URL: http://127.0.0.1:8000/.well-known/mercure
     MERCURE_PUBLISHER_JWT_KEY: not-a-secret-but-at-least-256-bits
-    MERCURE_SUBSCRIBER_JWT_KEY: not-a-secret-but-at-least-256-bits
+    MERCURE_SUBSCRIBER_JWT_KEY: another-not-a-secret-of-256-bits
     MERCURE_URL: http://app:8080/.well-known/mercure
     # From the environment of castor: the LLM key, and APP_DEMO=0 with TREFLE_TOKEN for the real
     # services
@@ -25,8 +25,8 @@ x-app-env: &app-env
 
 volumes:
     postgres-data: {}
+    # The sessions, the cache.app pool and the photos of the plantings (var/share/uploads)
     share: {}
-    uploads: {}
 
 services:
     # The version run in production, not the one of the dev stack
@@ -57,7 +57,6 @@ services:
             - "8000:8080"
         volumes:
             - share:/var/www/var/share
-            - uploads:/var/www/public/uploads
         depends_on:
             postgres:
                 condition: service_healthy
@@ -70,7 +69,6 @@ services:
         environment: *app-env
         volumes:
             - share:/var/www/var/share
-            - uploads:/var/www/public/uploads
         depends_on:
             app:
                 condition: service_healthy
