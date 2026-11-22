@@ -24,7 +24,7 @@ castor app:db:migrate                        # Doctrine migrations (alias: casto
 castor app:db:fixtures                       # fixtures (alias: castor fixtures)
 castor postgres                              # psql shell on the app database (alias: castor pg)
 castor postgres -- select 1 from foobar      # one-off command database query
-castor demo:reset                            # 2 validated plants with their reminders, 3 plantings in 3 spaces (one empty); forgets the language
+castor demo:reset                            # 2 validated plants with their reminders, 3 plantings in 3 spaces (one empty)
 castor demo:frost [--date=YYYY-MM-DD]        # reminder check with the recorded frost forecast
 castor mcp:stdio                             # MCP server over STDIO (Claude Desktop, Claude Code...)
 ```
@@ -81,25 +81,25 @@ Without option, the `default` context applies.
 - Spaces: `App\Garden\Entity\Space` carries the exposure and the soil; a `Planting` has an optional space (`SET NULL`),
   and its neighbours are the other plantings of its space. Pages `/spaces`, `/spaces/new`, `/spaces/{id}` and
   `/spaces/{id}/edit` (`SpaceController`); `RecommendationEngine` reads the exposure of the space
-- Languages: English (default) and French, `App\Locale\Model\SupportedLocale`. The language is a setting, never in
-  the URL, and `App\Locale\PreferredLocale` is the only way to read or change it (`get()`, `set()`, `isChosen()`): a row
-  of `App\Settings\Entity\Settings` today, a field of the user once there are accounts, hence its name. The request
-  listener (`App\Locale\RequestLocaleListener`), the banner (`LocaleBanner`, the language of the browser until one is
-  chosen) and the footer switch go through it, the switch posts to `/locale`. The worker never reads it while handling a
-  message from a request: `RunAgent` and `DraftCareSheet` carry the locale captured when sent, and their handler applies
-  it with the `LocaleSwitcher`; the reminder check, which has no recipient, reads `PreferredLocale` in its handler and
-  in `app:reminders:run` (one locale per recipient later). The agent gets it at the end of its prompt
-  (`App\Chat\InterfaceLanguagePrompt`) and writes its care sheets in it. The species search asks the LLM for the Latin
-  names of a name Trefle does not know, when the interface is not in English (`App\Garden\LatinNameResolver`, cached
-  per name)
+- Languages: English (default) and French (`App\Locale\Model\SupportedLocale`), a setting, never in the URL. Designed
+  for accounts to come: `App\Locale\PreferredLocale` (`get()`, `set()`, `isChosen()`) is the only way to read or change
+  it, named after its role so that it can move to the user, while the messages a request dispatches (`RunAgent`,
+  `DraftCareSheet`) carry the locale captured when sent, which their handler applies with the `LocaleSwitcher`, and only
+  the reminder check, without recipient, reads `PreferredLocale` in its handler (and in `app:reminders:run`).
+  - Today a row of `App\Settings\Entity\Settings`, read by `App\Locale\RequestLocaleListener` for every request, and
+    emptied by `castor demo:reset`. Until one is chosen, `LocaleBanner` offers the language of the browser; the footer
+    switch (`LocaleSwitch`) posts to `/locale`.
+  - The agent gets the language at the end of its prompt (`App\Chat\InterfaceLanguagePrompt`) and writes its care
+    sheets in it. When the interface is not in English, the species search asks the LLM for the Latin names of a name
+    Trefle does not know (`App\Garden\LatinNameResolver`, cached per name).
 - Translations: `translations/messages+intl-icu.{en,fr}.yaml` (ICU MessageFormat: `{name}`, `plural`, `select`; ’ for
   an apostrophe in French) and `translations/validators.{en,fr}.yaml` for the constraints. The enums translate their
   label (`TranslatableInterface`); dates, months and temperatures go through `App\Locale\IntlFormatter` (Twig:
   `day_and_month`, `long_date`, `day_and_time`, `temperature`, `month_abbr()`, `month_initial()`), in the timezone of
   the date. A stored notification keeps the language it was sent in
 - `APP_DEMO=1` (default, in `.env`; `APP_DEMO=0` in `.env.local` for the real APIs, then restart the workers):
-  Trefle and Open-Meteo answer from `fixtures/http/`, the Latin names of the species search from `fixtures/llm/`. Tests always run in demo mode (`.env.test`; Symfony
-  does not load `.env.local` in the test env)
+  Trefle and Open-Meteo answer from `fixtures/http/`, the Latin names of the species search from `fixtures/llm/`. Tests
+  always run in demo mode (`.env.test`; Symfony does not load `.env.local` in the test env)
 - PostgreSQL 16: user/pass/db = `app`/`app`, DATABASE_URL already configured
 - Traefik router, HTTPS on `<root_domain>` (see `castor.php`)
 - Production: one image, `app` (the "Production stages" of the Dockerfile, `.dockerignore` at the root). A new
