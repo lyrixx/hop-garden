@@ -34,7 +34,8 @@ castor demo:reset   # optional: a rose and a lemon tree, with their reminders, a
 Open <https://hop-garden.test> and type `hortensia`.
 
 That's all: the demo mode is on by default, so Trefle and Open-Meteo answer from the responses
-stored in [`fixtures/http/`](fixtures/http/). Only the LLM key is needed.
+stored in [`fixtures/http/`](fixtures/http/). Only the LLM key is needed. Hop Garden speaks English and French: see
+[In English or in French](#in-english-or-in-french).
 
 To use OpenAI instead of Anthropic, put this in `.env.local`:
 
@@ -75,6 +76,20 @@ written before a tap.
   draft care sheet. Once you validate it, the space and the plant follow, as above.
 
 A card keeps its outcome: reload the page and it still says *Added* or *Created*, and a second tap adds nothing.
+
+### In English or in French
+
+Hop Garden speaks English and French. The language is a setting of the application, not of the URL: with a browser in
+French, the pages stay in English until you choose, under a band in French, *Passer en français* or *Rester en
+anglais*. The band does not come back, and the footer switches the language later. `castor demo:reset` forgets it.
+
+- The assistant answers in the language you write in, and in the one of the interface when a tap on a card or a choice
+  does not tell. The care sheets it drafts (common name, pruning and cutting advice, notes) are in the language of the
+  interface. The Latin name stays the pivot.
+- The species search of the forms (*Add a plant*, *New species*) finds a French name Trefle does not know: when Trefle
+  finds nothing, one short call to the LLM gives its Latin names, cached per name, and Trefle is searched with them.
+  In demo mode, these names come from [`fixtures/llm/latin-names.json`](fixtures/llm/latin-names.json): try `rosier`.
+- The reminders, their notifications and the frost toasts are written in the language of the interface.
 
 The frost alert fires below the hardiness of the plant plus 2 °C (0 °C for a frost-sensitive plant). A panicled
 hydrangea is hardy to about -25 °C, so the recorded cold snap (down to -12.4 °C) warns about the lemon tree of
@@ -275,4 +290,6 @@ Hop Garden is released under the [MIT license](LICENSE).
 - The responses in `fixtures/http/` are hand-written samples in the format of each API, not real records; their
   Trefle ids are made up. Set `APP_DEMO=0` and `TREFLE_TOKEN` in `.env.local` to use the real services.
 - One garden location for the frost forecast.
+- One language for the whole application, as there are no accounts. A notification keeps the language it was sent in,
+  and the data of `castor demo:reset` is in English.
 - E-mail notifications are not implemented: notifications stay in the application.
