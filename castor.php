@@ -163,7 +163,7 @@ function plantings_move_photos(): int
     return docker_exit_code(['bin/console', 'app:plantings:move-photos']);
 }
 
-#[AsTask(description: 'Resets the demo data: 5 accounts, 2 gardens (one shared by Alice and Bob), their plants, spaces and reminders, no notification', namespace: 'demo', name: 'reset')]
+#[AsTask(description: 'Resets the demo data: 5 accounts, 2 gardens (one shared by Alice and Bob), their plants, spaces and reminders, an invitation for Erin, no notification', namespace: 'demo', name: 'reset')]
 function demo_reset(): void
 {
     io()->title('Resetting the demo data');
@@ -181,6 +181,8 @@ function demo_reset(): void
         ['carol@hop-garden.test', 'hop-garden-demo', 'a member, in English', 'Carol\'s balcony, its owner'],
         ['dave@hop-garden.test', 'hop-garden-demo', 'on the waiting list: approve him in the back-office', 'none yet'],
     ]);
+    // Keep in sync with App\Story\DemoStory::ERIN_INVITATION_TOKEN
+    io()->comment('Erin, who has no account, is invited into The allotment by Alice: ' . get_project_url(variable('root_domain')) . '/invitations/erin-is-invited-into-the-allotment-by-alice');
     if (has_router()) {
         io()->comment('Their emails land in Mailpit: ' . get_project_url('mail.' . variable('root_domain')));
     }

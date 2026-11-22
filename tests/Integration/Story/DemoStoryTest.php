@@ -9,6 +9,7 @@ use App\Garden\Entity\Garden;
 use App\Garden\Entity\Planting;
 use App\Garden\Entity\Space;
 use App\Garden\GardenRepository;
+use App\Garden\InvitationRepository;
 use App\Garden\PlantingRepository;
 use App\Garden\SpaceRepository;
 use App\Plant\Entity\Plant;
@@ -67,6 +68,11 @@ final class DemoStoryTest extends KernelTestCase
         self::assertSame([], $gardens->findOfMember($users->findOneByEmail('admin@hop-garden.test') ?? self::fail()), 'The wizard makes the first one.');
         $allotment = $gardens->findOfMember($bob)[0];
         $balcony = $gardens->findOfMember($carol)[0];
+
+        $erin = self::getContainer()->get(InvitationRepository::class)->findOneByToken(DemoStory::ERIN_INVITATION_TOKEN) ?? self::fail('The link castor demo:reset prints.');
+        self::assertSame(['erin@hop-garden.test', 'The allotment', 'Alice'], [$erin->getEmail(), $erin->getGarden()->getName(), $erin->getInvitedBy()->getDisplayName()]);
+        self::assertTrue($erin->isPending(self::mockTime('2026-12-01 07:00')->now()));
+        self::assertNull($users->findOneByEmail('erin@hop-garden.test'), 'She creates her account from the link.');
 
         self::assertSame(['English lavender'], array_map(static fn (Plant $plant): string => $plant->getCommonName(), self::getContainer()->get(PlantRepository::class)->findValidated($balcony)));
         self::assertSame(['Lavender of the window box'], array_map(static fn (Planting $planting): string => $planting->getName(), self::getContainer()->get(PlantingRepository::class)->findAllByName($balcony)));
