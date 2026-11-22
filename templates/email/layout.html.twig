@@ -1,7 +1,7 @@
 {#
     The frame of the emails of App\Account\AccountMailer: the green ground and the white card of Hop Garden, in inline
-    styles only (the mail clients drop the others). No text template: the Mailer strips this one, so every link is
-    written out too (_ui.html.twig).
+    styles only (the mail clients drop the others). No text template: App\Account\HtmlToTextConverter makes the text
+    part out of this one, so every link is written out too (_ui.html.twig).
     locale: string, of the email
 #}
 <!DOCTYPE html>

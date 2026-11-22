@@ -2,6 +2,8 @@ twig:
     file_name_pattern: '*.twig'
     globals:
         app_demo: '%env(bool:APP_DEMO)%'
+    mailer:
+        html_to_text_converter: App\Account\HtmlToTextConverter
 
 when@test:
     twig:

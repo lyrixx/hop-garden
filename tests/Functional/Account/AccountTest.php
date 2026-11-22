@@ -65,7 +65,7 @@ final class AccountTest extends WebTestCase
         self::assertSelectorTextContains('.flash-success', 'We sent a link to alice.smith@example.com: open it to confirm the change.');
         self::assertSame('alice@example.com', $this->member()->getEmail(), 'Not before its link.');
 
-        $link = self::linkOf($email);
+        $link = self::textLinksOf($email)[0];
         $this->client->request('GET', $link);
 
         self::assertResponseRedirects('/account', 303);

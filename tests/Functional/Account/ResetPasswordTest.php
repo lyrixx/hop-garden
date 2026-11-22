@@ -40,7 +40,7 @@ final class ResetPasswordTest extends WebTestCase
         self::assertEmailAddressContains($email, 'to', 'alice@example.com');
         self::assertEmailSubjectContains($email, 'Your new Hop Garden password');
         self::assertEmailHtmlBodyContains($email, 'This link works for one hour, once.');
-        $link = self::linkOf($email);
+        $link = self::textLinksOf($email)[0];
         self::assertStringContainsString('/reset-password/reset/', $link);
 
         $this->client->request('GET', $link);
