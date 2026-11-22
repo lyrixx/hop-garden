@@ -74,6 +74,16 @@ Without option, the `default` context applies.
   `App\Chat\ToolCallDisplay` only governs the "MCP" lines (demo mode only). Once tapped, a card sends its message
   to the agent as the user (`data-chat-notice`, see `assets/controllers/chat_controller.js`), and a tap on a choice
   sends its text
+- Public pages: `/` (`HomeController`, route `home`: what Hop Garden takes care of) and the legal pages `/legal-notice`,
+  `/terms` and `/privacy` (routes `legal_*` of `config/routes.yaml`, `TemplateController`, texts under `legal.*`). They
+  extend `templates/public/layout.html.twig`: their own top bar (the language, *Log in*, *Join the waiting list*, both
+  `#` until the accounts exist, see the TODOs), without the navigation of the application or the notification stream.
+  A blank of the publisher on a legal page is a `Legal:ToComplete`, never a made-up value. The footer of
+  `base.html.twig` links the legal pages on every page. The application starts at `/assistant` (route `chat`), and
+  `/?message=` redirects there. The privacy policy says the session cookie is the only one, and
+  `LegalPagesTest::testThePrivacyPolicyNamesTheOnlyCookie()` checks it: a new cookie (remember me...) goes in the policy.
+  The captures of `assets/images/home/` (a draft care sheet, the reminder board) exist in each language: retake both
+  when the card or the board changes
 - Species: `/plants` lists every species (validated first) with my plants of each, in one query
   (`PlantRepository::findAllWithPlantings()`); `/plants/new` creates a draft by hand with `SpeciesPicker` (any form
   whose data implements `SpeciesPickerData`), re-checked against Trefle (`PickedSpecies`), with a `CareSheet::blank()`
@@ -88,7 +98,7 @@ Without option, the `default` context applies.
   the reminder check, without recipient, reads `PreferredLocale` in its handler (and in `app:reminders:run`).
   - Today a row of `App\Settings\Entity\Settings`, read by `App\Locale\RequestLocaleListener` for every request, and
     emptied by `castor demo:reset`. Until one is chosen, `LocaleBanner` offers the language of the browser; the footer
-    switch (`LocaleSwitch`) posts to `/locale`.
+    switch (`LocaleSwitch`, also in the top bar of a public page) posts to `/locale`.
   - The agent gets the language at the end of its prompt (`App\Chat\InterfaceLanguagePrompt`) and writes its care
     sheets in it. When the interface is not in English, the species search asks the LLM for the Latin names of a name
     Trefle does not know (`App\Garden\LatinNameResolver`, cached per name).

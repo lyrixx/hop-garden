@@ -102,6 +102,7 @@ flash:
         validated: "La fiche de {name} est validée. Choisissez ses rappels ci-dessous."
 footer:
     demo_mode: "Mode démo : Trefle et Open-Meteo répondent par des réponses enregistrées."
+    legal: "Informations légales"
     plant_data: "Données botaniques : {trefle}."
     plates: "Planches : {library}, domaine public."
     reviewed: "Les données de culture rédigées par un LLM sont relues par un humain avant d’être enregistrées."
@@ -125,6 +126,200 @@ hardiness:
     caption: "Échelle de rusticité, en °C"
     label: "Rustique jusqu’à {coldest} °C, alerte gel sous {threshold} °C"
     threshold: "alerte gel {threshold} °C"
+home:
+    conversation:
+        answer: "Hortensia paniculé"
+        message: "Je viens de planter un hortensia sur la terrasse"
+        option:
+            arborescens: "Hortensia arborescent"
+            macrophylla: "Hortensia à grandes feuilles"
+            paniculata: "Hortensia paniculé"
+        question: "Quel hortensia avez-vous planté ?"
+        reply: "Voici sa fiche de culture. Vérifiez les valeurs surlignées, j’en suis moins sûr, puis validez-la."
+    figure:
+        care_sheet: "Une fiche en brouillon. Chaque valeur a un niveau de confiance : l’assistant surligne celles à vérifier."
+        care_sheet_alt: "La fiche en brouillon d’un hortensia paniculé : rusticité, exposition, arrosage, taille et boutures, quatre valeurs surlignées avec une confiance moyenne ou faible, et le bouton Valider."
+        conversation: "L’assistant demande lequel, puis rédige la fiche."
+        heading: "Dans l’application"
+        reminders: "Les rappels à venir, et la prévision de gel avec les plantes menacées."
+        reminders_alt: "Deux cartes. À venir : une alerte gel pour le citronnier, et la taille du rosier grimpant le 1er février. Prévisions de gel : trois nuits de -3,2 °C à -12,4 °C, le citronnier menacé chaque nuit."
+    hero:
+        heading: "Savoir quand tailler. Être prévenu avant le gel."
+        kicker: "Votre carnet de jardin"
+        lede: "Hop Garden tient une fiche pour chaque plante de votre jardin. Il vous dit quoi faire chaque mois, et vous prévient quand une nuit sera trop froide pour l’une d’elles. Dites-le en une phrase : il propose, vous validez."
+        more: "Voir ce qu’il règle"
+    join:
+        heading: "Hop Garden ouvre à quelques jardiniers à la fois."
+        text: "Inscrivez-vous dès maintenant : les comptes ouvrent par petits groupes, et nous vous écrivons quand le vôtre est prêt."
+    problem:
+        care_sheet:
+            heading: "Les fiches trouvées en ligne se contredisent."
+            text: "L’assistant rédige la fiche de culture à partir des données botaniques de Trefle et de ses propres connaissances. Chaque valeur a un niveau de confiance, les incertaines sont surlignées, et la fiche cite ses sources. Vous vérifiez, vous corrigez ce que vous savez mieux, et la fiche reste un brouillon tant que vous ne l’avez pas validée."
+        frost:
+            heading: "Un gel tardif tue une plante."
+            text: "Activez l’alerte gel d’une plante : chaque matin à 7 h, Hop Garden lit la prévision Open-Meteo des trois prochains jours et la compare à sa rusticité, plus 2 °C de marge. Si une nuit s’annonce trop froide pour votre citronnier, une notification dans Hop Garden vous prévient le matin même, à temps pour le rentrer."
+        mcp:
+            heading: "Votre assistant IA ne connaît pas votre jardin."
+            text: "Hop Garden est aussi un serveur MCP. Branchez Claude Desktop, Claude Code, Cursor ou un autre client MCP : il cherche des plantes, lit vos fiches et vos espaces, consulte la prévision de gel. Pour ajouter une plante, il vous donne le lien de sa carte, et c’est vous qui confirmez."
+        notebook:
+            heading: "Tenir un carnet de jardin prend trop de temps."
+            text: "Écrivez « Je viens de planter un hortensia sur la terrasse ». L’assistant demande quel hortensia, puis propose chaque étape sur une carte : la fiche, l’espace s’il est nouveau, la plante. Rien n’entre dans votre jardin avant que vous touchiez sa carte. Vous préférez les formulaires ? Tout se fait aussi à la main."
+        pruning:
+            heading: "On oublie quand tailler."
+            text: "Chaque fiche donne les mois où tailler, couper les fleurs fanées et bouturer. Activez un rappel : le 1er de chacun de ces mois, une notification dans Hop Garden vous dit quelle plante attend."
+        soon:
+            heading: "À plusieurs, on ne sait pas qui a fait quoi."
+            label: "Bientôt"
+            text: "Les jardins partagés arrivent, avec des invitations pour y faire entrer ceux avec qui vous jardinez."
+        spaces:
+            heading: "On ne sait plus ce qu’on a planté, ni où."
+            text: "Décrivez les espaces de votre jardin, comme la terrasse ou le massif nord, avec leur exposition et leur sol. Chaque plante a son espace, sa photo, les soins reçus et ses voisines. Hop Garden vous signale une plante de plein soleil installée à l’ombre."
+    problems:
+        heading: "Ce que Hop Garden règle"
+    title: "Hop Garden · Rappels de taille et alertes gel pour votre jardin"
+legal:
+    draft_note: "Cette page est un brouillon : les parties marquées « À compléter » attendent les informations de l’éditeur."
+    last_updated: "Dernière mise à jour :"
+    last_updated_to_complete: "la date de cette version"
+    notice:
+        contact:
+            heading: "Contact"
+            text: "Pour toute question sur Hop Garden ou sur ces mentions, écrivez à :"
+            to_complete: "l’adresse email de contact"
+        credits:
+            heading: "Crédits"
+        director:
+            heading: "Directeur de la publication"
+            to_complete: "prénom et nom de la personne responsable de la publication"
+        host:
+            address: "Adresse"
+            heading: "Hébergeur"
+            name: "Nom"
+            phone: "Téléphone"
+            to_complete:
+                address: "adresse postale de l’hébergeur"
+                name: "nom ou raison sociale de l’hébergeur"
+                phone: "numéro de téléphone de l’hébergeur"
+        intro: "Les informations que la loi pour la confiance dans l’économie numérique (LCEN) exige d’un site."
+        publisher:
+            address: "Adresse"
+            contact: "Contact"
+            heading: "Éditeur"
+            name: "Nom"
+            registration: "Immatriculation"
+            to_complete:
+                address: "adresse postale, ou siège social de la société"
+                contact: "adresse email et numéro de téléphone"
+                name: "prénom et nom, ou raison sociale et forme juridique"
+                registration: "numéro SIREN ou RCS, et capital social pour une société"
+                vat: "numéro de TVA intracommunautaire, le cas échéant"
+            vat: "Numéro de TVA"
+        title: "Mentions légales"
+    privacy:
+        controller:
+            heading: "Qui est responsable"
+            text: "Le responsable du traitement de vos données est l’éditeur de Hop Garden, désigné dans les {link}mentions légales{link_end}. Pour toute question sur vos données, écrivez à :"
+            to_complete: "l’adresse email de contact pour les données personnelles, et le délégué à la protection des données s’il y en a un"
+        cookies:
+            form: "À l’envoi de certains formulaires, un cookie technique protège aussi l’envoi, puis il est supprimé aussitôt."
+            heading: "Cookies"
+            language: "Votre choix de langue est conservé sur le serveur, pas dans un cookie."
+            none: "Aucun cookie de mesure d’audience ni de publicité, et aucune ressource chargée depuis un autre site : les polices sont servies par Hop Garden. Ces cookies sont strictement nécessaires au service et dispensés de consentement : il n’y a pas de bannière cookies."
+            session: "Hop Garden utilise le cookie de session ({name}) : il garde votre session, comme votre conversation avec l’assistant, et protège les formulaires contre les requêtes falsifiées. Il disparaît à la fermeture du navigateur, et la session prend fin après 12 heures sans visite."
+        data:
+            account: "Votre compte : votre adresse email, votre nom affiché, votre mot de passe (enregistré haché, jamais en clair) et votre langue."
+            conversations: "Vos conversations avec l’assistant : vos messages et ses réponses sont enregistrés, et envoyés au fournisseur du modèle de langage qui rédige les réponses. Pour répondre, l’assistant lit votre jardin (fiches, plantes, espaces), et ce qu’il lit part chez le même fournisseur. Le nom d’une espèce que vous cherchez peut aussi lui être envoyé, pour trouver son nom latin ou rédiger sa fiche."
+            garden: "Votre jardin : les fiches de culture de vos espèces, vos plantes et leurs espaces, les soins que vous notez, vos notes, vos rappels et vos notifications."
+            heading: "Les données que Hop Garden traite"
+            location: "La position de votre jardin (latitude et longitude), envoyée à Open-Meteo pour la prévision de gel."
+            logs:
+                text: "Les journaux techniques :"
+                to_complete: "ce qu’enregistrent les journaux du serveur et de l’hébergeur, comme l’adresse IP, la date et la page demandée"
+            photos: "Les photos que vous ajoutez à vos plantes, stockées sur le serveur de Hop Garden."
+            searches: "Les noms des plantes que vous cherchez, envoyés à Trefle pour identifier l’espèce."
+            third_parties: "Open-Meteo et Trefle reçoivent ces requêtes du serveur de Hop Garden, jamais de votre navigateur, et rien d’autre sur vous."
+        intro: "Cette page explique quelles données personnelles Hop Garden traite, pourquoi, combien de temps, et comment exercer vos droits, conformément au Règlement général sur la protection des données (RGPD)."
+        purposes:
+            billing: "La facturation, une fois le service payant : une obligation légale (article 6.1.c du RGPD)."
+            heading: "Pourquoi, et sur quelle base légale"
+            security: "Le bon fonctionnement et la sécurité du service, avec les journaux du serveur : l’intérêt légitime de l’éditeur (article 6.1.f du RGPD)."
+            service: "Fournir le service auquel vous vous êtes inscrit (votre compte, votre jardin, les rappels, les alertes gel, l’assistant, les emails sur votre compte) : l’exécution du contrat (article 6.1.b du RGPD)."
+        recipients:
+            heading: "Qui reçoit vos données"
+            text: "Vos données ne vont qu’aux sous-traitants dont Hop Garden a besoin pour fonctionner, et à Trefle et Open-Meteo comme décrit plus haut."
+            to_complete: "la liste des sous-traitants, leur pays, et les garanties pour un transfert hors de l’Union européenne. Par exemple : l’hébergeur de l’application et de sa base de données ; le fournisseur du modèle de langage (Anthropic ou OpenAI, selon la configuration) ; le service d’envoi des emails, quand Hop Garden en enverra."
+            transfers: "Le fournisseur du modèle de langage peut traiter les conversations hors de l’Union européenne."
+        retention:
+            account:
+                text: "Votre compte et votre jardin : tant que votre compte existe. Ils sont supprimés quand vous le supprimez, dans un délai de"
+                to_complete: "délai de suppression, sauvegardes comprises"
+            conversations:
+                text: "Vos conversations avec l’assistant :"
+                to_complete: "durée de conservation"
+            heading: "Combien de temps"
+            invoices:
+                text: "Les factures, une fois le service payant :"
+                to_complete: "durée de conservation"
+            logs:
+                text: "Les journaux du serveur :"
+                to_complete: "durée de conservation"
+            session: "La session : elle prend fin après 12 heures sans visite."
+        rights:
+            complaint: "Si vous estimez que vos droits ne sont pas respectés, vous pouvez adresser une réclamation à la CNIL ({link})."
+            heading: "Vos droits"
+            text: "Vous pouvez accéder à vos données, les faire rectifier ou effacer, limiter leur traitement ou vous y opposer, et les recevoir dans un format réutilisable. Écrivez au contact ci-dessus : l’éditeur répond sous un mois."
+        title: "Politique de confidentialité"
+    terms:
+        access:
+            availability: "L’éditeur s’efforce de garder Hop Garden disponible, sans garantie : le service peut être interrompu pour maintenance, ou quand un prestataire fait défaut (hébergeur, modèle de langage, Trefle, Open-Meteo)."
+            heading: "Accès au service"
+            text: "Hop Garden fonctionne dans un navigateur web, avec une connexion internet à votre charge. L’accès passe par une liste d’attente : vous vous inscrivez, confirmez votre adresse email, et votre compte ouvre une fois validé par l’éditeur. L’éditeur peut limiter le nombre de comptes et l’usage de l’assistant."
+        account:
+            heading: "Votre compte"
+            text: "Vous donnez une adresse email qui est la vôtre et gardez votre mot de passe secret : ce qui est fait avec votre compte relève de votre responsabilité. Vous pouvez supprimer votre compte à tout moment ; vos données sont alors supprimées comme l’explique la {link}politique de confidentialité{link_end}."
+        changes:
+            heading: "Modification des conditions"
+            text: "L’éditeur peut modifier ces conditions. Vous êtes prévenu par email avant qu’une nouvelle version s’applique à vous, avec un préavis de"
+            to_complete: "durée du préavis"
+        content:
+            heading: "Vos contenus"
+            text: "Vos fiches, vos notes et vos photos restent les vôtres. L’éditeur ne les conserve et ne les traite que pour fournir le service."
+        data:
+            heading: "Données personnelles"
+            text: "Hop Garden traite vos données personnelles comme l’explique sa {link}politique de confidentialité{link_end}."
+        intro: "Ces conditions régissent l’utilisation de Hop Garden et son abonnement. Créer un compte vaut acceptation."
+        law:
+            court:
+                text: "À défaut de solution amiable, le litige est porté devant"
+                to_complete: "le tribunal compétent, dans les limites du droit de la consommation"
+            heading: "Droit applicable et litiges"
+            law:
+                text: "Ces conditions sont soumises au"
+                to_complete: "droit applicable, par exemple le droit français"
+            mediation:
+                text: "En cas de litige, écrivez d’abord à l’éditeur. En tant que consommateur, vous pouvez aussi recourir gratuitement à un médiateur de la consommation :"
+                to_complete: "nom, site et adresse du médiateur de la consommation"
+        liability:
+            heading: "Responsabilité"
+            text: "Hop Garden vous aide à prendre soin de votre jardin, il ne remplace pas votre jugement. Les fiches sont rédigées par un modèle de langage à partir des données de Trefle et de ses propres connaissances, et c’est vous qui les validez. Les alertes gel dépendent de la prévision d’Open-Meteo, qui peut se tromper, et de la rusticité inscrite dans chaque fiche."
+            to_complete: "les limites de la responsabilité de l’éditeur"
+        price:
+            heading: "Prix et paiement"
+            text: "Hop Garden sera un service payant. Les prix sont affichés toutes taxes comprises avant tout abonnement."
+            to_complete: "les prix, les durées d’abonnement, les moyens de paiement, la facturation, le renouvellement et les changements de prix"
+        purpose:
+            heading: "Objet"
+            text: "Hop Garden est une application web qui tient une fiche pour chaque plante de votre jardin, vous rappelle les travaux du mois, vous prévient du gel et propose un assistant de jardinage. Elle est fournie par l’éditeur désigné dans les {link}mentions légales{link_end}."
+        termination:
+            heading: "Durée et résiliation"
+            text: "Vous pouvez mettre fin au service à tout moment en supprimant votre compte. L’éditeur peut suspendre un compte utilisé contre ces conditions ou contre la loi."
+            to_complete: "la durée de l’abonnement, le sort de la période payée, et les remboursements"
+        title: "Conditions générales de vente"
+        withdrawal:
+            heading: "Droit de rétractation"
+            text: "En tant que consommateur, vous disposez de 14 jours à compter de l’abonnement pour vous rétracter, sans avoir à vous justifier (Code de la consommation, article L221-18). Si vous demandez que le service commence avant la fin de ce délai, vous payez le service fourni jusqu’à votre rétractation (article L221-25)."
+            to_complete: "comment se rétracter (formulaire, adresse) et comment vous êtes remboursé"
+    to_complete: "À compléter"
 list:
     and: "{items} et {last}"
 locale:
@@ -225,6 +420,10 @@ proposal:
         heading: "Créer un espace"
         intro: "Votre assistant propose cet espace. Choisissez son exposition et son sol : rien n’est créé avant que vous touchiez la carte."
         title: "Créer {name}"
+public:
+    join: "Rejoindre la liste d’attente"
+    log_in: "Se connecter"
+    nav: "Compte"
 recommendation:
     exposure:
         close: "Elle préfère {preferred, select, sun {le plein soleil} part_shade {la mi-ombre} other {l’ombre}} et se trouve ici {actual, select, sun {en plein soleil} part_shade {à la mi-ombre} other {à l’ombre}} : elle devrait s’en accommoder, mais serait mieux {preferred, select, sun {en plein soleil} part_shade {à la mi-ombre} other {à l’ombre}}."

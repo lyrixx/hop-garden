@@ -26,7 +26,7 @@ final class ChatControllerTest extends WebTestCase
 
     public function testAnEmptyConversation(): void
     {
-        $crawler = $this->client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/assistant');
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('#chat-log .chat-empty#chat-empty');
@@ -47,18 +47,18 @@ final class ChatControllerTest extends WebTestCase
 
     public function testTheMessageIsEmptyWithoutLink(): void
     {
-        $crawler = $this->client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/assistant');
 
         self::assertSame('', $crawler->filter('form.chat-form input[name="text"]')->attr('value'));
     }
 
     public function testAMessageIsQueuedForTheWorker(): void
     {
-        $crawler = $this->client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/assistant');
 
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => '  hortensia ']);
 
-        self::assertResponseRedirects('/', 303);
+        self::assertResponseRedirects('/assistant', 303);
         $messages = $this->runAgentMessages();
         self::assertCount(1, $messages);
         self::assertSame('hortensia', $messages[0]->text, 'Trimmed.');
@@ -67,7 +67,7 @@ final class ChatControllerTest extends WebTestCase
 
     public function testTurboSendsTheMessage(): void
     {
-        $crawler = $this->client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/assistant');
 
         // As Turbo submits a form
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => 'hortensia'], ['HTTP_ACCEPT' => 'text/vnd.turbo-stream.html, text/html, application/xhtml+xml']);
@@ -81,7 +81,7 @@ final class ChatControllerTest extends WebTestCase
     #[TestWith(['   '])]
     public function testABlankMessageIsRefused(string $text): void
     {
-        $crawler = $this->client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/assistant');
 
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => $text]);
 
@@ -91,7 +91,7 @@ final class ChatControllerTest extends WebTestCase
 
     public function testATooLongMessageIsRefused(): void
     {
-        $crawler = $this->client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/assistant');
 
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => str_repeat('a', 501)]);
 
@@ -109,14 +109,14 @@ final class ChatControllerTest extends WebTestCase
 
     public function testTheConversationIsReplayedFromItsHistory(): void
     {
-        $crawler = $this->client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/assistant');
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => 'hortensia']);
         $this->runTheWorker();
-        $crawler = $this->client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/assistant');
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => 'paniculata']);
         $this->runTheWorker();
 
-        $crawler = $this->client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/assistant');
 
         self::assertSelectorNotExists('.chat-empty');
         self::assertSame(['hortensia', 'paniculata'], $crawler->filter('#chat-log .bubble-user')->each(static fn ($bubble): string => $bubble->text()));
@@ -132,11 +132,11 @@ final class ChatControllerTest extends WebTestCase
         $this->setEnvVar('APP_DEMO', '0');
         self::ensureKernelShutdown();
         $this->client = self::createClient();
-        $crawler = $this->client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/assistant');
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => 'paniculata']);
         $this->runTheWorker();
 
-        $this->client->request('GET', '/');
+        $this->client->request('GET', '/assistant');
 
         self::assertSelectorNotExists('.tool-call');
         self::assertSelectorTextSame('#chat-log .bubble-user', 'paniculata');
@@ -146,7 +146,7 @@ final class ChatControllerTest extends WebTestCase
 
     public function testADeletedDraftIsSaidSo(): void
     {
-        $crawler = $this->client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/assistant');
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => 'paniculata']);
         $this->runTheWorker();
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
@@ -155,7 +155,7 @@ final class ChatControllerTest extends WebTestCase
         }
         $entityManager->flush();
 
-        $this->client->request('GET', '/');
+        $this->client->request('GET', '/assistant');
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('.chat-card .callout', 'This draft no longer exists.');
@@ -163,15 +163,15 @@ final class ChatControllerTest extends WebTestCase
 
     public function testANewConversation(): void
     {
-        $crawler = $this->client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/assistant');
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => 'hortensia']);
         $this->runTheWorker();
-        $crawler = $this->client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/assistant');
         $topic = $this->streamSource($crawler);
 
         $this->client->submit($crawler->selectButton('New conversation')->form());
 
-        self::assertResponseRedirects('/', 303);
+        self::assertResponseRedirects('/assistant', 303);
         $crawler = $this->client->followRedirect();
         self::assertNotSame($topic, $this->streamSource($crawler));
         self::assertSelectorExists('.chat-empty');
@@ -179,13 +179,13 @@ final class ChatControllerTest extends WebTestCase
 
     public function testANewConversationRequiresAValidCsrfToken(): void
     {
-        $crawler = $this->client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/assistant');
         $topic = $this->streamSource($crawler);
 
         $this->client->request('POST', '/chat/new', ['_token' => 'forged']);
 
         self::assertResponseStatusCodeSame(401);
-        $crawler = $this->client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/assistant');
         self::assertSame($topic, $this->streamSource($crawler), 'The same conversation.');
     }
 

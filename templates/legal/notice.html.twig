@@ -1,0 +1,70 @@
+{% extends 'legal/layout.html.twig' %}
+
+{% block heading %}{{ 'legal.notice.title'|trans }}{% endblock %}
+
+{% block intro %}{{ 'legal.notice.intro'|trans }}{% endblock %}
+
+{% block sections %}
+    <section>
+        <h2>{{ 'legal.notice.publisher.heading'|trans }}</h2>
+        <dl class="legal-facts">
+            <div>
+                <dt>{{ 'legal.notice.publisher.name'|trans }}</dt>
+                <dd><twig:Legal:ToComplete :what="'legal.notice.publisher.to_complete.name'|trans"/></dd>
+            </div>
+            <div>
+                <dt>{{ 'legal.notice.publisher.address'|trans }}</dt>
+                <dd><twig:Legal:ToComplete :what="'legal.notice.publisher.to_complete.address'|trans"/></dd>
+            </div>
+            <div>
+                <dt>{{ 'legal.notice.publisher.registration'|trans }}</dt>
+                <dd><twig:Legal:ToComplete :what="'legal.notice.publisher.to_complete.registration'|trans"/></dd>
+            </div>
+            <div>
+                <dt>{{ 'legal.notice.publisher.vat'|trans }}</dt>
+                <dd><twig:Legal:ToComplete :what="'legal.notice.publisher.to_complete.vat'|trans"/></dd>
+            </div>
+            <div>
+                <dt>{{ 'legal.notice.publisher.contact'|trans }}</dt>
+                <dd><twig:Legal:ToComplete :what="'legal.notice.publisher.to_complete.contact'|trans"/></dd>
+            </div>
+        </dl>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.notice.director.heading'|trans }}</h2>
+        <p><twig:Legal:ToComplete :what="'legal.notice.director.to_complete'|trans"/></p>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.notice.host.heading'|trans }}</h2>
+        <dl class="legal-facts">
+            <div>
+                <dt>{{ 'legal.notice.host.name'|trans }}</dt>
+                <dd><twig:Legal:ToComplete :what="'legal.notice.host.to_complete.name'|trans"/></dd>
+            </div>
+            <div>
+                <dt>{{ 'legal.notice.host.address'|trans }}</dt>
+                <dd><twig:Legal:ToComplete :what="'legal.notice.host.to_complete.address'|trans"/></dd>
+            </div>
+            <div>
+                <dt>{{ 'legal.notice.host.phone'|trans }}</dt>
+                <dd><twig:Legal:ToComplete :what="'legal.notice.host.to_complete.phone'|trans"/></dd>
+            </div>
+        </dl>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.notice.contact.heading'|trans }}</h2>
+        <p>{{ 'legal.notice.contact.text'|trans }} <twig:Legal:ToComplete :what="'legal.notice.contact.to_complete'|trans"/></p>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.notice.credits.heading'|trans }}</h2>
+        <ul>
+            <li>{{ 'footer.plant_data'|trans({trefle: '<a href="https://trefle.io">Trefle</a>'})|raw }}</li>
+            <li>{{ 'footer.weather_data'|trans({open_meteo: '<a href="https://open-meteo.com/">Open-Meteo.com</a>', license: '<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>'})|raw }}</li>
+            <li>{{ 'footer.plates'|trans({library: '<a href="https://www.flickr.com/photos/biodivlibrary/">Biodiversity Heritage Library</a>'})|raw }}</li>
+        </ul>
+    </section>
+{% endblock %}

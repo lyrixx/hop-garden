@@ -31,7 +31,7 @@ castor start
 castor demo:reset   # optional: a rose and a lemon tree, with their reminders, and 3 spaces
 ```
 
-Open <https://hop-garden.test> and type `hortensia`.
+Open <https://hop-garden.test/assistant> and type `hortensia`.
 
 That's all: the demo mode is on by default, so Trefle and Open-Meteo answer from the responses
 stored in [`fixtures/http/`](fixtures/http/). Only the LLM key is needed. Hop Garden speaks English and French: see
@@ -95,6 +95,14 @@ anglais*. The band does not come back, and the footer switches the language late
 The frost alert fires below the hardiness of the plant plus 2 °C (0 °C for a frost-sensitive plant). A panicled
 hydrangea is hardy to about -25 °C, so the recorded cold snap (down to -12.4 °C) warns about the lemon tree of
 `castor demo:reset`, not about it.
+
+### The public pages
+
+<https://hop-garden.test> is the public page: what Hop Garden takes care of, in English or in French, with its own top
+bar (the language, *Log in*, *Join the waiting list*: both lead nowhere until the accounts exist). The legal notice
+(`/legal-notice`), the terms of sale (`/terms`) and the privacy policy (`/privacy`) are linked from the footer of every
+page; their blanks, marked *To be completed*, wait for the information of the publisher. The application starts at
+`/assistant`, the chat.
 
 ## Architecture
 

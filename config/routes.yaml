@@ -10,6 +10,28 @@
 controllers:
     resource: routing.controllers
 
+# The legal pages, public: their texts are in the catalogs of translations/ (legal.*)
+legal_notice:
+    path: /legal-notice
+    methods: GET
+    controller: Symfony\Bundle\FrameworkBundle\Controller\TemplateController
+    defaults:
+        template: legal/notice.html.twig
+
+legal_privacy:
+    path: /privacy
+    methods: GET
+    controller: Symfony\Bundle\FrameworkBundle\Controller\TemplateController
+    defaults:
+        template: legal/privacy.html.twig
+
+legal_terms:
+    path: /terms
+    methods: GET
+    controller: Symfony\Bundle\FrameworkBundle\Controller\TemplateController
+    defaults:
+        template: legal/terms.html.twig
+
 # The collection of the validated plants merged into the garden
 legacy_collection:
     path: /collection

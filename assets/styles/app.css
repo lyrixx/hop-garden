@@ -155,6 +155,8 @@ em { font-family: var(--serif); }
     text-align: center;
 }
 .footer p { margin: .25rem 0; }
+.footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: .2rem 1.4rem; margin-bottom: .5rem; }
+.footer-links a { color: var(--white); font-weight: 600; }
 .demo-mode { display: inline-block; margin-top: .3rem; padding: .15rem .7rem; border-radius: 999px; background: var(--anise); color: var(--forest-deep); font-weight: 600; }
 
 /* The language of the browser, offered until one is chosen: an anise band above the top bar, in the language it offers */

@@ -133,7 +133,7 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
         $this->tap($this->card($page, 'planting'), 'Add to my garden');
 
         self::assertSame($balcony->getId(), $this->plantingOf($hydrangea)->getSpace()?->getId());
-        self::assertSame('Created', $this->card($this->client->request('GET', '/'), 'space')->filter('.status')->text(), 'Created, after a reload too.');
+        self::assertSame('Created', $this->card($this->client->request('GET', '/assistant'), 'space')->filter('.status')->text(), 'Created, after a reload too.');
     }
 
     /**
@@ -204,11 +204,11 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
      */
     private function say(string $text): Crawler
     {
-        $crawler = $this->client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/assistant');
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => $text]);
         $this->runTheWorker();
 
-        return $this->client->request('GET', '/');
+        return $this->client->request('GET', '/assistant');
     }
 
     /**

@@ -1,0 +1,87 @@
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{{ 'home.title'|trans }}{% endblock %}
+
+{% block head %}
+    <meta name="description" content="{{ 'home.hero.lede'|trans }}">
+{% endblock %}
+
+{% block body %}
+    <section class="home-hero">
+        <div class="home-hero-text">
+            <span class="plate-tab">{{ 'home.hero.kicker'|trans }}</span>
+            <h1>{{ 'home.hero.heading'|trans }}</h1>
+            <p class="home-lede">{{ 'home.hero.lede'|trans }}</p>
+            <p class="actions">
+                <twig:Public:JoinButton class="button-light button-next"/>
+                <a class="home-more" href="#what-it-solves">{{ 'home.hero.more'|trans }}</a>
+            </p>
+        </div>
+
+        {# The chat of the application, drawn by its own components: a conversation already answered, nothing to tap #}
+        <figure class="home-conversation">
+            <div class="home-conversation-log">
+                <twig:Chat:Bubble kind="user" :text="'home.conversation.message'|trans"/>
+                <twig:Chat:Choices :choices="{
+                    question: 'home.conversation.question'|trans,
+                    options: ['home.conversation.option.macrophylla'|trans, 'home.conversation.option.paniculata'|trans, 'home.conversation.option.arborescens'|trans],
+                }" :answered="true"/>
+                <twig:Chat:Bubble kind="user" :text="'home.conversation.answer'|trans"/>
+                <twig:Chat:Bubble kind="assistant" :text="'home.conversation.reply'|trans"/>
+            </div>
+            <figcaption class="home-caption"><span class="fig">fig. 1</span> {{ 'home.figure.conversation'|trans }}</figcaption>
+        </figure>
+    </section>
+
+    <section class="home-section" id="what-it-solves">
+        <h2>{{ 'home.problems.heading'|trans }}</h2>
+        {% set problems = [
+            {icon: 'secateurs', heading: 'home.problem.pruning.heading'|trans, text: 'home.problem.pruning.text'|trans},
+            {icon: 'snowflake', tint: 'pict-frost', heading: 'home.problem.frost.heading'|trans, text: 'home.problem.frost.text'|trans},
+            {icon: 'note', tint: 'pict-sun', heading: 'home.problem.care_sheet.heading'|trans, text: 'home.problem.care_sheet.text'|trans},
+            {icon: 'grid', heading: 'home.problem.spaces.heading'|trans, text: 'home.problem.spaces.text'|trans},
+            {icon: 'chat', tint: 'pict-water', heading: 'home.problem.notebook.heading'|trans, text: 'home.problem.notebook.text'|trans},
+            {icon: 'plug', tint: 'pict-sun', heading: 'home.problem.mcp.heading'|trans, text: 'home.problem.mcp.text'|trans},
+        ] %}
+        <ul class="problem-grid">
+            {% for problem in problems %}
+                <li class="card problem">
+                    <span class="pict {{ problem.tint ?? '' }}"><twig:Icon :name="problem.icon" :size="22"/></span>
+                    <h3>{{ problem.heading }}</h3>
+                    <p>{{ problem.text }}</p>
+                </li>
+            {% endfor %}
+        </ul>
+
+        {# Not there yet: said so #}
+        <aside class="home-soon">
+            <span class="pict"><twig:Icon name="people" :size="22"/></span>
+            <div>
+                <span class="tag tag-soon">{{ 'home.problem.soon.label'|trans }}</span>
+                <h3>{{ 'home.problem.soon.heading'|trans }}</h3>
+                <p>{{ 'home.problem.soon.text'|trans }}</p>
+            </div>
+        </aside>
+    </section>
+
+    {# Captures of the application, in the language of the page #}
+    <section class="home-section">
+        <h2>{{ 'home.figure.heading'|trans }}</h2>
+        <div class="home-figures">
+            <figure class="home-figure">
+                <img src="{{ asset('images/home/care-sheet.' ~ app.request.locale ~ '.webp') }}" alt="{{ 'home.figure.care_sheet_alt'|trans }}" width="1188" height="1170" loading="lazy">
+                <figcaption class="home-caption"><span class="fig">fig. 2</span> {{ 'home.figure.care_sheet'|trans }}</figcaption>
+            </figure>
+            <figure class="home-figure">
+                <img src="{{ asset('images/home/reminders.' ~ app.request.locale ~ '.webp') }}" alt="{{ 'home.figure.reminders_alt'|trans }}" width="620" height="697" loading="lazy">
+                <figcaption class="home-caption"><span class="fig">fig. 3</span> {{ 'home.figure.reminders'|trans }}</figcaption>
+            </figure>
+        </div>
+    </section>
+
+    <section class="card crowned home-join">
+        <h2>{{ 'home.join.heading'|trans }}</h2>
+        <p>{{ 'home.join.text'|trans }}</p>
+        <twig:Public:JoinButton class="button-next"/>
+    </section>
+{% endblock %}

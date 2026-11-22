@@ -1,0 +1,20 @@
+{#
+    A public page, open to anyone: the home page and the legal pages. Its own top bar (the language, Log in, the call to
+    join), no navigation of the application, no reminder toasts.
+#}
+{% extends 'base.html.twig' %}
+
+{% block header %}
+    <header class="topbar public-topbar">
+        <a class="brand" href="{{ path('home') }}">
+            <span class="pict"><twig:Icon name="hop" :size="32"/></span>
+            <span>Hop Garden</span>
+        </a>
+        <nav class="public-nav" aria-label="{{ 'public.nav'|trans }}">
+            <twig:LocaleSwitch :short="true"/>
+            {# TODO(saas-accounts): path() of the login page once it exists (branch saas-accounts), "#" until then #}
+            <a class="public-nav-link" href="#">{{ 'public.log_in'|trans }}</a>
+            <twig:Public:JoinButton class="button-light public-nav-join"/>
+        </nav>
+    </header>
+{% endblock %}

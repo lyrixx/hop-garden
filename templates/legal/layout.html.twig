@@ -1,0 +1,24 @@
+{#
+    A legal page: its title, what it is for, then its sections in a crowned card. The blanks of the publisher are
+    Legal:ToComplete zones.
+    Blocks: heading and intro (translated), sections
+#}
+{% extends 'public/layout.html.twig' %}
+
+{% block title %}{{ block('heading') }} · Hop Garden{% endblock %}
+
+{% block body %}
+    <article class="legal">
+        <header class="plate-head">
+            <span class="plate-tab">Hop Garden</span>
+            <h1>{% block heading %}{% endblock %}</h1>
+            <p>{% block intro %}{% endblock %}</p>
+        </header>
+
+        <div class="card crowned legal-card">
+            <p class="review-note legal-draft">{{ 'legal.draft_note'|trans }}</p>
+            {% block sections %}{% endblock %}
+            <p class="legal-updated">{{ 'legal.last_updated'|trans }} <twig:Legal:ToComplete :what="'legal.last_updated_to_complete'|trans"/></p>
+        </div>
+    </article>
+{% endblock %}

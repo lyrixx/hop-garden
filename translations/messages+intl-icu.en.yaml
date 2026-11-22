@@ -102,6 +102,7 @@ flash:
         validated: "{name} is validated. Pick its reminders below."
 footer:
     demo_mode: "Demo mode: Trefle and Open-Meteo answer from recorded responses."
+    legal: "Legal information"
     plant_data: "Plant data: {trefle}."
     plates: "Plates: {library}, public domain."
     reviewed: "Care data filled by an LLM is reviewed by a human before being saved."
@@ -125,6 +126,200 @@ hardiness:
     caption: "Scale of hardiness, in °C"
     label: "Hardy down to {coldest} °C, frost alert below {threshold} °C"
     threshold: "frost alert {threshold} °C"
+home:
+    conversation:
+        answer: "Panicled hydrangea"
+        message: "I just planted a hydrangea on the terrace"
+        option:
+            arborescens: "Smooth hydrangea"
+            macrophylla: "Bigleaf hydrangea"
+            paniculata: "Panicled hydrangea"
+        question: "Which hydrangea did you plant?"
+        reply: "Here is its care sheet. Check the highlighted values, I am less sure of them, then validate it."
+    figure:
+        care_sheet: "A draft care sheet. Each value has a confidence level: the assistant highlights the ones to check."
+        care_sheet_alt: "The draft care sheet of a panicled hydrangea: hardiness, exposure, watering, pruning and cuttings, four values highlighted with a medium or low confidence, and the Validate button."
+        conversation: "The assistant asks which one, then drafts the care sheet."
+        heading: "In the application"
+        reminders: "The reminders coming up, and the frost forecast with the plants it threatens."
+        reminders_alt: "Two cards. Coming up: a frost alert for the lemon tree, and the pruning of the climbing rose on 1 February. Frost forecast: three nights from -3.2 °C to -12.4 °C, each with the lemon tree at risk."
+    hero:
+        heading: "Know when to prune. Get warned before the frost."
+        kicker: "Your garden notebook"
+        lede: "Hop Garden keeps a care sheet for each plant in your garden. It tells you what to do each month, and warns you when a night will be too cold for one of them. Say it in one sentence: it proposes, you validate."
+        more: "See what it takes care of"
+    join:
+        heading: "Hop Garden opens to a few gardeners at a time."
+        text: "Sign up now: accounts open in small groups, and we email you when yours is ready."
+    problem:
+        care_sheet:
+            heading: "Care sheets found online contradict each other."
+            text: "The assistant drafts the care sheet from the botanical data of Trefle and its own knowledge. Each value has a confidence level, the uncertain ones are highlighted, and the sheet names its sources. You check, you correct what you know better, and the sheet stays a draft until you validate it."
+        frost:
+            heading: "A late frost kills a plant."
+            text: "Turn on the frost alert of a plant: every morning at 7, Hop Garden reads the Open-Meteo forecast for the next three days and compares it with the hardiness of the plant, plus 2 °C of margin. If a night will be too cold for your lemon tree, a notification in Hop Garden warns you that same morning, in time to bring it in."
+        mcp:
+            heading: "Your AI assistant does not know your garden."
+            text: "Hop Garden is also an MCP server. Connect Claude Desktop, Claude Code, Cursor or another MCP client: it searches plants, reads your care sheets and your spaces, checks the frost forecast. To add a plant, it gives you the link to its card, and you confirm."
+        notebook:
+            heading: "Keeping a garden notebook takes too long."
+            text: "Write “I just planted a hydrangea on the terrace”. The assistant asks which hydrangea, then proposes each step on a card: the care sheet, the space if it is new, the plant. Nothing joins your garden until you tap its card. Rather use forms? Everything can be done by hand too."
+        pruning:
+            heading: "You forget when to prune."
+            text: "Each care sheet gives the months to prune, deadhead and take cuttings. Turn on a reminder: on the 1st of each of these months, a notification in Hop Garden tells you which plant is due."
+        soon:
+            heading: "Gardening together, nobody knows who did what."
+            label: "Soon"
+            text: "Shared gardens are coming, with invitations to bring in the people you garden with."
+        spaces:
+            heading: "You no longer know what you planted, or where."
+            text: "Describe the spaces of your garden, such as the terrace or the north bed, with their exposure and their soil. Each plant has its space, its photo, the care it got and its neighbours. Hop Garden tells you when a plant that likes full sun grows in the shade."
+    problems:
+        heading: "What Hop Garden takes care of"
+    title: "Hop Garden · Pruning reminders and frost alerts for your garden"
+legal:
+    draft_note: "This page is a draft: the parts marked “To be completed” wait for the information of the publisher."
+    last_updated: "Last updated:"
+    last_updated_to_complete: "the date of this version"
+    notice:
+        contact:
+            heading: "Contact"
+            text: "For any question about Hop Garden or about this notice, write to:"
+            to_complete: "the contact email address"
+        credits:
+            heading: "Credits"
+        director:
+            heading: "Publication director"
+            to_complete: "first name and last name of the person responsible for the publication"
+        host:
+            address: "Address"
+            heading: "Host"
+            name: "Name"
+            phone: "Phone"
+            to_complete:
+                address: "postal address of the host"
+                name: "name or company name of the host"
+                phone: "phone number of the host"
+        intro: "The information French law requires from a website (loi pour la confiance dans l’économie numérique)."
+        publisher:
+            address: "Address"
+            contact: "Contact"
+            heading: "Publisher"
+            name: "Name"
+            registration: "Registration"
+            to_complete:
+                address: "postal address, or registered office of the company"
+                contact: "email address and phone number"
+                name: "first name and last name, or company name and legal form"
+                registration: "SIREN or RCS number, and the share capital for a company"
+                vat: "intra-community VAT number, if any"
+            vat: "VAT number"
+        title: "Legal notice"
+    privacy:
+        controller:
+            heading: "Who is responsible"
+            text: "The controller of your data is the publisher of Hop Garden, named in the {link}legal notice{link_end}. For any question about your data, write to:"
+            to_complete: "the contact email address for personal data, and the data protection officer if there is one"
+        cookies:
+            form: "When you send some forms, a technical cookie also protects the sending, and is removed right after."
+            heading: "Cookies"
+            language: "Your choice of language is kept on the server, not in a cookie."
+            none: "No cookie for audience measurement or advertising, and no resource loaded from another site: the fonts are served by Hop Garden. These cookies are strictly necessary to the service and need no consent: there is no cookie banner."
+            session: "Hop Garden uses the session cookie ({name}): it keeps your session, such as your conversation with the assistant, and protects the forms against forged requests. It is deleted when you close your browser, and the session ends after 12 hours without a visit."
+        data:
+            account: "Your account: your email address, your display name, your password (stored hashed, never in clear) and your language."
+            conversations: "Your conversations with the assistant: your messages and its answers are stored, and sent to the provider of the language model that writes the answers. To answer, the assistant reads your garden (care sheets, plants, spaces), and what it reads goes to the same provider. The name of a species you look up may be sent to it too, to find its Latin name or draft its care sheet."
+            garden: "Your garden: the care sheets of your species, your plants and their spaces, the care you record, your notes, your reminders and your notifications."
+            heading: "The data Hop Garden processes"
+            location: "The location of your garden (latitude and longitude), sent to Open-Meteo for the frost forecast."
+            logs:
+                text: "Technical logs:"
+                to_complete: "what the logs of the server and of the host record, such as the IP address, the date and the page requested"
+            photos: "The photos you add to your plants, stored on the server of Hop Garden."
+            searches: "The names of the plants you search, sent to Trefle to identify the species."
+            third_parties: "Open-Meteo and Trefle receive these requests from the server of Hop Garden, never from your browser, and nothing else about you."
+        intro: "This page explains which personal data Hop Garden processes, why, for how long, and how to exercise your rights, under the General Data Protection Regulation (GDPR)."
+        purposes:
+            billing: "Invoicing, once the service is paid: a legal obligation (article 6(1)(c) GDPR)."
+            heading: "Why, and on what legal basis"
+            security: "Keeping the service running and secure, with the logs of the server: the legitimate interest of the publisher (article 6(1)(f) GDPR)."
+            service: "Providing the service you signed up for (your account, your garden, the reminders, the frost alerts, the assistant, the emails about your account): the performance of the contract (article 6(1)(b) GDPR)."
+        recipients:
+            heading: "Who receives your data"
+            text: "Your data only goes to the processors Hop Garden needs to run, and to Trefle and Open-Meteo as described above."
+            to_complete: "the list of the processors, their country, and the safeguards for a transfer outside the European Union. For example: the host of the application and its database; the provider of the language model (Anthropic or OpenAI, depending on the configuration); the email service, once Hop Garden sends emails."
+            transfers: "The provider of the language model may process the conversations outside the European Union."
+        retention:
+            account:
+                text: "Your account and your garden: as long as your account exists. They are deleted when you delete it, within"
+                to_complete: "the delay of deletion, backups included"
+            conversations:
+                text: "Your conversations with the assistant:"
+                to_complete: "how long they are kept"
+            heading: "For how long"
+            invoices:
+                text: "Invoices, once the service is paid:"
+                to_complete: "how long they are kept"
+            logs:
+                text: "The logs of the server:"
+                to_complete: "how long they are kept"
+            session: "The session: it ends after 12 hours without a visit."
+        rights:
+            complaint: "If you think your rights are not respected, you can lodge a complaint with a data protection authority, such as the CNIL in France ({link})."
+            heading: "Your rights"
+            text: "You can access your data, have it corrected or erased, restrict or object to its processing, and receive it in a reusable format. Write to the contact above: the publisher answers within one month."
+        title: "Privacy policy"
+    terms:
+        access:
+            availability: "The publisher strives to keep Hop Garden available, without guarantee: it may be interrupted for maintenance, or when a provider fails (host, language model, Trefle, Open-Meteo)."
+            heading: "Access to the service"
+            text: "Hop Garden works in a web browser, with an internet connection at your expense. Access opens through a waiting list: you sign up, confirm your email address, and your account opens once the publisher has validated it. The publisher may limit the number of accounts and the use of the assistant."
+        account:
+            heading: "Your account"
+            text: "You give an email address that is yours and keep your password secret: what is done with your account is your responsibility. You can delete your account at any time; your data is then deleted as the {link}privacy policy{link_end} explains."
+        changes:
+            heading: "Changes to these terms"
+            text: "The publisher may change these terms. You are told by email before a new version applies to you, with a notice of"
+            to_complete: "the notice period"
+        content:
+            heading: "Your content"
+            text: "Your care sheets, notes and photos remain yours. The publisher only stores and processes them to provide the service."
+        data:
+            heading: "Personal data"
+            text: "Hop Garden processes your personal data as its {link}privacy policy{link_end} explains."
+        intro: "These terms govern the use of Hop Garden and its subscription. Creating an account means accepting them."
+        law:
+            court:
+                text: "Failing an amicable solution, the dispute goes to"
+                to_complete: "the competent court, within the limits of consumer law"
+            heading: "Applicable law and disputes"
+            law:
+                text: "These terms are governed by"
+                to_complete: "the applicable law, for example French law"
+            mediation:
+                text: "In case of dispute, write to the publisher first. As a consumer, you can also turn to a consumer mediator, free of charge:"
+                to_complete: "name, website and address of the consumer mediator"
+        liability:
+            heading: "Liability"
+            text: "Hop Garden helps you look after your garden, it does not replace your judgement. The care sheets are drafted by a language model from the data of Trefle and its own knowledge, and you validate them. The frost alerts depend on the Open-Meteo forecast, which can be wrong, and on the hardiness written in each care sheet."
+            to_complete: "the limits of the liability of the publisher"
+        price:
+            heading: "Price and payment"
+            text: "Hop Garden will be a paid service. Prices are shown, taxes included, before any subscription."
+            to_complete: "the prices, the subscription periods, the payment methods, the invoicing, the renewal and the changes of price"
+        purpose:
+            heading: "Purpose"
+            text: "Hop Garden is a web application that keeps a care sheet for each plant of your garden, reminds you of the work of the month, warns you of frost and offers a gardening assistant. It is provided by the publisher named in the {link}legal notice{link_end}."
+        termination:
+            heading: "Duration and termination"
+            text: "You can end the service at any time by deleting your account. The publisher may suspend an account used against these terms or the law."
+            to_complete: "the duration of the subscription, what happens to the paid period, and the refunds"
+        title: "Terms of sale"
+        withdrawal:
+            heading: "Right of withdrawal"
+            text: "As a consumer, you have 14 days from the subscription to withdraw, without giving a reason (French Consumer Code, article L221-18). If you ask for the service to start before the end of this period, you pay for the service provided until you withdraw (article L221-25)."
+            to_complete: "how to withdraw (form, address) and how you are refunded"
+    to_complete: "To be completed"
 list:
     and: "{items} and {last}"
 locale:
@@ -225,6 +420,10 @@ proposal:
         heading: "Create a space"
         intro: "Your assistant proposes this space. Pick its exposure and its soil: nothing is created until you tap the card."
         title: "Create {name}"
+public:
+    join: "Join the waiting list"
+    log_in: "Log in"
+    nav: "Account"
 recommendation:
     exposure:
         close: "It prefers {preferred, select, sun {full sun} part_shade {part shade} other {shade}} and gets {actual, select, sun {full sun} part_shade {part shade} other {shade}} here: it should cope, but would do better in {preferred, select, sun {full sun} part_shade {part shade} other {shade}}."

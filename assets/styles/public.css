@@ -1,0 +1,115 @@
+/* The public pages: their top bar, the home page and the legal pages. Uses the tokens and classes of app.css */
+
+/* The top bar of a public page: the language, Log in, the call to join */
+.public-nav { display: flex; align-items: center; gap: 1rem; }
+.public-nav .locale-switch { margin: 0; color: rgb(255 255 255 / 80%); }
+.public-nav-link { padding: .5rem .3rem; color: var(--white); font-weight: 600; text-decoration: none; }
+.public-nav-link:hover { text-decoration: underline; }
+.public-nav .button { padding: .55rem 1.15rem; }
+
+/* A caption under a figure, set bare on the green, as the plates of the library */
+.home-caption { margin-top: .7rem; color: var(--text-soft); font-family: var(--serif); font-size: .95rem; font-weight: 500; }
+.home-caption .fig { margin-right: .35rem; color: var(--anise); font-style: italic; font-weight: 700; }
+
+/* The hero: what it takes care of, and the chat beside it */
+.home-hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 3.5rem; align-items: center; padding: 1.5rem 0 3rem; }
+.home-hero h1 { margin-top: .4rem; font-size: 3.5rem; line-height: 1.04; }
+:is(.home-hero h1, .home-section > h2, .home-join h2, .legal h1) { text-wrap: balance; }
+.home-lede { max-width: 35rem; margin: 1.2rem 0 1.7rem; font-family: var(--serif); font-size: 1.22rem; font-weight: 500; line-height: 1.5; }
+.home-hero .actions { gap: .8rem 1.4rem; }
+.home-more { font-weight: 700; }
+.home-conversation { margin: 0; }
+.home-conversation-log { display: flex; flex-direction: column; gap: .8rem; }
+.home-conversation .bubble, .home-conversation .chat-choices { max-width: 88%; }
+
+/* The sections: a large title on the green, then their cards */
+.home-section { padding: 2.5rem 0; scroll-margin-top: 5rem; }
+.home-section > h2 { margin-bottom: 1.4rem; font-size: 2.3rem; }
+
+/* What it takes care of: the problem as its title, then what Hop Garden does about it */
+.problem-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 1.1rem; margin: 0; padding: 0; list-style: none; }
+.problem { display: flex; flex-direction: column; gap: .65rem; padding: 1.5rem 1.6rem 1.6rem; }
+.problem .pict { width: 46px; height: 46px; }
+.problem h3 { font-size: 1.35rem; line-height: 1.2; }
+.problem p { margin: 0; }
+
+/* What is coming: on the green, a dashed outline, never a card that would pass for a feature */
+.home-soon { display: flex; align-items: flex-start; gap: 1rem; margin-top: 1.1rem; padding: 1.3rem 1.6rem; border: 1.5px dashed rgb(255 255 255 / 45%); border-radius: 24px; background: var(--veil); }
+.home-soon .pict { width: 46px; height: 46px; }
+.home-soon h3 { margin: .45rem 0 .3rem; font-size: 1.25rem; }
+.home-soon p { margin: 0; color: var(--text-soft); }
+.tag-soon { background: var(--anise); color: var(--forest-deep); letter-spacing: .08em; text-transform: uppercase; }
+
+/* The captures of the application, on their own green ground: about as tall as each other */
+.home-figures { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.home-figure { margin: 0; }
+.home-figure img { display: block; width: 100%; height: auto; border-radius: 24px; box-shadow: var(--shadow), 0 0 0 1px rgb(255 255 255 / 14%); }
+
+/* The call to join, crowned, at the end of the page */
+.home-join {
+    --crown-left: 50%;
+    --crown-shift: translateX(-50%);
+    max-width: 760px;
+    margin: calc(var(--crown-room) + 1.5rem) auto 1rem;
+    padding: 2.2rem 2.4rem 2.4rem;
+    text-align: center;
+}
+.home-join h2 { font-size: 2rem; }
+.home-join p { max-width: 34rem; margin: .8rem auto 1.5rem; }
+
+/* A legal page: one crowned card, its sections apart */
+.legal { max-width: 880px; margin: 0 auto; }
+.legal-card { margin-top: var(--crown-room); padding: 2.2rem 2.6rem 2.4rem; border-radius: 32px; line-height: 1.6; }
+.legal-card section { margin-top: 1.7rem; padding-top: 1.5rem; border-top: 1px solid var(--cream); }
+.legal-card h2 { margin-bottom: .6rem; font-size: 1.45rem; }
+.legal-card p { margin: .6rem 0; }
+.legal-card ul { margin: .5rem 0; padding-left: 1.3rem; }
+.legal-card li + li { margin-top: .35rem; }
+.legal-draft { margin-bottom: .5rem; }
+.legal-updated { margin-top: 1.7rem !important; padding-top: 1.2rem; border-top: 1px solid var(--cream); color: var(--muted); font-size: .9rem; }
+.legal-facts { display: flex; flex-direction: column; gap: .55rem; margin: .4rem 0 0; }
+.legal-facts > div { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: .2rem 1rem; align-items: baseline; }
+.legal-facts dt { color: var(--muted); font-weight: 600; }
+.legal-facts dd { margin: 0; }
+
+/* What the publisher still has to write: magenta and dashed, impossible to miss */
+.to-complete {
+    padding: .05rem .45rem;
+    border: 1.5px dashed var(--magenta);
+    border-radius: 8px;
+    background: var(--pink-soft);
+    color: var(--crimson);
+    font-weight: 600;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+/* Room between the lines of a blank that wraps */
+:is(.legal-card p, .legal-card li, .legal-facts dd):has(.to-complete) { line-height: 1.95; }
+.to-complete-label { display: inline-flex; align-items: center; gap: .25rem; margin-right: .15rem; font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; vertical-align: .05em; }
+
+@media (max-width: 900px) {
+    .home-hero, .home-figures { grid-template-columns: minmax(0, 1fr); }
+    .home-hero { gap: 2.2rem; }
+}
+
+@media (max-width: 640px) {
+    /* One line on a phone, in French too: "Se connecter" */
+    .public-topbar { flex-wrap: nowrap; }
+    .public-topbar .brand, .public-nav-link { white-space: nowrap; }
+    .public-nav { gap: .35rem; }
+    .public-nav .locale-switch .icon { display: none; }
+    .public-nav .locale-switch button { padding: .1rem .45rem; }
+    .public-nav-link { font-size: .92rem; }
+    /* The hero calls to join, right below */
+    .public-nav-join { display: none !important; }
+    .home-hero { padding-top: .5rem; }
+    .home-hero h1 { font-size: 2.35rem; }
+    .home-lede { font-size: 1.08rem; }
+    .home-section > h2 { font-size: 1.8rem; }
+    .problem { padding: 1.3rem 1.3rem 1.4rem; }
+    .home-soon { padding: 1.1rem 1.2rem; }
+    .home-join { padding: 1.8rem 1.3rem 2rem; }
+    .home-join h2 { font-size: 1.6rem; }
+    .legal-card { padding: 1.6rem 1.3rem 1.8rem; border-radius: 26px; }
+    .legal-facts > div { grid-template-columns: minmax(0, 1fr); }
+}

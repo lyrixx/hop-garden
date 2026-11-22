@@ -428,10 +428,10 @@ final class PlantControllerTest extends WebTestCase
     public function testTheNewSpeciesOffersTheAssistant(): void
     {
         $crawler = $this->client->request('GET', '/plants');
-        self::assertSame('/?message=' . rawurlencode('Draft the care sheet of a new species'), $crawler->selectLink('ask the assistant to draft it')->attr('href'));
+        self::assertSame('/assistant?message=' . rawurlencode('Draft the care sheet of a new species'), $crawler->selectLink('ask the assistant to draft it')->attr('href'));
 
         $crawler = $this->client->request('GET', '/plants/new');
-        self::assertSame('/?message=' . rawurlencode('Draft the care sheet of a new species'), $crawler->selectLink('Ask the assistant to draft it')->attr('href'));
+        self::assertSame('/assistant?message=' . rawurlencode('Draft the care sheet of a new species'), $crawler->selectLink('Ask the assistant to draft it')->attr('href'));
     }
 
     public function testAddToMyGardenOnlyFromAValidatedSpecies(): void

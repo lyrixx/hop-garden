@@ -82,7 +82,8 @@ jobs:
                   set -e
                   set -o pipefail
 
-                  curl --fail --insecure --silent -H "Host: hop-garden.test" https://127.0.0.1 | grep "Hop Garden"
+                  # The public page, in English until a language is chosen
+                  curl --fail --insecure --silent -H "Host: hop-garden.test" https://127.0.0.1 | grep "Join the waiting list"
 
             - name: "Show the response and the logs"
               if: failure()

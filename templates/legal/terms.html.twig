@@ -1,0 +1,72 @@
+{% extends 'legal/layout.html.twig' %}
+
+{% block heading %}{{ 'legal.terms.title'|trans }}{% endblock %}
+
+{% block intro %}{{ 'legal.terms.intro'|trans }}{% endblock %}
+
+{% block sections %}
+    {% set notice_link = {link: '<a href="' ~ path('legal_notice') ~ '">', link_end: '</a>'} %}
+    {% set privacy_link = {link: '<a href="' ~ path('legal_privacy') ~ '">', link_end: '</a>'} %}
+
+    <section>
+        <h2>{{ 'legal.terms.purpose.heading'|trans }}</h2>
+        <p>{{ 'legal.terms.purpose.text'|trans(notice_link)|raw }}</p>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.terms.access.heading'|trans }}</h2>
+        <p>{{ 'legal.terms.access.text'|trans }}</p>
+        <p>{{ 'legal.terms.access.availability'|trans }}</p>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.terms.account.heading'|trans }}</h2>
+        <p>{{ 'legal.terms.account.text'|trans(privacy_link)|raw }}</p>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.terms.price.heading'|trans }}</h2>
+        <p>{{ 'legal.terms.price.text'|trans }}</p>
+        <p><twig:Legal:ToComplete :what="'legal.terms.price.to_complete'|trans"/></p>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.terms.withdrawal.heading'|trans }}</h2>
+        <p>{{ 'legal.terms.withdrawal.text'|trans }}</p>
+        <p><twig:Legal:ToComplete :what="'legal.terms.withdrawal.to_complete'|trans"/></p>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.terms.termination.heading'|trans }}</h2>
+        <p>{{ 'legal.terms.termination.text'|trans }}</p>
+        <p><twig:Legal:ToComplete :what="'legal.terms.termination.to_complete'|trans"/></p>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.terms.liability.heading'|trans }}</h2>
+        <p>{{ 'legal.terms.liability.text'|trans }}</p>
+        <p><twig:Legal:ToComplete :what="'legal.terms.liability.to_complete'|trans"/></p>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.terms.content.heading'|trans }}</h2>
+        <p>{{ 'legal.terms.content.text'|trans }}</p>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.terms.data.heading'|trans }}</h2>
+        <p>{{ 'legal.terms.data.text'|trans(privacy_link)|raw }}</p>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.terms.changes.heading'|trans }}</h2>
+        <p>{{ 'legal.terms.changes.text'|trans }} <twig:Legal:ToComplete :what="'legal.terms.changes.to_complete'|trans"/></p>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.terms.law.heading'|trans }}</h2>
+        <p>{{ 'legal.terms.law.law.text'|trans }} <twig:Legal:ToComplete :what="'legal.terms.law.law.to_complete'|trans"/></p>
+        <p>{{ 'legal.terms.law.mediation.text'|trans }} <twig:Legal:ToComplete :what="'legal.terms.law.mediation.to_complete'|trans"/></p>
+        <p>{{ 'legal.terms.law.court.text'|trans }} <twig:Legal:ToComplete :what="'legal.terms.law.court.to_complete'|trans"/></p>
+    </section>
+{% endblock %}
