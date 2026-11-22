@@ -5,7 +5,8 @@
 {#
     Every member sees them, and may leave unless they are its only one. Its owner (form, not null: GARDEN_MANAGE) invites,
     removes a member, and manages the invitations waiting (App\Controller\GardenMembersController). shown_link: the link
-    of an invitation just sent or renewed, shown once, copied at once when asked (copy)
+    of an invitation just sent or renewed, shown once, copied at once when asked (copy). The dates in the timezone of the
+    garden, as its reminders
 #}
 {% block body %}
 <div class="with-specimen">
@@ -26,7 +27,7 @@
                     <span class="pict"><twig:Icon name="user" :size="18"/></span>
                     <div class="member-name">
                         <strong>{{ member.displayName }}</strong>{% if member == app.user %} <span class="meta member-you">{{ 'garden.members.you'|trans }}</span>{% endif %}
-                        <p class="meta"><span class="tag {{ membership.owner ? 'tag-owner' }}">{{ membership.role|trans }}</span> {{ 'garden.members.since'|trans({date: membership.joinedAt|long_date}) }}</p>
+                        <p class="meta"><span class="tag {{ membership.owner ? 'tag-owner' }}">{{ membership.role|trans }}</span> {{ 'garden.members.since'|trans({date: garden.localTime(membership.joinedAt)|long_date}) }}</p>
                     </div>
                     {% if member == app.user and memberships|length > 1 %}
                         {# Its owner leaves it to the oldest of the others: Garden::leave() #}
@@ -73,7 +74,7 @@
                             <div class="invitation-head">
                                 <strong>{{ invitation.email }}</strong>
                                 <p class="meta">
-                                    {{ 'garden.members.invitation.sent_on'|trans({date: invitation.createdAt|long_date, name: invitation.invitedBy.displayName}) }} ·
+                                    {{ 'garden.members.invitation.sent_on'|trans({date: garden.localTime(invitation.createdAt)|long_date, name: invitation.invitedBy.displayName}) }} ·
                                     {% if invitation.pending(now) %}
                                         {{ 'garden.members.invitation.expires_on'|trans({date: garden.localTime(invitation.expiresAt)|long_date}) }}
                                     {% else %}
