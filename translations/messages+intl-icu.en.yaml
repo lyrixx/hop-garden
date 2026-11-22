@@ -256,7 +256,7 @@ garden:
     empty: "Nothing planted yet. {first}Add your first plant{first_end}, or {assistant}ask the assistant{assistant_end}."
     form:
         city:
-            help: "Type its city, then Find: pick the right one among the places found."
+            help: "Type its city, its postcode, or both, then Find: pick the right one among the places found."
             label: "City"
             placeholder: "Lyon"
         name:

@@ -1,6 +1,6 @@
 {
     "results": [
-        {"id": 2998324, "name": "Lille", "latitude": 50.63297, "longitude": 3.05858, "elevation": 25.0, "feature_code": "PPLA", "country_code": "FR", "admin1_id": 11071624, "admin2_id": 2990129, "timezone": "Europe/Paris", "population": 234475, "country_id": 3017382, "country": "France", "admin1": "Hauts-de-France", "admin2": "Nord"}
+        {"id": 2998324, "name": "Lille", "latitude": 50.63297, "longitude": 3.05858, "elevation": 25.0, "feature_code": "PPLA", "country_code": "FR", "admin1_id": 11071624, "admin2_id": 2990129, "timezone": "Europe/Paris", "population": 234475, "postcodes": ["59800", "59000", "59160", "59260", "59777", "59001 CEDEX"], "country_id": 3017382, "country": "France", "admin1": "Hauts-de-France", "admin2": "Nord"}
     ],
     "generationtime_ms": 0.48
 }

@@ -256,7 +256,7 @@ garden:
     empty: "Rien de planté pour l’instant. {first}Ajoutez votre première plante{first_end}, ou {assistant}demandez à l’assistant{assistant_end}."
     form:
         city:
-            help: "Tapez sa ville, puis Chercher : choisissez la bonne parmi les lieux trouvés."
+            help: "Tapez sa ville, son code postal, ou les deux, puis Chercher : choisissez la bonne parmi les lieux trouvés."
             label: "Ville"
             placeholder: "Lyon"
         name:

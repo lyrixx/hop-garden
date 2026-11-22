@@ -9,7 +9,8 @@ care_record:
     in_the_future: "Cette date est dans le futur."
 garden:
     place:
-        not_found: "Aucun lieu nommé « {{ city }} » : vérifiez son orthographe, ou essayez une ville proche."
+        not_found: "Aucun lieu trouvé pour « {{ city }} » : vérifiez son orthographe, ou essayez son code postal, ou une ville proche."
+        not_found_in_demo: "En mode démo, la recherche ne connaît que quelques lieux enregistrés. Essayez : {{ places }}."
         not_picked: "Choisissez le lieu de votre jardin parmi ceux trouvés."
         required: "Cherchez d’abord la ville de votre jardin."
         unavailable: "La recherche de lieux ne répond pas : réessayez dans un instant."

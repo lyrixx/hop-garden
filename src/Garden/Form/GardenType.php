@@ -2,10 +2,12 @@
 
 namespace App\Garden\Form;
 
+use App\DataSource\Demo\RecordedResponses;
 use App\DataSource\Exception\DataSourceUnavailableException;
 use App\DataSource\OpenMeteo\GeocodingClient;
 use App\DataSource\OpenMeteo\Model\Place;
 use App\Garden\Form\Model\GardenFormData;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
@@ -18,9 +20,10 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Translation\LocaleSwitcher;
 
 /**
- * The name and the place of a garden, without JavaScript: "Find" searches the city with the geocoding of Open-Meteo,
- * then the form offers the places found, one to pick. The places come from Open-Meteo again on each submission, never
- * from the browser, which sends the id of its pick only.
+ * The name and the place of a garden, without JavaScript: "Find" searches the city (its name, its postcode, or both) with
+ * the geocoding of Open-Meteo, then the form offers the places found, one to pick. The places come from Open-Meteo again
+ * on each submission, never from the browser, which sends the id of its pick only. In demo mode, a city that no
+ * recording answers gets the ones that do.
  *
  * @extends AbstractType<GardenFormData>
  */
@@ -29,6 +32,9 @@ final class GardenType extends AbstractType
     public function __construct(
         private readonly GeocodingClient $geocodingClient,
         private readonly LocaleSwitcher $localeSwitcher,
+        private readonly RecordedResponses $recordedResponses,
+        #[Autowire(env: 'bool:APP_DEMO')]
+        private readonly bool $demo,
     ) {
     }
 
@@ -60,6 +66,7 @@ final class GardenType extends AbstractType
                 $city = \is_string($submitted['city'] ?? null) ? trim($submitted['city']) : '';
                 $data->places = [];
                 $data->placeSearchUnavailable = false;
+                $data->demoPlaceQueries = [];
                 if ('' !== $city) {
                     try {
                         $data->places = $this->geocodingClient->search($city, $this->localeSwitcher->getLocale());
@@ -67,6 +74,9 @@ final class GardenType extends AbstractType
                         // Already logged by the client
                         $data->placeSearchUnavailable = true;
                     }
+                }
+                if ('' !== $city && [] === $data->places && !$data->placeSearchUnavailable && $this->demo) {
+                    $data->demoPlaceQueries = $this->recordedResponses->placeQueries();
                 }
 
                 self::addPlaces($event->getForm(), $data->places);
@@ -98,14 +108,16 @@ final class GardenType extends AbstractType
             return;
         }
 
-        $choices = [];
+        $suggestions = [];
         foreach ($places as $place) {
-            $choices[$place->label()] = $place->id;
+            $suggestions[$place->id] = $place->suggestion();
         }
 
         $form->add('placeId', ChoiceType::class, [
             'label' => 'garden.form.place.label',
-            'choices' => $choices,
+            // By id: two homonyms may read the same
+            'choices' => array_keys($suggestions),
+            'choice_label' => static fn (int $id): string => $suggestions[$id],
             'expanded' => true,
             'required' => false,
             'placeholder' => false,

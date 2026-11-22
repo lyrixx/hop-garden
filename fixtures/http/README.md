@@ -11,4 +11,9 @@ They follow the response format of each API, with sample values for 4 plants
 - `open-meteo/forecast-frost.json` is moved to start on the current day (of the app clock), at the position asked: the
   same cold snap in every garden.
 - `open-meteo/geocoding/<city>.json` are the places of a few cities (Paris and its homonyms, Lyon, Lille, Nantes,
-  Bordeaux, London), whatever the language asked; any other name finds none (`_empty.json`).
+  Bordeaux, London, Paron, Auxerre) and `<postcode>.json` the ones of two postcodes of the Yonne (89100, 89000), whatever
+  the language and the count asked; any other name finds none (`_empty.json`). So "89100 Paron" finds Paron: the
+  postcode is searched alone, then the name among its places (`App\DataSource\OpenMeteo\GeocodingClient`). The garden
+  form suggests these names when it finds nothing (`RecordedResponses::placeQueries()`). Paron, Auxerre and the
+  postcodes are recorded as Open-Meteo answered in November 2026 (`language=en`, `count=5` for a name, `count=100` for a
+  postcode); the older ones are trimmed to a few places, and a part of their postcodes. A new file is a new suggestion.

@@ -46,7 +46,7 @@ final class GardensTest extends WebTestCase
         $crawler = $this->client->submit($crawler->selectButton('Find')->form(), ['garden[name]' => 'The orchard', 'garden[city]' => 'Paris']);
         self::assertResponseStatusCodeSame(422, 'Shown again: Turbo Drive renders it in place.');
         self::assertSame(
-            ['Paris, Île-de-France, France', 'Paris, Texas, United States', 'Paris, Tennessee, United States'],
+            ['Paris, Île-de-France, France', 'Paris, Texas, United States', 'Paris (38242), Tennessee, United States'],
             $crawler->filter('.garden-places .choice span')->each(static fn (Crawler $label): string => $label->text()),
         );
         self::assertSame([], self::getContainer()->get(GardenRepository::class)->findOfMember($member), 'Searched only.');
@@ -85,7 +85,7 @@ final class GardensTest extends WebTestCase
 
         $crawler = $this->client->submit($crawler->selectButton('Find')->form(), ['garden[name]' => 'Balcony', 'garden[city]' => 'Atlantis']);
         self::assertResponseStatusCodeSame(422);
-        self::assertSelectorTextContains('.garden-city', 'No place named "Atlantis"');
+        self::assertSelectorTextContains('.garden-city', 'No place found for "Atlantis"');
 
         $this->client->submit($crawler->selectButton('Create the garden')->form(), ['garden[name]' => 'Balcony', 'garden[city]' => '']);
         self::assertResponseStatusCodeSame(422);

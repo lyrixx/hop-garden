@@ -1,0 +1,10 @@
+{
+    "results": [
+        {"id": 2988475, "name": "Paron", "latitude": 48.17888, "longitude": 3.25075, "elevation": 89.0, "feature_code": "PPL", "country_code": "FR", "admin1_id": 11071619, "admin2_id": 2967222, "timezone": "Europe/Paris", "population": 4543, "postcodes": ["89100"], "country_id": 3017382, "country": "France", "admin1": "Bourgogne-Franche-Comté", "admin2": "Yonne"},
+        {"id": 4125531, "name": "Paron", "latitude": 34.77287, "longitude": -92.7585, "elevation": 150.0, "feature_code": "PPL", "country_code": "US", "admin1_id": 4099753, "admin2_id": 4130035, "timezone": "America/Chicago", "postcodes": ["72122"], "country_id": 6252001, "country": "United States", "admin1": "Arkansas", "admin2": "Saline"},
+        {"id": 6380154, "name": "Parón", "latitude": -9.03883, "longitude": -77.74191, "elevation": 3332.0, "feature_code": "PPL", "country_code": "PE", "admin1_id": 3699674, "admin2_id": 3696296, "timezone": "America/Lima", "population": 245, "country_id": 3932488, "country": "Peru", "admin1": "Ancash", "admin2": "Huaylas Province"},
+        {"id": 3171450, "name": "Parona", "latitude": 45.28165, "longitude": 8.75055, "elevation": 113.0, "feature_code": "PPLA3", "country_code": "IT", "admin1_id": 3174618, "admin2_id": 3171364, "timezone": "Europe/Rome", "population": 1776, "country_id": 3175395, "country": "Italy", "admin1": "Lombardy", "admin2": "Province of Pavia"},
+        {"id": 512505, "name": "Paron", "latitude": 57.8374, "longitude": 51.4748, "elevation": 198.0, "feature_code": "PPL", "country_code": "RU", "admin1_id": 548389, "timezone": "Europe/Kirov", "country_id": 2017370, "country": "Russia", "admin1": "Kirov Oblast"}
+    ],
+    "generationtime_ms": 0.27
+}
