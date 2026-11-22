@@ -57,7 +57,7 @@ final class RegistrationTest extends WebTestCase
         self::assertSelectorTextSame('h1', 'Check your inbox');
 
         self::mockTime('2026-11-23 18:00');
-        $this->client->request('GET', self::linkOf($email));
+        $this->client->request('GET', self::textLinksOf($email)[0]);
 
         self::assertResponseRedirects('/register/waiting-list', 303);
         $this->client->followRedirect();
@@ -86,9 +86,16 @@ final class RegistrationTest extends WebTestCase
         self::assertEmailAddressContains($email, 'to', 'alice@example.com');
         self::assertEmailSubjectContains($email, 'Vous avez déjà un compte Hop Garden', 'In the language of its owner.');
         self::assertEmailHtmlBodyContains($email, 'Bonjour Alice,');
-        self::assertEmailHtmlBodyContains($email, '/reset-password');
         self::assertCount(1, self::getContainer()->get(UserRepository::class)->findAll());
         self::assertSame($passwordHash, $this->user('alice@example.com')->getPassword(), 'Its password stays.');
+
+        [$login, $reset] = self::textLinksOf($email);
+        $this->client->request('GET', $login);
+        self::assertResponseIsSuccessful();
+        self::assertRouteSame('login');
+        $this->client->request('GET', $reset);
+        self::assertResponseIsSuccessful();
+        self::assertRouteSame('reset_password_request');
     }
 
     public function testTheTermsAndAPasswordOfTwelveCharacters(): void
@@ -150,8 +157,14 @@ final class RegistrationTest extends WebTestCase
             'registration[acceptsTerms]' => true,
         ]);
 
-        self::assertEmailSubjectContains(self::lastEmail(), 'Vérifiez votre adresse pour Hop Garden');
+        $email = self::lastEmail();
+        self::assertEmailSubjectContains($email, 'Vérifiez votre adresse pour Hop Garden');
         self::assertSame(SupportedLocale::French, $this->user('alice@example.com')->getPreferredLocale());
+
+        $this->client->request('GET', self::textLinksOf($email)[0]);
+        self::assertResponseRedirects('/register/waiting-list', 303);
+        $this->client->followRedirect();
+        self::assertSelectorTextSame('h1', 'Vous êtes sur la liste d’attente');
     }
 
     private function register(string $email, string $displayName = 'Alice'): void

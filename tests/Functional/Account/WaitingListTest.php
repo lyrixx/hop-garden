@@ -82,7 +82,7 @@ final class WaitingListTest extends WebTestCase
         self::assertEmailAddressContains($email, 'to', 'dave@example.com');
         self::assertEmailSubjectContains($email, 'Vous pouvez entrer', 'In the language of Dave, not of the administrator.');
         self::assertEmailHtmlBodyContains($email, 'Bonjour Dave,');
-        self::assertStringEndsWith('/login', self::linkOf($email));
+        $login = self::textLinksOf($email)[0];
         $crawler = $this->client->followRedirect();
         self::assertSelectorTextContains('#flash-messages', 'Dave is approved, and gets the email.');
         self::assertSame([], $this->names($crawler));
@@ -90,20 +90,26 @@ final class WaitingListTest extends WebTestCase
         self::assertSame('2026-11-22 10:00', $this->reload($dave)->getApprovedAt()?->format('Y-m-d H:i'));
 
         $this->client->restart();
+        $this->client->request('GET', $login);
+        self::assertResponseIsSuccessful();
+        self::assertRouteSame('login');
         $this->logInWithTheForm($this->client, 'dave@example.com');
         self::assertResponseRedirects('/assistant', 302, 'In.');
     }
 
     public function testRefusedTheMemberGetsAnEmailAndStaysOut(): void
     {
-        $dave = UserFactory::new()->verified()->create(['email' => 'dave@example.com', 'displayName' => 'Dave']);
+        $dave = UserFactory::new()->verified()->create(['email' => 'dave@example.com', 'displayName' => "Dave O'Brien"]);
         $this->logInWithoutGarden($this->client, UserFactory::new()->admin()->create());
 
         $crawler = $this->client->request('GET', '/admin/waiting-list');
         $this->client->submit($crawler->filter('form[action*="/refuse"]')->form());
 
         self::assertResponseRedirects('/admin/waiting-list');
-        self::assertEmailSubjectContains(self::lastEmail(), 'Your request to join Hop Garden');
+        $email = self::lastEmail();
+        self::assertEmailSubjectContains($email, 'Your request to join Hop Garden');
+        self::assertEmailTextBodyContains($email, "Hello Dave O'Brien,");
+        self::assertSame([], self::textLinksOf($email), 'No link.');
         self::assertSame(AccessStatus::Refused, $this->reload($dave)->getAccessStatus());
 
         $this->client->restart();
