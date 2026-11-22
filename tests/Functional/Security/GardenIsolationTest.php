@@ -3,6 +3,7 @@
 namespace App\Tests\Functional\Security;
 
 use App\Chat\Message\RunAgent;
+use App\Factory\PlantingFactory;
 use App\Garden\Entity\Garden;
 use App\Garden\Entity\Planting;
 use App\Garden\PlantingRepository;
@@ -39,6 +40,8 @@ final class GardenIsolationTest extends WebTestCase
         'account', 'account_email', 'account_email_confirm', 'account_password', 'account_delete',
         // The species search of Trefle, of no garden; its quota counts per garden (GardenQuotas)
         'ux_live_component',
+        // Her subscriber cookie, renewed: her topics (MercureSubscriptionTest)
+        'mercure_cookie',
     ];
 
     /**
@@ -137,6 +140,32 @@ final class GardenIsolationTest extends WebTestCase
 
         $this->client->request('POST', $url, ['planting_0196a1b2c3d47e5f8a9b0c1d2e3f4a5b' => ['name' => 'Mine now']]);
         self::assertSame([], self::getContainer()->get(PlantingRepository::class)->findBy(['name' => 'Mine now']), 'Nothing added.');
+    }
+
+    /**
+     * Their ids in the body of her forms: not a choice, not a species of hers.
+     */
+    public function testTheirIdsInHerFormsAreRefused(): void
+    {
+        $crawler = $this->client->request('GET', '/garden/new');
+        $values = $crawler->selectButton('Add to my garden')->form()->getPhpValues();
+        $values['planting']['name'] = 'In their terrace';
+        $values['planting']['space'] = (string) $this->gardens->terrace->getId();
+        $this->client->request('POST', '/garden/new', $values);
+        self::assertResponseStatusCodeSame(422, 'Their space is no choice of hers.');
+        self::assertSame([], self::getContainer()->get(PlantingRepository::class)->findBy(['name' => 'In their terrace']));
+
+        // A plant of hers of their species: their care sheet is not offered, nor taken
+        $mine = PlantingFactory::new()->draftingFailed()->create(['garden' => $this->gardens->balcony, 'name' => 'My musk rose', 'scientificName' => 'Rosa moschata']);
+        $crawler = $this->client->request('GET', '/garden/' . $mine->getId());
+        self::assertResponseIsSuccessful();
+        self::assertStringNotContainsString('Climbing rose', $crawler->filter('main')->text());
+        $this->client->request('POST', '/garden/' . $mine->getId() . '/plant', ['plant' => $this->gardens->rose->getId(), '_token' => $crawler->filter('input[name="_token"]')->first()->attr('value')]);
+        self::assertResponseRedirects('/garden/' . $mine->getId(), 303);
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('.flash-warning', 'This care sheet is not a validated one of the same species.');
+        self::getContainer()->get(EntityManagerInterface::class)->clear();
+        self::assertNull(self::getContainer()->get(PlantingRepository::class)->find($mine->getId())?->getPlant());
     }
 
     public function testHerMessagesAndTheirsStayInTheirGarden(): void
