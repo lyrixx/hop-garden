@@ -2,10 +2,10 @@
 
 namespace App\Tests\Unit\Garden;
 
-use App\Tests\Utils\Translation\Translators;
 use App\Garden\Entity\Space;
 use App\Garden\Model\Soil;
 use App\Plant\Model\Exposure;
+use App\Tests\Utils\Translation\Translators;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 

@@ -2,8 +2,6 @@
 
 namespace App\Tests\Unit\Garden;
 
-use App\Locale\IntlFormatter;
-use App\Tests\Utils\Translation\Translators;
 use App\DataSource\OpenMeteo\Model\DailyMinimum;
 use App\DataSource\OpenMeteo\Model\FrostForecast;
 use App\Garden\Entity\Planting;
@@ -14,11 +12,13 @@ use App\Garden\Recommendation\Model\Recommendation;
 use App\Garden\Recommendation\Model\RecommendationLevel;
 use App\Garden\Recommendation\Model\RecommendationSubject;
 use App\Garden\Recommendation\RecommendationEngine;
+use App\Locale\IntlFormatter;
 use App\Plant\Entity\CareSheet;
 use App\Plant\Model\Exposure;
 use App\Plant\Model\Watering;
 use App\Reminder\FrostRiskEvaluator;
 use App\Tests\Utils\Factory\PlantFactory;
+use App\Tests\Utils\Translation\Translators;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -28,8 +28,21 @@ final class RecommendationEngineTest extends TestCase
 
     protected function setUp(): void
     {
-        $translator = Translators::for('en');
-        $this->engine = new RecommendationEngine(new FrostRiskEvaluator(), $translator, new IntlFormatter($translator));
+        $this->engine = self::engine('en');
+    }
+
+    /**
+     * Each language its articles and prepositions: "le plein soleil", "à la mi-ombre", "d’ombre".
+     */
+    public function testTheExposuresInFrench(): void
+    {
+        $this->engine = self::engine('fr');
+
+        self::assertSame('La mi-ombre lui convient.', $this->recommend(RecommendationSubject::Exposure, self::planting(Exposure::PartShade), PlantFactory::careSheet(exposure: Exposure::PartShade))->message);
+        self::assertSame(
+            "Elle a besoin du plein soleil et se trouve ici à l’ombre\u{a0}: déplacez-la vers un coin en plein soleil, à l’automne ou au début du printemps.",
+            $this->recommend(RecommendationSubject::Exposure, self::planting(Exposure::Shade), PlantFactory::careSheet(exposure: Exposure::Sun))->message,
+        );
     }
 
     public function testTheSameExposureSuitsIt(): void
@@ -324,6 +337,13 @@ final class RecommendationEngineTest extends TestCase
         $recommendation = $this->recommend(RecommendationSubject::Pruning, $planting, PlantFactory::careSheet(pruningMonths: [3]), '2026-07-01');
 
         self::assertSame('Prune it in March. Cut the faded flower heads back to the first pair of buds. Last pruned on 10 March 2026.', $recommendation->message);
+    }
+
+    private static function engine(string $locale): RecommendationEngine
+    {
+        $translator = Translators::for($locale);
+
+        return new RecommendationEngine(new FrostRiskEvaluator(), $translator, new IntlFormatter($translator));
     }
 
     private function recommend(RecommendationSubject $subject, Planting $planting, CareSheet $careSheet, string $today = '2026-12-01', ?FrostForecast $forecast = null): Recommendation

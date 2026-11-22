@@ -2,7 +2,6 @@
 
 namespace App\Tests\Integration\DataFixtures;
 
-use Symfony\Contracts\Translation\TranslatorInterface;
 use App\DataFixtures\DemoFixtures;
 use App\Garden\Entity\Planting;
 use App\Garden\Entity\Space;
@@ -16,6 +15,7 @@ use App\Reminder\ReminderChecker;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * What "castor demo:reset" then "castor demo:frost" show, on the test database.

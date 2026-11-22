@@ -3,7 +3,6 @@
 namespace App\Tests\Unit\Plant;
 
 use App\Locale\IntlFormatter;
-use App\Tests\Utils\Translation\Translators;
 use App\Plant\CareSheetPresenter;
 use App\Plant\Entity\CareSheet;
 use App\Plant\Model\CareSheetField;
@@ -13,6 +12,7 @@ use App\Plant\Model\Exposure;
 use App\Plant\Model\Source;
 use App\Plant\Model\Watering;
 use App\Tests\Utils\Factory\PlantFactory;
+use App\Tests\Utils\Translation\Translators;
 use PHPUnit\Framework\TestCase;
 
 final class CareSheetPresenterTest extends TestCase
