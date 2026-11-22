@@ -4,6 +4,8 @@ framework:
 
     # Note that the session will be started ONLY if you read or write from it.
     session:
+        # 12 hours without a request before a session expires (24 minutes in php.ini-production)
+        gc_maxlifetime: 43200
         # In the share dir (APP_SHARE_DIR), a volume in production: the conversation of the chat
         # survives a deployment
         save_path: '%kernel.share_dir%/sessions'
