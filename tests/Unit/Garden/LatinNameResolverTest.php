@@ -4,7 +4,13 @@ namespace App\Tests\Unit\Garden;
 
 use App\DataSource\DataSourceCache;
 use App\DataSource\Demo\RecordedLatinNames;
+use App\Factory\GardenFactory;
+use App\Garden\Exception\QuotaReachedException;
+use App\Garden\GardenQuotas;
 use App\Garden\LatinNameResolver;
+use App\Tests\Utils\Factory\EntityId;
+use App\Tests\Utils\Garden\FixedCurrentGarden;
+use App\Tests\Utils\Garden\InMemoryQuotas;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
 use Symfony\AI\Platform\Exception\RuntimeException;
@@ -25,6 +31,22 @@ final class LatinNameResolverTest extends TestCase
 
     /** @var list<string> */
     private array $warnings = [];
+
+    private ?GardenQuotas $quotas = null;
+
+    public function testEachQuestionCountsInTheQuotaOfTheGarden(): void
+    {
+        $this->quotas = InMemoryQuotas::create(latinNames: 2);
+        $this->answers = ['["Rosa"]', '["Lavandula"]'];
+        $resolver = $this->resolver();
+
+        $resolver->resolve('rosier', 'fr');
+        $resolver->resolve('rosier', 'fr');
+        $resolver->resolve('lavande', 'fr');
+
+        $this->expectException(QuotaReachedException::class);
+        $resolver->resolve('hortensia', 'fr');
+    }
 
     public function testTheLlmIsAskedOncePerNameAndLanguage(): void
     {
@@ -119,6 +141,6 @@ final class LatinNameResolverTest extends TestCase
             }
         };
 
-        return new LatinNameResolver($platform, 'claude-sonnet-5-5', new RecordedLatinNames(\dirname(__DIR__, 3) . '/fixtures/llm/latin-names.json'), new DataSourceCache(new ArrayAdapter(), $demo), $logger, $demo);
+        return new LatinNameResolver($platform, 'claude-sonnet-5-5', new RecordedLatinNames(\dirname(__DIR__, 3) . '/fixtures/llm/latin-names.json'), new DataSourceCache(new ArrayAdapter(), $demo), $logger, $demo, $this->quotas ?? InMemoryQuotas::create(), new FixedCurrentGarden(EntityId::assign(GardenFactory::createOne(), 1)));
     }
 }

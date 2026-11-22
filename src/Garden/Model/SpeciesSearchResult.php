@@ -5,7 +5,8 @@ namespace App\Garden\Model;
 use App\DataSource\Trefle\Model\PlantCandidate;
 
 /**
- * The species found for the name of a planting. Trefle may know none of them, or not answer.
+ * The species found for the name of a planting. Trefle may know none of them, or not answer; the LLM may not be asked
+ * for its Latin names, the quota of the garden spent.
  */
 final readonly class SpeciesSearchResult
 {
@@ -15,6 +16,7 @@ final readonly class SpeciesSearchResult
     private function __construct(
         public array $candidates,
         public bool $trefleUnavailable,
+        public bool $latinNamesQuotaReached,
     ) {
     }
 
@@ -23,12 +25,20 @@ final readonly class SpeciesSearchResult
      */
     public static function found(array $candidates): self
     {
-        return new self($candidates, false);
+        return new self($candidates, false, false);
     }
 
     public static function trefleUnavailable(): self
     {
-        return new self([], true);
+        return new self([], true, false);
+    }
+
+    /**
+     * Trefle found nothing for the name as typed, and the LLM was not asked for its Latin names.
+     */
+    public static function latinNamesQuotaReached(): self
+    {
+        return new self([], false, true);
     }
 
     public function find(int $trefleId): ?PlantCandidate

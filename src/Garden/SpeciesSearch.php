@@ -5,6 +5,7 @@ namespace App\Garden;
 use App\DataSource\Exception\DataSourceUnavailableException;
 use App\DataSource\Trefle\Model\PlantCandidate;
 use App\DataSource\Trefle\TrefleClient;
+use App\Garden\Exception\QuotaReachedException;
 use App\Garden\Model\SpeciesSearchResult;
 use App\Locale\Model\SupportedLocale;
 use Psr\Log\LoggerInterface;
@@ -51,6 +52,10 @@ final readonly class SpeciesSearch
             $this->logger->warning('Species search unavailable.', ['exception' => $e]);
 
             return SpeciesSearchResult::trefleUnavailable();
+        } catch (QuotaReachedException $e) {
+            $this->logger->warning('Species search without its Latin names: the quota of the garden is spent.', ['exception' => $e]);
+
+            return SpeciesSearchResult::latinNamesQuotaReached();
         }
 
         return SpeciesSearchResult::found($candidates);

@@ -4,6 +4,9 @@ framework:
             # Answers of Trefle and Open-Meteo (see App\DataSource\DataSourceCache)
             data_source.cache:
                 adapter: cache.app
+            # The quotas of the gardens (config/packages/framework.yaml, rate_limiter)
+            garden_quota.cache:
+                adapter: cache.app
 
 when@test:
     framework:

@@ -14,6 +14,22 @@ framework:
     #fragments: true
 
     trusted_proxies: '%env(TRUSTED_PROXIES)%'
+
+    # The quotas of a garden, against the cost of the LLM (App\Garden\GardenQuotas)
+    rate_limiter:
+        # The runs of its agent: the messages of the chat and the care sheets it drafts
+        garden_agent_runs:
+            policy: sliding_window
+            limit: 200
+            interval: '1 day'
+            cache_pool: garden_quota.cache
+        # The Latin names the species search asks the LLM for (App\Garden\LatinNameResolver)
+        garden_latin_names:
+            policy: sliding_window
+            limit: 100
+            interval: '1 day'
+            cache_pool: garden_quota.cache
+
 when@test:
     framework:
         test: true

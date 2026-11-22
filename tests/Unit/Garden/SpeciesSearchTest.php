@@ -7,9 +7,13 @@ use App\DataSource\Demo\RecordedLatinNames;
 use App\DataSource\Demo\RecordedResponses;
 use App\DataSource\Trefle\Model\PlantCandidate;
 use App\DataSource\Trefle\TrefleClient;
+use App\Factory\GardenFactory;
 use App\Garden\LatinNameResolver;
 use App\Garden\Model\SpeciesSearchResult;
 use App\Garden\SpeciesSearch;
+use App\Tests\Utils\Factory\EntityId;
+use App\Tests\Utils\Garden\FixedCurrentGarden;
+use App\Tests\Utils\Garden\InMemoryQuotas;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -96,7 +100,7 @@ final class SpeciesSearchTest extends TestCase
 
         return new SpeciesSearch(
             new TrefleClient($httpClient, $cache, new NullLogger(), 'token', false),
-            new LatinNameResolver($platform, 'claude-sonnet-5-5', new RecordedLatinNames(\dirname(__DIR__, 3) . '/fixtures/llm/latin-names.json'), $cache, new NullLogger(), false),
+            new LatinNameResolver($platform, 'claude-sonnet-5-5', new RecordedLatinNames(\dirname(__DIR__, 3) . '/fixtures/llm/latin-names.json'), $cache, new NullLogger(), false, InMemoryQuotas::create(), new FixedCurrentGarden(EntityId::assign(GardenFactory::createOne(), 1))),
             new LocaleSwitcher($locale, []),
             new NullLogger(),
         )->search($name);

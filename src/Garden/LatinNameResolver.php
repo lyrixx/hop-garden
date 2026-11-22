@@ -5,6 +5,7 @@ namespace App\Garden;
 use App\DataSource\DataSourceCache;
 use App\DataSource\Demo\RecordedLatinNames;
 use App\DataSource\Exception\UnexpectedResponseException;
+use App\Garden\Exception\QuotaReachedException;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Platform\Exception\ExceptionInterface as PlatformException;
 use Symfony\AI\Platform\Message\Message;
@@ -17,8 +18,8 @@ use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpException;
 /**
  * The Latin names a vernacular name may stand for ("rosier" is Rosa), asked to the LLM in one short call: the fallback
  * of SpeciesSearch, for a name Trefle does not know. Cached per name and language, an answer without any name too; a
- * failure is not, it is asked again next time. In demo mode, and so in the tests, the names are recorded ones
- * (RecordedLatinNames): no network.
+ * failure is not, it is asked again next time. Each question counts in the quota of the current garden (GardenQuotas).
+ * In demo mode, and so in the tests, the names are recorded ones (RecordedLatinNames): no network, no quota.
  */
 final readonly class LatinNameResolver
 {
@@ -39,6 +40,8 @@ final readonly class LatinNameResolver
         private LoggerInterface $logger,
         #[Autowire(env: 'bool:APP_DEMO')]
         private bool $demo,
+        private GardenQuotas $gardenQuotas,
+        private CurrentGarden $currentGarden,
     ) {
     }
 
@@ -46,6 +49,8 @@ final readonly class LatinNameResolver
      * @param string $locale the language of the name
      *
      * @return list<string> the most likely first, none when the LLM knows no plant of that name or does not answer
+     *
+     * @throws QuotaReachedException
      */
     public function resolve(string $name, string $locale): array
     {
@@ -63,6 +68,10 @@ final readonly class LatinNameResolver
      */
     private function ask(string $name, string $locale): array
     {
+        if (!$this->gardenQuotas->consumeLatinNames($this->currentGarden->get())) {
+            throw QuotaReachedException::forLatinNames();
+        }
+
         $language = \Locale::getDisplayLanguage($locale, 'en');
         $maxNames = self::MAX_NAMES;
         $answer = $this->platform->invoke($this->model, new MessageBag(
