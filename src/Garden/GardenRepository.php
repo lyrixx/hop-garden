@@ -35,6 +35,27 @@ class GardenRepository extends ServiceEntityRepository
     }
 
     /**
+     * The base, and the slugs it starts with a dash after: "my-garden", "my-garden-2"... Of the whole site: see
+     * App\Garden\Slugs.
+     *
+     * @return list<string>
+     */
+    public function findSlugsStartingWith(string $base): array
+    {
+        /** @var list<string> $slugs */
+        $slugs = $this->createQueryBuilder('garden')
+            ->select('garden.slug')
+            ->andWhere('garden.slug = :base OR garden.slug LIKE :suffixed')
+            ->setParameter('base', $base)
+            ->setParameter('suffixed', $base . '-%')
+            ->getQuery()
+            ->getSingleColumnResult()
+        ;
+
+        return $slugs;
+    }
+
+    /**
      * @return list<Garden> the gardens of this member, the one they joined first first
      */
     public function findOfMember(User $user): array

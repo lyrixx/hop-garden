@@ -7,6 +7,7 @@ use App\Garden\Entity\Space;
 use App\Garden\Form\Model\SpaceFormData;
 use App\Garden\Form\SpaceType;
 use App\Garden\Security\GardenResourceVoter;
+use App\Garden\Slugs;
 use App\Garden\SpaceRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
@@ -38,7 +39,7 @@ final class SpaceController extends AbstractController
     }
 
     #[Route('/spaces/new', name: 'space_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, ClockInterface $clock): Response
+    public function new(Request $request, Slugs $slugs, ClockInterface $clock): Response
     {
         $garden = $this->currentGarden->get();
         $data = new SpaceFormData();
@@ -46,9 +47,12 @@ final class SpaceController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $space = $data->toSpace($garden, $clock->now());
-            $this->spaceRepository->add($space);
-            $this->entityManager->flush();
+            $space = $this->entityManager->wrapInTransaction(function () use ($data, $garden, $slugs, $clock): Space {
+                $space = $data->toSpace($garden, $slugs->forSpace($garden, $data->name), $clock->now());
+                $this->spaceRepository->add($space);
+
+                return $space;
+            });
 
             $this->addFlash('success', new TranslatableMessage('flash.space.added', ['name' => $space->getName()]));
 

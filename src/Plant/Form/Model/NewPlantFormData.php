@@ -42,12 +42,13 @@ final class NewPlantFormData implements SpeciesPickerData
     /**
      * A draft with the names of Trefle, and a care sheet to fill in.
      */
-    public function toPlant(Garden $garden, PlantCandidate $candidate, \DateTimeImmutable $createdAt): Plant
+    public function toPlant(Garden $garden, PlantCandidate $candidate, string $slug, \DateTimeImmutable $createdAt): Plant
     {
         return Plant::propose(
             $garden,
             $candidate->commonName ?? trim($this->name),
             $candidate->scientificName,
+            $slug,
             // Trefle may not know its family: the card shows none
             $candidate->family ?? '',
             CareSheet::blank([new Source(Source::TREFLE)]),

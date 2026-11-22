@@ -8,6 +8,7 @@ use App\DataSource\OpenMeteo\GeocodingClient;
 use App\Garden\Entity\Garden;
 use App\Garden\Entity\GardenLocation;
 use App\Garden\GardenRepository;
+use App\Garden\Slugs;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
@@ -37,6 +38,7 @@ final readonly class AdoptOrphansCommand
         private GeocodingClient $geocodingClient,
         private EntityManagerInterface $entityManager,
         private ClockInterface $clock,
+        private Slugs $slugs,
     ) {
     }
 
@@ -76,7 +78,7 @@ final readonly class AdoptOrphansCommand
         }
 
         $adopted = $this->connection->transactional(function () use ($user, $name, $place): array {
-            $garden = Garden::create(trim($name), new GardenLocation($place->label(), $place->latitude, $place->longitude, $place->timezone), $user, $this->clock->now());
+            $garden = Garden::create(trim($name), $this->slugs->forGarden(trim($name)), new GardenLocation($place->label(), $place->latitude, $place->longitude, $place->timezone), $user, $this->clock->now());
             $this->gardenRepository->add($garden);
             $this->entityManager->flush();
 

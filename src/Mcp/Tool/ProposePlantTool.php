@@ -3,6 +3,7 @@
 namespace App\Mcp\Tool;
 
 use App\Garden\CurrentGarden;
+use App\Garden\Slugs;
 use App\Mcp\CareSheetInput;
 use App\Mcp\PlantNormalizer;
 use App\Plant\Entity\Plant;
@@ -43,6 +44,7 @@ final readonly class ProposePlantTool
         private PlantNormalizer $plantNormalizer,
         private ClockInterface $clock,
         private CurrentGarden $currentGarden,
+        private Slugs $slugs,
     ) {
     }
 
@@ -73,9 +75,13 @@ final readonly class ProposePlantTool
             throw new ToolCallException($e->getMessage());
         }
 
-        $plant = Plant::propose($this->currentGarden->get(), trim($common_name), trim($scientific_name), trim($family), $careSheet, $this->clock->now(), $trefle_id, $image_url, $notes);
-        $this->plantRepository->add($plant);
-        $this->entityManager->flush();
+        $garden = $this->currentGarden->get();
+        $plant = $this->entityManager->wrapInTransaction(function () use ($garden, $common_name, $scientific_name, $family, $careSheet, $trefle_id, $image_url, $notes): Plant {
+            $plant = Plant::propose($garden, trim($common_name), trim($scientific_name), $this->slugs->forSpecies($garden, trim($scientific_name)), trim($family), $careSheet, $this->clock->now(), $trefle_id, $image_url, $notes);
+            $this->plantRepository->add($plant);
+
+            return $plant;
+        });
 
         return [
             'plant_id' => $plant->getId()->toRfc4122(),

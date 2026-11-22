@@ -7,6 +7,7 @@ use App\Garden\PlantingRepository;
 use App\Garden\PlantValidation;
 use App\Garden\Security\GardenResourceVoter;
 use App\Garden\Security\PlantValidationVoter;
+use App\Garden\Slugs;
 use App\Garden\SpeciesSearch;
 use App\Plant\Entity\Plant;
 use App\Plant\Exception\PlantAlreadyValidatedException;
@@ -56,7 +57,7 @@ final class PlantController extends AbstractController
      * that has its care sheet already is not made twice.
      */
     #[Route('/plants/new', name: 'plant_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, SpeciesSearch $speciesSearch, ClockInterface $clock): Response
+    public function new(Request $request, SpeciesSearch $speciesSearch, Slugs $slugs, ClockInterface $clock): Response
     {
         $garden = $this->currentGarden->get();
         $data = new NewPlantFormData();
@@ -73,9 +74,12 @@ final class PlantController extends AbstractController
                 return $this->redirectToRoute('plant_show', ['id' => $existing->getId()], Response::HTTP_SEE_OTHER);
             }
 
-            $plant = $data->toPlant($garden, $candidate, $clock->now());
-            $this->plantRepository->add($plant);
-            $this->entityManager->flush();
+            $plant = $this->entityManager->wrapInTransaction(function () use ($data, $garden, $candidate, $slugs, $clock): Plant {
+                $plant = $data->toPlant($garden, $candidate, $slugs->forSpecies($garden, $candidate->scientificName), $clock->now());
+                $this->plantRepository->add($plant);
+
+                return $plant;
+            });
 
             $this->addFlash('success', new TranslatableMessage('flash.species.draft_ready', ['name' => $plant->getCommonName()]));
 

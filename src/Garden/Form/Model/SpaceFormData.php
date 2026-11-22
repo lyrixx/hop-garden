@@ -51,14 +51,14 @@ final class SpaceFormData
         return $data;
     }
 
-    public function toSpace(Garden $garden, \DateTimeImmutable $createdAt): Space
+    public function toSpace(Garden $garden, string $slug, \DateTimeImmutable $createdAt): Space
     {
-        return new Space($garden, trim($this->name), $this->exposure, $this->soil, $createdAt);
+        return new Space($garden, trim($this->name), $slug, $this->exposure, $this->soil, $createdAt);
     }
 
-    public function toProposedSpace(Garden $garden, Uuid $proposalId, \DateTimeImmutable $createdAt): Space
+    public function toProposedSpace(Garden $garden, Uuid $proposalId, string $slug, \DateTimeImmutable $createdAt): Space
     {
-        return Space::proposed($garden, $proposalId, trim($this->name), $this->exposure, $this->soil, $createdAt);
+        return Space::proposed($garden, $proposalId, trim($this->name), $slug, $this->exposure, $this->soil, $createdAt);
     }
 
     public function applyTo(Space $space): void

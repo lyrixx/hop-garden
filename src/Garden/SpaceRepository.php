@@ -74,6 +74,28 @@ class SpaceRepository extends ServiceEntityRepository
     }
 
     /**
+     * The base, and the slugs it starts with a dash after: "rose", "rose-2"... See App\Garden\Slugs.
+     *
+     * @return list<string>
+     */
+    public function findSlugsStartingWith(Garden $garden, string $base): array
+    {
+        /** @var list<string> $slugs */
+        $slugs = $this->createQueryBuilder('space')
+            ->select('space.slug')
+            ->andWhere('space.garden = :garden')
+            ->andWhere('space.slug = :base OR space.slug LIKE :suffixed')
+            ->setParameter('garden', $garden)
+            ->setParameter('base', $base)
+            ->setParameter('suffixed', $base . '-%')
+            ->getQuery()
+            ->getSingleColumnResult()
+        ;
+
+        return $slugs;
+    }
+
+    /**
      * Whatever its garden: a proposal id is unique. The caller checks the space is of the current one.
      */
     public function findOneByProposalId(Uuid $proposalId): ?Space

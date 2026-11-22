@@ -10,12 +10,14 @@ use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
  * A garden in Paris, its owner an approved member of their own: ownedBy() for a given one, withMembers() for the
- * others, who join it the day after.
+ * others, who join it the day after. Its slug comes from its name, unless told.
  *
  * @extends PersistentObjectFactory<Garden>
  */
 final class GardenFactory extends PersistentObjectFactory
 {
+    use FreeSlug;
+
     public static function class(): string
     {
         return Garden::class;
@@ -57,6 +59,13 @@ final class GardenFactory extends PersistentObjectFactory
 
     protected function initialize(): static
     {
-        return $this->instantiateWith(Instantiator::namedConstructor('create'));
+        return $this
+            ->beforeInstantiate(static function (array $attributes): array {
+                $attributes['slug'] ??= self::freeSlug($attributes['name'] ?? null, static fn (): array => array_map(static fn (Garden $garden): string => $garden->getSlug(), static::repository()->findAll()));
+
+                return $attributes;
+            })
+            ->instantiateWith(Instantiator::namedConstructor('create'))
+        ;
     }
 }

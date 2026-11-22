@@ -21,6 +21,7 @@ use Symfony\Component\Uid\Uuid;
  */
 #[ORM\Entity(repositoryClass: PlantRepository::class)]
 #[ORM\Index(fields: ['status'])]
+#[ORM\UniqueConstraint(fields: ['garden', 'slug'])]
 class Plant
 {
     #[ORM\Id]
@@ -45,6 +46,11 @@ class Plant
         private string $commonName,
         #[ORM\Column]
         private string $scientificName,
+        /**
+         * The name of its URL, from its Latin name, unique in its garden: see App\Garden\Slugs. A revision keeps it.
+         */
+        #[ORM\Column]
+        private string $slug,
         #[ORM\Column]
         private string $family,
         #[ORM\Embedded(columnPrefix: 'care_')]
@@ -69,6 +75,7 @@ class Plant
         Garden $garden,
         string $commonName,
         string $scientificName,
+        string $slug,
         string $family,
         CareSheet $careSheet,
         \DateTimeImmutable $createdAt,
@@ -76,7 +83,7 @@ class Plant
         ?string $imageUrl = null,
         ?string $notes = null,
     ): self {
-        return new self($garden, $commonName, $scientificName, $family, $careSheet, $createdAt, $trefleId, $imageUrl, $notes);
+        return new self($garden, $commonName, $scientificName, $slug, $family, $careSheet, $createdAt, $trefleId, $imageUrl, $notes);
     }
 
     public function validate(\DateTimeImmutable $validatedAt): void
@@ -159,6 +166,11 @@ class Plant
     public function getScientificName(): string
     {
         return $this->scientificName;
+    }
+
+    public function getSlug(): string
+    {
+        return $this->slug;
     }
 
     public function getFamily(): string

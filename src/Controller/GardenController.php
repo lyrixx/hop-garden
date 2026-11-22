@@ -21,6 +21,7 @@ use App\Garden\PlantingPhotoStorage;
 use App\Garden\PlantingRepository;
 use App\Garden\Recommendation\RecommendationEngine;
 use App\Garden\Security\GardenResourceVoter;
+use App\Garden\Slugs;
 use App\Locale\PreferredLocale;
 use App\Mcp\Agent\AgentRunTokens;
 use App\Mercure\Topics;
@@ -88,6 +89,7 @@ final class GardenController extends AbstractController
     public function new(
         Request $request,
         PlantingPhotoStorage $photoStorage,
+        Slugs $slugs,
         #[CurrentUser]
         User $user,
         #[MapQueryParameter(name: 'plant')]
@@ -101,8 +103,12 @@ final class GardenController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $photoFilename = null !== $data->photo ? $photoStorage->store($data->photo) : null;
-            $planting = $data->toPlanting($garden, $this->clock->now(), $photoFilename);
-            $this->plantingRepository->add($planting);
+            $planting = $this->entityManager->wrapInTransaction(function () use ($data, $garden, $slugs, $photoFilename): Planting {
+                $planting = $data->toPlanting($garden, $slugs->forPlanting($garden, $data->name), $this->clock->now(), $photoFilename);
+                $this->plantingRepository->add($planting);
+
+                return $planting;
+            });
 
             // A care sheet already validated for this species: no need for the agent
             $sameSpeciesPlant = $plant ?? $this->sameSpeciesPlants($planting)[0] ?? null;

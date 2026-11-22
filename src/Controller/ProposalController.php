@@ -14,6 +14,7 @@ use App\Garden\Model\SpaceProposal;
 use App\Garden\PlantingRepository;
 use App\Garden\Security\GardenOfTheResource;
 use App\Garden\Security\GardenResourceVoter;
+use App\Garden\Slugs;
 use App\Garden\SpaceRepository;
 use App\Plant\Model\Exposure;
 use App\Plant\PlantRepository;
@@ -51,6 +52,7 @@ final class ProposalController extends AbstractController
         private readonly LoggerInterface $logger,
         private readonly CurrentGarden $currentGarden,
         private readonly GardenOfTheResource $gardenOfTheResource,
+        private readonly Slugs $slugs,
     ) {
     }
 
@@ -97,8 +99,7 @@ final class ProposalController extends AbstractController
         $form->handleRequest($request);
 
         if (null !== $plant && null === $unavailable && $form->isSubmitted() && $form->isValid()) {
-            $plantingRepository->add(Planting::proposed($proposal->proposalId, trim($data->name), $plant, $space, $this->clock->now()));
-            $this->flushOnce();
+            $this->insertOnce(fn () => $plantingRepository->add(Planting::proposed($proposal->proposalId, trim($data->name), $this->slugs->forPlanting($plant->getGarden(), trim($data->name)), $plant, $space, $this->clock->now())));
 
             return $this->redirect($cardUrl, Response::HTTP_SEE_OTHER);
         }
@@ -138,8 +139,8 @@ final class ProposalController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $spaceRepository->add($data->toProposedSpace($this->currentGarden->get(), $proposal->proposalId, $this->clock->now()));
-            $this->flushOnce();
+            $garden = $this->currentGarden->get();
+            $this->insertOnce(fn () => $spaceRepository->add($data->toProposedSpace($garden, $proposal->proposalId, $this->slugs->forSpace($garden, $data->name), $this->clock->now())));
 
             return $this->redirect($cardUrl, Response::HTTP_SEE_OTHER);
         }
@@ -169,12 +170,15 @@ final class ProposalController extends AbstractController
 
     /**
      * Found by its proposal id before, but two taps may race: the unique key keeps one row. The entity manager is closed
-     * after the failed flush, so the card is read again in the request of the redirect.
+     * after the failed flush, so the card is read again in the request of the redirect. Its slug is picked in the same
+     * transaction: see Slugs.
+     *
+     * @param \Closure(): void $add
      */
-    private function flushOnce(): void
+    private function insertOnce(\Closure $add): void
     {
         try {
-            $this->entityManager->flush();
+            $this->entityManager->wrapInTransaction($add);
         } catch (UniqueConstraintViolationException $e) {
             $this->logger->warning('A card was tapped twice at once: the other tap added it.', ['exception' => $e]);
         }

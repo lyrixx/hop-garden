@@ -49,6 +49,28 @@ class PlantRepository extends ServiceEntityRepository
     }
 
     /**
+     * The base, and the slugs it starts with a dash after: "rose", "rose-2"... See App\Garden\Slugs.
+     *
+     * @return list<string>
+     */
+    public function findSlugsStartingWith(Garden $garden, string $base): array
+    {
+        /** @var list<string> $slugs */
+        $slugs = $this->createQueryBuilder('p')
+            ->select('p.slug')
+            ->andWhere('p.garden = :garden')
+            ->andWhere('p.slug = :base OR p.slug LIKE :suffixed')
+            ->setParameter('garden', $garden)
+            ->setParameter('base', $base)
+            ->setParameter('suffixed', $base . '-%')
+            ->getQuery()
+            ->getSingleColumnResult()
+        ;
+
+        return $slugs;
+    }
+
+    /**
      * Read again and locked until the current transaction ends: a concurrent request waits, then sees the outcome.
      */
     public function lock(Plant $plant): void

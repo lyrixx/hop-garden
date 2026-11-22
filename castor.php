@@ -138,7 +138,7 @@ function garden_adopt_orphans(#[AsRawTokens] array $rawTokens = []): int
 
     // The last migration before the one that refuses a row without garden (Version20261123120000). Never down: a
     // database past it has no orphan
-    $lastWithOrphans = 'DoctrineMigrations\Version20261123100000';
+    $lastWithOrphans = 'DoctrineMigrations\Version20261123110000';
     docker_compose_run(['bin/console', 'doctrine:database:create', '--if-not-exists']);
     $current = explode(' ', trim(docker_compose_run(['bin/console', 'doctrine:migrations:current', '--no-ansi'], c: context()->withQuiet())->getOutput()))[0];
     if (strcmp($current, $lastWithOrphans) < 0) {

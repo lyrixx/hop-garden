@@ -9,12 +9,14 @@ use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
  * A spot of the garden whose exposure and soil the user has not told yet, in the default garden of the test unless
- * told (DefaultGardenStory).
+ * told (DefaultGardenStory). Its slug comes from its name, unless told.
  *
  * @extends PersistentObjectFactory<Space>
  */
 final class SpaceFactory extends PersistentObjectFactory
 {
+    use FreeSlug;
+
     public static function class(): string
     {
         return Space::class;
@@ -29,5 +31,15 @@ final class SpaceFactory extends PersistentObjectFactory
             'soil' => null,
             'createdAt' => new \DateTimeImmutable('2026-11-01'),
         ];
+    }
+
+    protected function initialize(): static
+    {
+        return $this->beforeInstantiate(static function (array $attributes): array {
+            $attributes['garden'] = self::gardenOf($attributes['garden'] ?? null);
+            $attributes['slug'] ??= self::freeSlug($attributes['name'] ?? null, static fn (): array => array_map(static fn (Space $space): string => $space->getSlug(), static::repository()->findBy(['garden' => $attributes['garden']])), $attributes['garden']);
+
+            return $attributes;
+        });
     }
 }

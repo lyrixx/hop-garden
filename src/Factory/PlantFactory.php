@@ -11,12 +11,14 @@ use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
  * A draft, as the agent proposes it: validated() for a plant of the garden. In the default garden of the test unless
- * told (DefaultGardenStory).
+ * told (DefaultGardenStory). Its slug comes from its scientific name, unless told.
  *
  * @extends PersistentObjectFactory<Plant>
  */
 final class PlantFactory extends PersistentObjectFactory
 {
+    use FreeSlug;
+
     // Before the states that need a validated plant, whatever their order
     private const int VALIDATION_PRIORITY = 10;
 
@@ -64,6 +66,14 @@ final class PlantFactory extends PersistentObjectFactory
 
     protected function initialize(): static
     {
-        return $this->instantiateWith(Instantiator::namedConstructor('propose'));
+        return $this
+            ->beforeInstantiate(static function (array $attributes): array {
+                $attributes['garden'] = self::gardenOf($attributes['garden'] ?? null);
+                $attributes['slug'] ??= self::freeSlug($attributes['scientificName'] ?? null, static fn (): array => array_map(static fn (Plant $plant): string => $plant->getSlug(), static::repository()->findBy(['garden' => $attributes['garden']])), $attributes['garden']);
+
+                return $attributes;
+            })
+            ->instantiateWith(Instantiator::namedConstructor('propose'))
+        ;
     }
 }

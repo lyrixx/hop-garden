@@ -14,12 +14,14 @@ use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
  * A planting the user added to the garden, without space nor care sheet unless told. In the garden of its space or of
- * its care sheet, else in the default garden of the test (DefaultGardenStory).
+ * its care sheet, else in the default garden of the test (DefaultGardenStory). Its slug comes from its name, unless told.
  *
  * @extends PersistentObjectFactory<Planting>
  */
 final class PlantingFactory extends PersistentObjectFactory
 {
+    use FreeSlug;
+
     public static function class(): string
     {
         return Planting::class;
@@ -102,7 +104,8 @@ final class PlantingFactory extends PersistentObjectFactory
                 }
                 $space = $attributes['space'] ?? null;
                 $plant = $attributes['plant'] ?? null;
-                $attributes['garden'] ??= $space instanceof Space ? $space->getGarden() : ($plant instanceof Plant ? $plant->getGarden() : DefaultGardenStory::get('garden'));
+                $attributes['garden'] = self::gardenOf($attributes['garden'] ?? ($space instanceof Space ? $space->getGarden() : ($plant instanceof Plant ? $plant->getGarden() : DefaultGardenStory::get('garden'))));
+                $attributes['slug'] ??= self::freeSlug($attributes['name'] ?? null, static fn (): array => array_map(static fn (Planting $planting): string => $planting->getSlug(), static::repository()->findBy(['garden' => $attributes['garden']])), $attributes['garden']);
 
                 return $attributes;
             })

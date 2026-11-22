@@ -70,13 +70,14 @@ final class PlantingFormData implements SpeciesPickerData
         return $data;
     }
 
-    public function toPlanting(Garden $garden, \DateTimeImmutable $createdAt, ?string $photoFilename): Planting
+    public function toPlanting(Garden $garden, string $slug, \DateTimeImmutable $createdAt, ?string $photoFilename): Planting
     {
         $scientificName = trim($this->scientificName ?? '');
 
         $planting = new Planting(
             $garden,
             trim($this->name),
+            $slug,
             $this->space,
             self::nullIfBlank($this->diseases),
             $createdAt,

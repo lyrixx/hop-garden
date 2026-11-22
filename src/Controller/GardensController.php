@@ -9,6 +9,7 @@ use App\Garden\Form\GardenType;
 use App\Garden\Form\Model\GardenFormData;
 use App\Garden\GardenRepository;
 use App\Garden\Security\GardenVoter;
+use App\Garden\Slugs;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -39,16 +40,19 @@ final class GardensController extends AbstractController
      * Its name and its city: where it grows gives the frost forecast, its timezone the hour of the reminders.
      */
     #[Route('/gardens/new', name: 'garden_create', methods: ['GET', 'POST'])]
-    public function create(Request $request, #[CurrentUser] User $user, GardenRepository $gardenRepository, ClockInterface $clock): Response
+    public function create(Request $request, #[CurrentUser] User $user, GardenRepository $gardenRepository, Slugs $slugs, ClockInterface $clock): Response
     {
         $data = GardenFormData::forNewGarden();
         $form = $this->createForm(GardenType::class, $data);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid() && !self::searched($form)) {
-            $garden = Garden::create(trim($data->name), $data->toLocation(), $user, $clock->now());
-            $gardenRepository->add($garden);
-            $this->entityManager->flush();
+            $garden = $this->entityManager->wrapInTransaction(static function () use ($data, $user, $gardenRepository, $slugs, $clock): Garden {
+                $garden = Garden::create(trim($data->name), $slugs->forGarden(trim($data->name)), $data->toLocation(), $user, $clock->now());
+                $gardenRepository->add($garden);
+
+                return $garden;
+            });
             $this->currentGarden->switchTo($garden);
 
             $this->addFlash('success', new TranslatableMessage('flash.garden.created', ['name' => $garden->getName()]));

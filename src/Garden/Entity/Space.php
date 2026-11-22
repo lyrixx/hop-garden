@@ -17,6 +17,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * growing there, and they are neighbours.
  */
 #[ORM\Entity(repositoryClass: SpaceRepository::class)]
+#[ORM\UniqueConstraint(fields: ['garden', 'slug'])]
 class Space
 {
     #[ORM\Id]
@@ -44,6 +45,11 @@ class Space
         #[ORM\Column]
         private string $name,
         /**
+         * The name of its URL, unique in its garden: see App\Garden\Slugs. A renaming keeps it.
+         */
+        #[ORM\Column]
+        private string $slug,
+        /**
          * Unknown until the user tells.
          */
         #[ORM\Column(nullable: true)]
@@ -60,9 +66,9 @@ class Space
     /**
      * Created from the space card the agent proposed, as the user completed it.
      */
-    public static function proposed(Garden $garden, Uuid $proposalId, string $name, ?Exposure $exposure, ?Soil $soil, \DateTimeImmutable $createdAt): self
+    public static function proposed(Garden $garden, Uuid $proposalId, string $name, string $slug, ?Exposure $exposure, ?Soil $soil, \DateTimeImmutable $createdAt): self
     {
-        $space = new self($garden, $name, $exposure, $soil, $createdAt);
+        $space = new self($garden, $name, $slug, $exposure, $soil, $createdAt);
         $space->proposalId = $proposalId;
 
         return $space;
@@ -128,6 +134,11 @@ class Space
     public function getName(): string
     {
         return $this->name;
+    }
+
+    public function getSlug(): string
+    {
+        return $this->slug;
     }
 
     public function getExposure(): ?Exposure

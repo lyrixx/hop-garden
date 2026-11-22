@@ -47,6 +47,11 @@ class Garden
     private function __construct(
         #[ORM\Column]
         private string $name,
+        /**
+         * The name of its URL, unique in the whole site: see App\Garden\Slugs. A renaming keeps it.
+         */
+        #[ORM\Column(unique: true)]
+        private string $slug,
         #[ORM\Embedded]
         private GardenLocation $location,
         #[ORM\Column]
@@ -56,9 +61,9 @@ class Garden
         $this->memberships = new ArrayCollection();
     }
 
-    public static function create(string $name, GardenLocation $location, User $owner, \DateTimeImmutable $createdAt): self
+    public static function create(string $name, string $slug, GardenLocation $location, User $owner, \DateTimeImmutable $createdAt): self
     {
-        $garden = new self($name, $location, $createdAt);
+        $garden = new self($name, $slug, $location, $createdAt);
         $garden->memberships->add(new Membership($garden, $owner, MembershipRole::Owner, $createdAt));
 
         return $garden;
@@ -154,6 +159,11 @@ class Garden
     public function getName(): string
     {
         return $this->name;
+    }
+
+    public function getSlug(): string
+    {
+        return $this->slug;
     }
 
     public function getLocation(): GardenLocation

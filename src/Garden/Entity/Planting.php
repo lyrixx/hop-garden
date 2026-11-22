@@ -18,6 +18,7 @@ use Symfony\Component\Uid\UuidV7;
  * species lives in the Plant it is linked to, of the same garden.
  */
 #[ORM\Entity(repositoryClass: PlantingRepository::class)]
+#[ORM\UniqueConstraint(fields: ['garden', 'slug'])]
 class Planting
 {
     #[ORM\Id]
@@ -60,6 +61,11 @@ class Planting
         #[ORM\Column]
         private string $name,
         /**
+         * The name of its URL, unique in its garden: see App\Garden\Slugs. A renaming keeps it.
+         */
+        #[ORM\Column]
+        private string $slug,
+        /**
          * Where it grows, with its exposure, its soil and its neighbours. Unknown until the user tells.
          */
         #[ORM\ManyToOne(inversedBy: 'plantings')]
@@ -84,13 +90,13 @@ class Planting
      * Added from the "Add to my garden" card the agent proposed: a plant of a validated species, in the space of the
      * card, if any. Where and how it grows is left to the user.
      */
-    public static function proposed(Uuid $proposalId, string $name, Plant $plant, ?Space $space, \DateTimeImmutable $createdAt): self
+    public static function proposed(Uuid $proposalId, string $name, string $slug, Plant $plant, ?Space $space, \DateTimeImmutable $createdAt): self
     {
         if (!$plant->isValidated()) {
             throw new \LogicException(\sprintf('Plant %s is not validated.', $plant->getId()));
         }
 
-        $planting = new self($plant->getGarden(), $name, $space, null, $createdAt, $plant->getTrefleId(), $plant->getScientificName());
+        $planting = new self($plant->getGarden(), $name, $slug, $space, null, $createdAt, $plant->getTrefleId(), $plant->getScientificName());
         $planting->linkTo($plant);
         $planting->proposalId = $proposalId;
 
@@ -203,6 +209,11 @@ class Planting
     public function getName(): string
     {
         return $this->name;
+    }
+
+    public function getSlug(): string
+    {
+        return $this->slug;
     }
 
     public function getTrefleId(): ?int
