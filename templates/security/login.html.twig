@@ -28,7 +28,8 @@
             <input type="checkbox" id="login-remember-me" name="_remember_me">
             <label for="login-remember-me">{{ 'login.remember_me'|trans }}</label>
         </div>
-        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+        {# Stateless (config/packages/csrf.yaml): assets/controllers/csrf_protection_controller.js double-submits it #}
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}" data-controller="csrf-protection">
         <div class="actions">
             <twig:Button class="button-next">{{ 'login.submit'|trans }}</twig:Button>
         </div>
