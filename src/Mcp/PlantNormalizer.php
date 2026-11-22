@@ -73,8 +73,11 @@ final readonly class PlantNormalizer
         ];
     }
 
+    /**
+     * The page of its species, in its garden: readable, its slugs in place of the UUIDs of the tools.
+     */
     public function urlOf(Plant $plant): string
     {
-        return rtrim($this->defaultUri, '/') . $this->urlGenerator->generate('plant_show', ['id' => $plant->getId()]);
+        return rtrim($this->defaultUri, '/') . $this->urlGenerator->generate('plant_show', ['garden' => $plant->getGarden()->getSlug(), 'plant' => $plant->getSlug()]);
     }
 }

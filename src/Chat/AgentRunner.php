@@ -5,7 +5,9 @@ namespace App\Chat;
 use App\Chat\Model\AgentRun;
 use App\Chat\Model\ChatEvent;
 use App\Chat\Model\StreamedAnswer;
+use App\Garden\Entity\Garden;
 use App\Mcp\Agent\AgentRunContext;
+use App\Plant\PlantRepository;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface as AgentException;
@@ -29,7 +31,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * conversation, or of the drafting of a care sheet), as Turbo Streams: its answer as it comes, MCP tool calls (in demo
  * mode only, see ToolCallDisplay), the cards and choices of its tools (whatever the mode, see ToolCards), then "done", or
  * "error" when it fails. Every request of its MCP client carries the token of the run: the tools answer in the garden
- * of whoever sent the message (App\Mcp\Agent\AgentRunHttpClient).
+ * of whoever sent the message (App\Mcp\Agent\AgentRunHttpClient). The cards link to that garden: the worker has no URL
+ * to take one from.
  */
 final readonly class AgentRunner
 {
@@ -47,6 +50,7 @@ final readonly class AgentRunner
         private LoggerInterface $logger,
         private TranslatorInterface $translator,
         private AgentRunContext $agentRunContext,
+        private PlantRepository $plantRepository,
     ) {
     }
 
@@ -54,20 +58,20 @@ final readonly class AgentRunner
      * @param ?\Closure(Uuid): void $onDraftProposed called with the plant of each successful propose_plant, before its
      *                                               card is pushed
      */
-    public function run(string $topic, string $conversationId, string $agentRunToken, string $text, ?\Closure $onDraftProposed = null): AgentRun
+    public function run(Garden $garden, string $topic, string $conversationId, string $agentRunToken, string $text, ?\Closure $onDraftProposed = null): AgentRun
     {
-        return $this->agentRunContext->run($agentRunToken, fn (): AgentRun => $this->runWithToken($topic, $conversationId, $text, $onDraftProposed));
+        return $this->agentRunContext->run($agentRunToken, fn (): AgentRun => $this->runWithToken($garden, $topic, $conversationId, $text, $onDraftProposed));
     }
 
     /**
      * @param ?\Closure(Uuid): void $onDraftProposed
      */
-    private function runWithToken(string $topic, string $conversationId, string $text, ?\Closure $onDraftProposed): AgentRun
+    private function runWithToken(Garden $garden, string $topic, string $conversationId, string $text, ?\Closure $onDraftProposed): AgentRun
     {
         $proposedPlantIds = [];
         $answer = new StreamedAnswer();
 
-        $onToolCallSucceeded = function (ToolCallSucceeded $event) use ($topic, $onDraftProposed, &$proposedPlantIds, $answer): void {
+        $onToolCallSucceeded = function (ToolCallSucceeded $event) use ($garden, $topic, $onDraftProposed, &$proposedPlantIds, $answer): void {
             $entry = ToolCards::entryOf($event->getDefinition()->getName(), $event->getResult()->getResult());
             if (null === $entry) {
                 return;
@@ -79,7 +83,12 @@ final readonly class AgentRunner
                     $onDraftProposed($entry->plantId);
                 }
             }
-            $this->publisher->publish($topic, ToolCards::eventOf($entry), ['entry' => $entry]);
+            $this->publisher->publish($topic, ToolCards::eventOf($entry), [
+                'entry' => $entry,
+                'garden' => $garden,
+                // The draft of the card, whose frame its slug addresses
+                'plant' => null !== $entry->plantId ? $this->plantRepository->findOneInGarden($garden, $entry->plantId) : null,
+            ]);
             $answer->close();
         };
         $this->eventDispatcher->addListener(ToolCallSucceeded::class, $onToolCallSucceeded);

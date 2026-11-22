@@ -76,7 +76,7 @@ final readonly class DraftCareSheetHandler
         $run = null;
 
         try {
-            $run = $this->agentRunner->run($topic, $message->conversationId, $message->agentRunToken, CareSheetDraftPrompt::for($planting), function (Uuid $plantId) use ($message, $garden, $topic): void {
+            $run = $this->agentRunner->run($garden, $topic, $message->conversationId, $message->agentRunToken, CareSheetDraftPrompt::for($planting), function (Uuid $plantId) use ($message, $garden, $topic): void {
                 $planting = $this->currentAttempt($message);
                 $plant = $this->plantRepository->findOneInGarden($garden, $plantId);
                 if (null !== $planting && null !== $plant) {

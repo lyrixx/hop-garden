@@ -1,2 +1,2 @@
-{# entry: App\Chat\Model\ChatEntry, of a draft card #}
-<turbo-stream action="append" target="chat-log"><template><twig:Chat:DraftCard :plantId="entry.plantId"/></template></turbo-stream>
+{# entry: App\Chat\Model\ChatEntry, of a draft card · plant: ?App\Plant\Entity\Plant, its draft, null once deleted #}
+<turbo-stream action="append" target="chat-log"><template><twig:Chat:DraftCard :plant="plant" :arriving="true"/></template></turbo-stream>

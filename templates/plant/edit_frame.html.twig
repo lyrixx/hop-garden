@@ -1,6 +1,6 @@
 {# The form of the care sheet in the frame of its card, wherever the card shows: Save and Cancel bring the card back #}
 <turbo-frame id="plant-card-{{ plant.id }}-frame">
-    {% embed 'plant/_form.html.twig' with {cancel_url: path('plant_card', {id: plant.id})} %}
+    {% embed 'plant/_form.html.twig' with {cancel_url: path('plant_card', {plant: plant.slug})} %}
         {% block heading %}
             <header class="care-sheet-form-head">
                 <p class="kicker">Tab. {{ plant.id|specimen_number }}<span>{{ plant.family }}</span></p>

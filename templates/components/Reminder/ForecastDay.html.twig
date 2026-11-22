@@ -1,8 +1,8 @@
 {#
     A day of the frost forecast: its minimum, and the plants colder than their frost threshold that day.
-    day: App\Reminder\Model\ForecastDay · plantingIds: see Reminder:PlantLink
+    day: App\Reminder\Model\ForecastDay · plantingSlugs: see Reminder:PlantLink
 #}
-{% props day, plantingIds %}
+{% props day, plantingSlugs %}
 <li class="forecast-day {{ day.plantsAtRisk is empty ? '' : 'is-at-risk' }}">
     {# A forecast day is in the timezone of the garden #}
     <time class="forecast-date" datetime="{{ day.minimum.date|date('Y-m-d', false) }}">{{ day.minimum.date|day_and_month }}</time>
@@ -12,7 +12,7 @@
     {% else %}
         <p class="forecast-plants"><span class="visually-hidden">{{ 'forecast.at_risk'|trans }}</span>
             {% for plant in day.plantsAtRisk %}
-                <span class="tag tag-frost"><twig:Icon name="snowflake" :size="12"/><twig:Reminder:PlantLink :plant="plant" :plantingIds="plantingIds"/></span>
+                <span class="tag tag-frost"><twig:Icon name="snowflake" :size="12"/><twig:Reminder:PlantLink :plant="plant" :plantingSlugs="plantingSlugs"/></span>
             {% endfor %}
         </p>
     {% endif %}

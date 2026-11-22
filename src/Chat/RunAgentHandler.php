@@ -65,7 +65,7 @@ final readonly class RunAgentHandler
                 return;
             }
 
-            $this->agentRunner->run($topic, $message->conversationId, $message->agentRunToken, $message->text);
+            $this->agentRunner->run($garden, $topic, $message->conversationId, $message->agentRunToken, $message->text);
         });
     }
 }

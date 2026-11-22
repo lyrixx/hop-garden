@@ -29,7 +29,7 @@
                         {% set plant = entry.plant %}
                         {% set plate = plate(plant.scientificName) %}
                         <li class="card species-row {{ plant.validated ? 'is-validated' : 'is-draft' }}">
-                            <a class="species-row-name" href="{{ path('plant_show', {id: plant.id}) }}">
+                            <a class="species-row-name" href="{{ path('plant_show', {plant: plant.slug}) }}">
                                 <img class="species-summary-plate" src="{{ asset(plate.image) }}" alt="{{ plate.depicts ?? 'plate.schematic_alt'|trans }}" width="{{ plate.width }}" height="{{ plate.height }}" loading="lazy">
                                 <span>
                                     <strong>{{ plant.commonName }}</strong>

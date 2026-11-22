@@ -23,6 +23,7 @@ use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\ValueResolver;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
@@ -34,6 +35,7 @@ use Symfony\UX\TwigComponent\ComponentRendererInterface;
  * The care sheets of the species of the current garden. One of another garden answers 404: IsGranted comes before
  * IsCsrfTokenValid, so that a form sent to it says nothing either.
  */
+#[Route('/g/{garden}', requirements: ['garden' => Requirement::ASCII_SLUG])]
 final class PlantController extends AbstractController
 {
     public function __construct(
@@ -46,7 +48,7 @@ final class PlantController extends AbstractController
     /**
      * Every species, validated or still a draft, and my plants of each.
      */
-    #[Route('/plants', name: 'plant_index', methods: ['GET'])]
+    #[Route('/species', name: 'plant_index', methods: ['GET'])]
     public function index(): Response
     {
         return $this->render('plant/index.html.twig', ['entries' => $this->plantRepository->findAllWithPlantings($this->currentGarden->get())]);
@@ -56,7 +58,7 @@ final class PlantController extends AbstractController
      * A species by hand, without the assistant: picked with Trefle, then its care sheet filled in on its form. A species
      * that has its care sheet already is not made twice.
      */
-    #[Route('/plants/new', name: 'plant_new', methods: ['GET', 'POST'])]
+    #[Route('/species/new', name: 'plant_new', methods: ['GET', 'POST'])]
     public function new(Request $request, SpeciesSearch $speciesSearch, Slugs $slugs, ClockInterface $clock): Response
     {
         $garden = $this->currentGarden->get();
@@ -71,7 +73,7 @@ final class PlantController extends AbstractController
             if (null !== $existing) {
                 $this->addFlash('success', new TranslatableMessage('flash.species.exists', ['species' => $existing->getScientificName()]));
 
-                return $this->redirectToRoute('plant_show', ['id' => $existing->getId()], Response::HTTP_SEE_OTHER);
+                return $this->redirectToRoute('plant_show', ['plant' => $existing->getSlug()], Response::HTTP_SEE_OTHER);
             }
 
             $plant = $this->entityManager->wrapInTransaction(function () use ($data, $garden, $candidate, $slugs, $clock): Plant {
@@ -83,7 +85,7 @@ final class PlantController extends AbstractController
 
             $this->addFlash('success', new TranslatableMessage('flash.species.draft_ready', ['name' => $plant->getCommonName()]));
 
-            return $this->redirectToRoute('plant_edit', ['id' => $plant->getId()], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('plant_edit', ['plant' => $plant->getSlug()], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('plant/new.html.twig', ['form' => $form]);
@@ -92,9 +94,9 @@ final class PlantController extends AbstractController
     /**
      * The species: its card, and my plants that follow it in the garden.
      */
-    #[Route('/plants/{id}', name: 'plant_show', requirements: ['id' => Requirement::UUID], methods: ['GET'])]
+    #[Route('/species/{plant}', name: 'plant_show', requirements: ['plant' => Requirement::ASCII_SLUG], methods: ['GET'])]
     #[IsGranted(GardenResourceVoter::PLANT_VIEW, 'plant', statusCode: Response::HTTP_NOT_FOUND)]
-    public function show(Plant $plant, PlantingRepository $plantingRepository): Response
+    public function show(#[ValueResolver('in_garden')] Plant $plant, PlantingRepository $plantingRepository): Response
     {
         return $this->render('plant/show.html.twig', [
             'plant' => $plant,
@@ -106,17 +108,17 @@ final class PlantController extends AbstractController
      * The card in its Turbo Frame: loaded by the browser when the agent proposed a plant, and where its forms (edit,
      * validate, reminders) come back, wherever it shows.
      */
-    #[Route('/plants/{id}/card', name: 'plant_card', requirements: ['id' => Requirement::UUID], methods: ['GET'])]
+    #[Route('/species/{plant}/card', name: 'plant_card', requirements: ['plant' => Requirement::ASCII_SLUG], methods: ['GET'])]
     #[IsGranted(GardenResourceVoter::PLANT_VIEW, 'plant', statusCode: Response::HTTP_NOT_FOUND)]
-    public function card(Plant $plant, ComponentRendererInterface $componentRenderer): Response
+    public function card(#[ValueResolver('in_garden')] Plant $plant, ComponentRendererInterface $componentRenderer): Response
     {
         return new Response($componentRenderer->createAndRender('PlantCard', ['plant' => $plant]));
     }
 
-    #[Route('/plants/{id}/validate', name: 'plant_validate', requirements: ['id' => Requirement::UUID], methods: ['POST'])]
+    #[Route('/species/{plant}/validate', name: 'plant_validate', requirements: ['plant' => Requirement::ASCII_SLUG], methods: ['POST'])]
     #[IsGranted(PlantValidationVoter::VALIDATE, 'plant', statusCode: Response::HTTP_NOT_FOUND)]
     #[IsCsrfTokenValid('plant', tokenKey: '_token')]
-    public function validate(Request $request, Plant $plant, PlantValidation $plantValidation): Response
+    public function validate(Request $request, #[ValueResolver('in_garden')] Plant $plant, PlantValidation $plantValidation): Response
     {
         try {
             $this->entityManager->getConnection()->transactional(function () use ($plant, $plantValidation): void {
@@ -129,25 +131,25 @@ final class PlantController extends AbstractController
 
         // Validated in its frame: the card again, validated, with its reminders
         if ($request->headers->has('Turbo-Frame')) {
-            return $this->redirectToRoute('plant_card', ['id' => $plant->getId()], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('plant_card', ['plant' => $plant->getSlug()], Response::HTTP_SEE_OTHER);
         }
 
         $this->addFlash('success', new TranslatableMessage('flash.species.validated', ['name' => $plant->getCommonName()]));
 
-        return $this->redirectToRoute('plant_show', ['id' => $plant->getId()], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('plant_show', ['plant' => $plant->getSlug()], Response::HTTP_SEE_OTHER);
     }
 
     /**
      * In the frame of the card, wherever it shows (the chat, the page of the species): the form takes the place of the
      * card, and the card comes back once saved. Without a frame, a page of its own.
      */
-    #[Route('/plants/{id}/edit', name: 'plant_edit', requirements: ['id' => Requirement::UUID], methods: ['GET', 'POST'])]
+    #[Route('/species/{plant}/edit', name: 'plant_edit', requirements: ['plant' => Requirement::ASCII_SLUG], methods: ['GET', 'POST'])]
     #[IsGranted(GardenResourceVoter::PLANT_EDIT, 'plant', statusCode: Response::HTTP_NOT_FOUND)]
-    public function edit(Request $request, Plant $plant): Response
+    public function edit(Request $request, #[ValueResolver('in_garden')] Plant $plant): Response
     {
         $inFrame = $request->headers->has('Turbo-Frame');
         $data = CareSheetFormData::fromPlant($plant);
-        $form = $this->createForm(CareSheetType::class, $data, ['action' => $this->generateUrl('plant_edit', ['id' => $plant->getId()])]);
+        $form = $this->createForm(CareSheetType::class, $data, ['action' => $this->generateUrl('plant_edit', ['plant' => $plant->getSlug()])]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -156,22 +158,22 @@ final class PlantController extends AbstractController
 
             // The card says it: no message for later
             if ($inFrame) {
-                return $this->redirectToRoute('plant_card', ['id' => $plant->getId()], Response::HTTP_SEE_OTHER);
+                return $this->redirectToRoute('plant_card', ['plant' => $plant->getSlug()], Response::HTTP_SEE_OTHER);
             }
 
             $this->addFlash('success', new TranslatableMessage($plant->isValidated() ? 'flash.species.updated' : 'flash.species.draft_updated'));
 
-            return $this->redirectToRoute('plant_show', ['id' => $plant->getId()], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('plant_show', ['plant' => $plant->getSlug()], Response::HTTP_SEE_OTHER);
         }
 
         // An invalid form comes back with a 422, in its frame or on its page
         return $this->render($inFrame ? 'plant/edit_frame.html.twig' : 'plant/edit.html.twig', ['plant' => $plant, 'form' => $form]);
     }
 
-    #[Route('/plants/{id}/reminders/{type}', name: 'plant_reminder', requirements: ['id' => Requirement::UUID], methods: ['POST'])]
+    #[Route('/species/{plant}/reminders/{type}', name: 'plant_reminder', requirements: ['plant' => Requirement::ASCII_SLUG], methods: ['POST'])]
     #[IsGranted(GardenResourceVoter::PLANT_EDIT, 'plant', statusCode: Response::HTTP_NOT_FOUND)]
     #[IsCsrfTokenValid('plant', tokenKey: '_token')]
-    public function reminder(Request $request, Plant $plant, ReminderType $type): Response
+    public function reminder(Request $request, #[ValueResolver('in_garden')] Plant $plant, ReminderType $type): Response
     {
         try {
             if ($request->request->getBoolean('enabled')) {
@@ -186,9 +188,9 @@ final class PlantController extends AbstractController
 
         // Switched in its frame: the card holds the frame of each reminder
         if ($request->headers->has('Turbo-Frame')) {
-            return $this->redirectToRoute('plant_card', ['id' => $plant->getId()], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('plant_card', ['plant' => $plant->getSlug()], Response::HTTP_SEE_OTHER);
         }
 
-        return $this->redirectToRoute('plant_show', ['id' => $plant->getId()], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('plant_show', ['plant' => $plant->getSlug()], Response::HTTP_SEE_OTHER);
     }
 }

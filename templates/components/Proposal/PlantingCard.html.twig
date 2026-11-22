@@ -30,13 +30,13 @@
     <dl class="proposal-facts">
         <div>
             <dt><span class="pict"><twig:Icon name="note" :size="15"/></span> {{ 'species.label'|trans }}</dt>
-            <dd>{% if plant %}<a href="{{ path('plant_show', {id: plant.id}) }}" data-turbo-frame="_top"><em>{{ plant.scientificName }}</em></a> · {{ plant.commonName }}{% else %}{{ 'species.unknown'|trans }}{% endif %}</dd>
+            <dd>{% if plant %}<a href="{{ path('plant_show', {garden: plant.garden.slug, plant: plant.slug}) }}" data-turbo-frame="_top"><em>{{ plant.scientificName }}</em></a> · {{ plant.commonName }}{% else %}{{ 'species.unknown'|trans }}{% endif %}</dd>
         </div>
         <div>
             <dt><span class="pict"><twig:Icon name="grid" :size="15"/></span> {{ 'space.label'|trans }}</dt>
             <dd>
                 {%- if space -%}
-                    <a href="{{ path('space_show', {id: space.id}) }}" data-turbo-frame="_top">{{ space.name }}</a> <twig:Space:Conditions :space="space"/>
+                    <a href="{{ path('space_show', {garden: space.garden.slug, space: space.slug}) }}" data-turbo-frame="_top">{{ space.name }}</a> <twig:Space:Conditions :space="space"/>
                 {%- else -%}
                     {{ 'space.none'|trans }}
                 {%- endif -%}
@@ -46,7 +46,7 @@
 
     {% if planting %}
         <div class="actions">
-            <twig:Button href="{{ path('garden_show', {id: planting.id}) }}" icon="sprout" class="button-next" data-turbo-frame="_top">{{ 'action.see_my_plant'|trans }}</twig:Button>
+            <twig:Button href="{{ path('garden_show', {garden: planting.garden.slug, planting: planting.slug}) }}" icon="sprout" class="button-next" data-turbo-frame="_top">{{ 'action.see_my_plant'|trans }}</twig:Button>
         </div>
     {% elseif unavailable %}
         <p class="warning">{{ unavailable|trans }}</p>

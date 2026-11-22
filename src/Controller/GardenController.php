@@ -36,6 +36,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
+use Symfony\Component\HttpKernel\Attribute\ValueResolver;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
@@ -43,13 +44,13 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Translation\TranslatableMessage;
-use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Uid\UuidV7;
 
 /**
  * The plants of the current garden. A planting of another garden answers 404: IsGranted comes before
  * IsCsrfTokenValid, so that a form sent to it says nothing either.
  */
+#[Route('/g/{garden}', requirements: ['garden' => Requirement::ASCII_SLUG])]
 final class GardenController extends AbstractController
 {
     public function __construct(
@@ -82,8 +83,8 @@ final class GardenController extends AbstractController
     }
 
     /**
-     * A new plant of my garden. From the page of a validated species (?plant=), its species is fixed, with its care
-     * sheet; otherwise it is picked with Trefle, or not at all.
+     * A new plant of my garden. From the page of a validated species (?plant=, its slug), its species is fixed, with
+     * its care sheet; otherwise it is picked with Trefle, or not at all.
      */
     #[Route('/garden/new', name: 'garden_new', methods: ['GET', 'POST'])]
     public function new(
@@ -93,10 +94,10 @@ final class GardenController extends AbstractController
         #[CurrentUser]
         User $user,
         #[MapQueryParameter(name: 'plant')]
-        ?string $plantId = null,
+        ?string $species = null,
     ): Response {
         $garden = $this->currentGarden->get();
-        $plant = null !== $plantId ? $this->validatedPlant($plantId) : null;
+        $plant = null !== $species ? $this->validatedPlant($species) : null;
         $data = null !== $plant ? PlantingFormData::forPlant($plant) : new PlantingFormData();
         $form = $this->createForm(PlantingType::class, $data, ['garden' => $garden, 'plant' => $plant]);
         $form->handleRequest($request);
@@ -122,7 +123,7 @@ final class GardenController extends AbstractController
                 $this->addFlash('warning', new TranslatableMessage('flash.planting.added_quota_reached', ['name' => $planting->getName()]));
             }
 
-            return $this->redirectToRoute('garden_show', ['id' => $planting->getId()], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('garden_show', ['planting' => $planting->getSlug()], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('garden/new.html.twig', ['form' => $form, 'plant' => $plant]);
@@ -131,9 +132,9 @@ final class GardenController extends AbstractController
     /**
      * What the user sees in the garden, completed or corrected. The species, and so the care sheet, stay.
      */
-    #[Route('/garden/{id}/edit', name: 'garden_edit', requirements: ['id' => Requirement::UUID], methods: ['GET', 'POST'])]
+    #[Route('/garden/{planting}/edit', name: 'garden_edit', requirements: ['planting' => Requirement::ASCII_SLUG], methods: ['GET', 'POST'])]
     #[IsGranted(GardenResourceVoter::PLANTING_EDIT, 'planting', statusCode: Response::HTTP_NOT_FOUND)]
-    public function edit(Request $request, Planting $planting, PlantingPhotoStorage $photoStorage): Response
+    public function edit(Request $request, #[ValueResolver('in_garden')] Planting $planting, PlantingPhotoStorage $photoStorage): Response
     {
         $data = PlantingFormData::fromPlanting($planting);
         $form = $this->createForm(PlantingType::class, $data, ['garden' => $planting->getGarden(), 'planting' => $planting]);
@@ -153,15 +154,15 @@ final class GardenController extends AbstractController
 
             $this->addFlash('success', new TranslatableMessage('flash.planting.saved', ['name' => $planting->getName()]));
 
-            return $this->redirectToRoute('garden_show', ['id' => $planting->getId()], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('garden_show', ['planting' => $planting->getSlug()], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('garden/edit.html.twig', ['planting' => $planting, 'form' => $form]);
     }
 
-    #[Route('/garden/{id}', name: 'garden_show', requirements: ['id' => Requirement::UUID], methods: ['GET'])]
+    #[Route('/garden/{planting}', name: 'garden_show', requirements: ['planting' => Requirement::ASCII_SLUG], methods: ['GET'])]
     #[IsGranted(GardenResourceVoter::PLANTING_VIEW, 'planting', statusCode: Response::HTTP_NOT_FOUND)]
-    public function show(Planting $planting, RecommendationEngine $recommendationEngine, OpenMeteoClient $openMeteoClient, ChatHistory $chatHistory, Topics $topics): Response
+    public function show(#[ValueResolver('in_garden')] Planting $planting, RecommendationEngine $recommendationEngine, OpenMeteoClient $openMeteoClient, ChatHistory $chatHistory, Topics $topics): Response
     {
         $plant = $planting->getPlant();
 
@@ -193,9 +194,9 @@ final class GardenController extends AbstractController
      * The photo of a planting, to its members only: out of public/, see PlantingPhotoStorage. Its name changes with the
      * photo, so the browser keeps it as long as it likes, for itself only.
      */
-    #[Route('/garden/{id}/photos/{filename}', name: 'garden_photo', requirements: ['id' => Requirement::UUID, 'filename' => PlantingPhotoStorage::FILENAME_REQUIREMENT], methods: ['GET'])]
+    #[Route('/garden/{planting}/photos/{filename}', name: 'garden_photo', requirements: ['planting' => Requirement::ASCII_SLUG, 'filename' => PlantingPhotoStorage::FILENAME_REQUIREMENT], methods: ['GET'])]
     #[IsGranted(GardenResourceVoter::PLANTING_VIEW, 'planting', statusCode: Response::HTTP_NOT_FOUND)]
-    public function photo(Request $request, Planting $planting, string $filename, PlantingPhotoStorage $photoStorage): BinaryFileResponse
+    public function photo(Request $request, #[ValueResolver('in_garden')] Planting $planting, string $filename, PlantingPhotoStorage $photoStorage): BinaryFileResponse
     {
         $path = $filename === $planting->getPhotoFilename() ? $photoStorage->path($filename) : null;
         if (null === $path) {
@@ -214,10 +215,10 @@ final class GardenController extends AbstractController
     /**
      * Retry, after an attempt that ended without a draft.
      */
-    #[Route('/garden/{id}/draft', name: 'garden_draft', requirements: ['id' => Requirement::UUID], methods: ['POST'])]
+    #[Route('/garden/{planting}/draft', name: 'garden_draft', requirements: ['planting' => Requirement::ASCII_SLUG], methods: ['POST'])]
     #[IsGranted(GardenResourceVoter::PLANTING_EDIT, 'planting', statusCode: Response::HTTP_NOT_FOUND)]
     #[IsCsrfTokenValid('planting', tokenKey: '_token')]
-    public function draft(Planting $planting, #[CurrentUser] User $user): Response
+    public function draft(#[ValueResolver('in_garden')] Planting $planting, #[CurrentUser] User $user): Response
     {
         try {
             if (!$this->draftCareSheet($user, $planting)) {
@@ -227,15 +228,15 @@ final class GardenController extends AbstractController
             // Linked meanwhile, in another tab: nothing to draft
         }
 
-        return $this->redirectToRoute('garden_show', ['id' => $planting->getId()], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('garden_show', ['planting' => $planting->getSlug()], Response::HTTP_SEE_OTHER);
     }
 
     /**
      * Polled once the page listens to the run: it may have ended before.
      */
-    #[Route('/garden/{id}/drafting', name: 'garden_drafting', requirements: ['id' => Requirement::UUID], methods: ['GET'])]
+    #[Route('/garden/{planting}/drafting', name: 'garden_drafting', requirements: ['planting' => Requirement::ASCII_SLUG], methods: ['GET'])]
     #[IsGranted(GardenResourceVoter::PLANTING_VIEW, 'planting', statusCode: Response::HTTP_NOT_FOUND)]
-    public function drafting(Planting $planting): JsonResponse
+    public function drafting(#[ValueResolver('in_garden')] Planting $planting): JsonResponse
     {
         return $this->json(['drafting' => $planting->isDrafting()]);
     }
@@ -243,10 +244,10 @@ final class GardenController extends AbstractController
     /**
      * Another planting of the same species already has a validated care sheet: no need to draft a new one.
      */
-    #[Route('/garden/{id}/plant', name: 'garden_link_plant', requirements: ['id' => Requirement::UUID], methods: ['POST'])]
+    #[Route('/garden/{planting}/plant', name: 'garden_link_plant', requirements: ['planting' => Requirement::ASCII_SLUG], methods: ['POST'])]
     #[IsGranted(GardenResourceVoter::PLANTING_EDIT, 'planting', statusCode: Response::HTTP_NOT_FOUND)]
     #[IsCsrfTokenValid('planting', tokenKey: '_token')]
-    public function linkPlant(Request $request, Planting $planting): Response
+    public function linkPlant(Request $request, #[ValueResolver('in_garden')] Planting $planting): Response
     {
         $plantId = $request->request->getString('plant');
 
@@ -258,13 +259,13 @@ final class GardenController extends AbstractController
 
                 $this->addFlash('success', new TranslatableMessage('flash.planting.linked', ['name' => $planting->getName(), 'species' => $plant->getCommonName()]));
 
-                return $this->redirectToRoute('garden_show', ['id' => $planting->getId()], Response::HTTP_SEE_OTHER);
+                return $this->redirectToRoute('garden_show', ['planting' => $planting->getSlug()], Response::HTTP_SEE_OTHER);
             }
         }
 
         $this->addFlash('warning', new TranslatableMessage('flash.planting.not_same_species'));
 
-        return $this->redirectToRoute('garden_show', ['id' => $planting->getId()], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('garden_show', ['planting' => $planting->getSlug()], Response::HTTP_SEE_OTHER);
     }
 
     /**
@@ -299,13 +300,13 @@ final class GardenController extends AbstractController
     }
 
     /**
-     * Of the current garden: a care sheet of another one is no species to plant.
+     * By its slug, in the current garden: a care sheet of another one is no species to plant.
      */
-    private function validatedPlant(string $id): Plant
+    private function validatedPlant(string $slug): Plant
     {
-        $plant = Uuid::isValid($id) ? $this->plantRepository->findOneInGarden($this->currentGarden->get(), Uuid::fromString($id)) : null;
+        $plant = $this->plantRepository->findOneBySlug($this->currentGarden->get(), $slug);
         if (null === $plant || !$plant->isValidated()) {
-            throw $this->createNotFoundException(\sprintf('No validated plant with id %s.', $id));
+            throw $this->createNotFoundException(\sprintf('No validated species "%s".', $slug));
         }
 
         return $plant;

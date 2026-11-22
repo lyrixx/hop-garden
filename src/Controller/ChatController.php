@@ -26,6 +26,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 use Symfony\Component\Translation\TranslatableMessage;
@@ -35,9 +36,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\UX\Turbo\TurboBundle;
 
 /**
- * The chat of the member, in their current garden: a conversation of theirs in it (App\Chat\Entity\Conversation),
- * never one of another member nor of another garden.
+ * The chat of the member, in the garden of the URL: a conversation of theirs in it (App\Chat\Entity\Conversation),
+ * never one of another member nor of another garden. Two tabs on two gardens chat in each.
  */
+#[Route('/g/{garden}', requirements: ['garden' => Requirement::ASCII_SLUG])]
 final class ChatController extends AbstractController
 {
     public function __construct(
@@ -62,6 +64,7 @@ final class ChatController extends AbstractController
         }
 
         return $this->render('chat/index.html.twig', [
+            'garden' => $garden,
             'entries' => $entries,
             'plants' => $plants,
             'topic' => $topics->conversation($user, $conversationId->toRfc4122()),

@@ -1,11 +1,12 @@
 {#
     A space card of the agent (propose_space), live and in the history: the browser loads it in its frame, the worker
     has no session to sign its form. See App\Controller\ProposalController.
-    proposal: App\Garden\Model\SpaceProposal · arriving: bool, shown as it comes, live
+    proposal: App\Garden\Model\SpaceProposal · garden: App\Garden\Entity\Garden, of the chat · arriving: bool, shown as it
+    comes, live
 #}
-{%- props proposal, arriving = false -%}
+{%- props proposal, garden, arriving = false -%}
 <div class="chat-card chat-proposal{{ arriving ? ' is-arriving' }}">
-    <turbo-frame id="space-proposal-{{ proposal.proposalId }}" src="{{ path('space_proposal', proposal.toArray()) }}" data-action="turbo:frame-load->chat#scroll:once">
+    <turbo-frame id="space-proposal-{{ proposal.proposalId }}" src="{{ path('space_proposal', proposal.toArray()|merge({garden: garden.slug})) }}" data-action="turbo:frame-load->chat#scroll:once">
         <p class="callout">{{ 'chat.loading_card'|trans }}</p>
     </turbo-frame>
 </div>

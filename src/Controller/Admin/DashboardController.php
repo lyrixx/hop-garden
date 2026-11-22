@@ -63,7 +63,7 @@ final class DashboardController extends AbstractDashboardController
         yield MenuItem::linkTo(UserCrudController::class, new TranslatableMessage('admin.menu.users'), 'fa fa-users');
         yield MenuItem::linkTo(GardenCrudController::class, new TranslatableMessage('admin.menu.gardens'), 'fa fa-leaf');
         yield MenuItem::section();
-        yield MenuItem::linkToRoute(new TranslatableMessage('admin.menu.back'), 'fa fa-seedling', 'chat');
+        yield MenuItem::linkToRoute(new TranslatableMessage('admin.menu.back'), 'fa fa-seedling', 'assistant');
     }
 
     public function configureUserMenu(UserInterface $user): UserMenu

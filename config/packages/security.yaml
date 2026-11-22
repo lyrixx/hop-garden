@@ -41,7 +41,8 @@ security:
             form_login:
                 login_path: login
                 check_path: login
-                default_target_path: chat
+                # The assistant of their last garden, or the wizard of a first one
+                default_target_path: assistant
                 enable_csrf: true
             # 5 failed attempts per address and IP, 25 per IP, in 15 minutes (symfony/rate-limiter)
             login_throttling:
@@ -65,8 +66,8 @@ security:
         - { route: ^legal_, roles: PUBLIC_ACCESS }
         - { path: ^/(login|register|reset-password|locale)(/|$), roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }
-        # The chat (/assistant, /chat), the garden, the species, the spaces, the notifications, the account, the wizard of
-        # a first garden, the live components of /_components...
+        # The gardens (/g/{garden}/...: the chat, the plants, the species, the spaces, the notifications, the live
+        # components), the paths of before them (/assistant...), the account, the wizard of a first garden...
         - { path: ^/, roles: ROLE_USER }
 
 when@test:

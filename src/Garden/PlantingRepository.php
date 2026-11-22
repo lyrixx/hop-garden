@@ -48,6 +48,15 @@ class PlantingRepository extends ServiceEntityRepository
     }
 
     /**
+     * The one of the URL, in the garden of the URL: null when this garden has none of this slug, whether another one has
+     * it or not.
+     */
+    public function findOneBySlug(Garden $garden, string $slug): ?Planting
+    {
+        return $this->findOneBy(['garden' => $garden, 'slug' => $slug]);
+    }
+
+    /**
      * The base, and the slugs it starts with a dash after: "rose", "rose-2"... See App\Garden\Slugs.
      *
      * @return list<string>
@@ -80,17 +89,18 @@ class PlantingRepository extends ServiceEntityRepository
     /**
      * @param list<Plant> $plants of this garden
      *
-     * @return array<string, list<string>> the ids of the plantings of each plant that has some, oldest first, by plant id
+     * @return array<string, list<string>> the slugs of the plantings of each plant that has some, oldest first, by plant
+     *                                     id
      */
-    public function findIdsForPlants(Garden $garden, array $plants): array
+    public function findSlugsForPlants(Garden $garden, array $plants): array
     {
         if ([] === $plants) {
             return [];
         }
 
-        /** @var list<array{plantId: string|Uuid, plantingId: string|Uuid}> $rows */
+        /** @var list<array{plantId: string|Uuid, slug: string}> $rows */
         $rows = $this->createQueryBuilder('planting')
-            ->select('IDENTITY(planting.plant) AS plantId', 'planting.id AS plantingId')
+            ->select('IDENTITY(planting.plant) AS plantId', 'planting.slug')
             ->andWhere('planting.garden = :garden')
             ->andWhere('planting.plant IN (:plants)')
             ->setParameter('garden', $garden)
@@ -101,12 +111,12 @@ class PlantingRepository extends ServiceEntityRepository
             ->getArrayResult()
         ;
 
-        $ids = [];
+        $slugs = [];
         foreach ($rows as $row) {
-            $ids[(string) $row['plantId']][] = (string) $row['plantingId'];
+            $slugs[(string) $row['plantId']][] = $row['slug'];
         }
 
-        return $ids;
+        return $slugs;
     }
 
     /**

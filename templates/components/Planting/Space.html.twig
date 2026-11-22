@@ -9,9 +9,9 @@
     <th scope="row"><span class="pict"><twig:Icon name="grid" :size="17"/></span> {{ 'space.label'|trans }}</th>
     <td>
         {%- if space -%}
-            <a href="{{ path('space_show', {id: space.id}) }}">{{ space.name }}</a>
+            <a href="{{ path('space_show', {garden: space.garden.slug, space: space.slug}) }}">{{ space.name }}</a>
         {%- else -%}
-            {{ 'planting.no_space'|trans({link: '<a href="' ~ path('garden_edit', {id: planting.id}) ~ '">' ~ 'planting.choose_space'|trans ~ '</a>'})|raw }}
+            {{ 'planting.no_space'|trans({link: '<a href="' ~ path('garden_edit', {garden: planting.garden.slug, planting: planting.slug}) ~ '">' ~ 'planting.choose_space'|trans ~ '</a>'})|raw }}
         {%- endif -%}
     </td>
 </tr>
@@ -28,7 +28,7 @@
         <th scope="row"><span class="pict"><twig:Icon name="flower" :size="17"/></span> {{ 'planting.neighbours'|trans }}</th>
         <td>
             {% for neighbour in planting.neighbours %}
-                <a href="{{ path('garden_show', {id: neighbour.id}) }}">{{ neighbour.name }}</a>{{ not loop.last ? ', ' -}}
+                <a href="{{ path('garden_show', {garden: neighbour.garden.slug, planting: neighbour.slug}) }}">{{ neighbour.name }}</a>{{ not loop.last ? ', ' -}}
             {% else %}
                 {{ 'planting.no_neighbour'|trans({space: space.name}) }}
             {% endfor %}

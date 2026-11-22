@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Account\Entity\User;
-use App\Garden\CurrentGarden;
 use App\Garden\Entity\Garden;
 use App\Garden\Form\GardenType;
 use App\Garden\Form\Model\GardenFormData;
@@ -20,19 +19,17 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
-use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Translation\TranslatableMessage;
 
 /**
- * The gardens of a member: the wizard of a new one (a first one before any page of the garden: App\Garden\NoGardenListener),
- * the switch between them in the menu, and the settings of its owner. A garden of others answers 404.
+ * The gardens of a member: the wizard of a new one (a first one, from /assistant: LastGardenController), the home of
+ * each, and the settings of its owner. A garden of others answers 404 (App\Garden\GardenOfTheUrl).
  */
 final class GardensController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly CurrentGarden $currentGarden,
     ) {
     }
 
@@ -53,11 +50,9 @@ final class GardensController extends AbstractController
 
                 return $garden;
             });
-            $this->currentGarden->switchTo($garden);
-
             $this->addFlash('success', new TranslatableMessage('flash.garden.created', ['name' => $garden->getName()]));
 
-            return $this->redirectToRoute('chat', status: Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('chat', ['garden' => $garden->getSlug()], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('gardens/new.html.twig', [
@@ -67,22 +62,18 @@ final class GardensController extends AbstractController
     }
 
     /**
-     * From the menu: the pages show this garden from now on.
+     * Its assistant, where a login leads too.
      */
-    #[Route('/gardens/{id}/switch', name: 'garden_switch', requirements: ['id' => Requirement::UUID], methods: ['POST'])]
-    #[IsGranted(GardenVoter::VIEW, 'garden', statusCode: Response::HTTP_NOT_FOUND)]
-    #[IsCsrfTokenValid('garden_switch', tokenKey: '_token')]
-    public function switch(Garden $garden): Response
+    #[Route('/g/{garden}', name: 'garden_home', requirements: ['garden' => Requirement::ASCII_SLUG], methods: ['GET'])]
+    public function home(Garden $garden): Response
     {
-        $this->currentGarden->switchTo($garden);
-
-        return $this->redirectToRoute('garden', status: Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('chat', ['garden' => $garden->getSlug()]);
     }
 
     /**
      * Its name and its place, by its owner. Its members come with the invitations (phase 2).
      */
-    #[Route('/gardens/{id}/settings', name: 'garden_settings', requirements: ['id' => Requirement::UUID], methods: ['GET', 'POST'])]
+    #[Route('/g/{garden}/settings', name: 'garden_settings', requirements: ['garden' => Requirement::ASCII_SLUG], methods: ['GET', 'POST'])]
     #[IsGranted(GardenVoter::MANAGE, 'garden', statusCode: Response::HTTP_NOT_FOUND)]
     public function settings(Request $request, Garden $garden): Response
     {
@@ -97,7 +88,7 @@ final class GardensController extends AbstractController
 
             $this->addFlash('success', new TranslatableMessage('flash.garden.saved', ['name' => $garden->getName()]));
 
-            return $this->redirectToRoute('garden_settings', ['id' => $garden->getId()], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('garden_settings', ['garden' => $garden->getSlug()], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('gardens/settings.html.twig', ['garden' => $garden, 'form' => $form], self::formResponse($form));

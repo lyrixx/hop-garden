@@ -5,11 +5,11 @@
 #}
 {% props planting %}
 <li>
-    <a class="species-planting" href="{{ path('garden_show', {id: planting.id}) }}">
+    <a class="species-planting" href="{{ path('garden_show', {garden: planting.garden.slug, planting: planting.slug}) }}">
         <span class="plant-card-image"><twig:PlantingPhoto :planting="planting" :size="29"/></span>
         <span><span class="page-label page-label-plant">{{ 'planting.label'|trans }}</span> <strong>{{ planting.name }}</strong></span>
     </a>
     {% if planting.space %}
-        <a class="tag species-planting-space" href="{{ path('space_show', {id: planting.space.id}) }}"><twig:Icon name="grid" :size="13"/> {{ planting.space.name }}</a>
+        <a class="tag species-planting-space" href="{{ path('space_show', {garden: planting.space.garden.slug, space: planting.space.slug}) }}"><twig:Icon name="grid" :size="13"/> {{ planting.space.name }}</a>
     {% endif %}
 </li>

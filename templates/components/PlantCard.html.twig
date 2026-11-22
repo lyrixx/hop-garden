@@ -13,7 +13,7 @@
     <header class="card-head">
         <div>
             <p class="kicker">Tab. {{ plant.id|specimen_number }}<span>{{ plant.family }}</span></p>
-            <h3><a href="{{ path('plant_show', {id: plant.id}) }}" data-turbo-frame="_top">{{ plant.commonName }}</a></h3>
+            <h3><a href="{{ path('plant_show', {garden: plant.garden.slug, plant: plant.slug}) }}" data-turbo-frame="_top">{{ plant.commonName }}</a></h3>
             <p class="latin"><em>{{ plant.scientificName }}</em></p>
         </div>
         <twig:Status :validated="plant.validated">{{ (not plant.validated ? 'status.draft' : (in_garden ? 'status.in_garden' : 'status.validated'))|trans }}</twig:Status>

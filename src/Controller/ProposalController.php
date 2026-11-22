@@ -12,7 +12,6 @@ use App\Garden\Model\PlantingProposal;
 use App\Garden\Model\Soil;
 use App\Garden\Model\SpaceProposal;
 use App\Garden\PlantingRepository;
-use App\Garden\Security\GardenOfTheResource;
 use App\Garden\Security\GardenResourceVoter;
 use App\Garden\Slugs;
 use App\Garden\SpaceRepository;
@@ -40,9 +39,10 @@ use Symfony\Component\Uid\Uuid;
  * What the card proposes travels in its URL (see PlantingProposal and SpaceProposal); the row created from it keeps its
  * id, so that the card says "Added" or "Created" once tapped, after a reload too, and a second tap adds nothing.
  *
- * In the current garden: the care sheet and the space of a card are of it, or gone; a card tapped in another garden
- * answers 404, whether it is a garden of the member (a switch first, GardenOfTheResource) or not.
+ * In the garden of the URL: the care sheet and the space of a card are of it, or gone; a card of another garden, even
+ * of the member, answers 404 once tapped.
  */
+#[Route('/g/{garden}', requirements: ['garden' => Requirement::ASCII_SLUG])]
 final class ProposalController extends AbstractController
 {
     public function __construct(
@@ -51,7 +51,6 @@ final class ProposalController extends AbstractController
         private readonly FormFactoryInterface $formFactory,
         private readonly LoggerInterface $logger,
         private readonly CurrentGarden $currentGarden,
-        private readonly GardenOfTheResource $gardenOfTheResource,
         private readonly Slugs $slugs,
     ) {
     }
@@ -69,7 +68,6 @@ final class ProposalController extends AbstractController
 
         $planting = $plantingRepository->findOneByProposalId($proposal->proposalId);
         if (null !== $planting) {
-            $this->gardenOfTheResource->follow($planting->getGarden());
             if (!$this->isGranted(GardenResourceVoter::PLANTING_VIEW, $planting)) {
                 throw $this->createNotFoundException(\sprintf('No planting of the current garden was added from proposal %s.', $proposal->proposalId));
             }
@@ -80,10 +78,6 @@ final class ProposalController extends AbstractController
         }
 
         // Deleted since the agent proposed it, a URL made by hand, or of another garden: the same
-        $proposed = $plantRepository->find($proposal->plantId);
-        if (null !== $proposed) {
-            $this->gardenOfTheResource->follow($proposed->getGarden());
-        }
         $garden = $this->currentGarden->get();
         $plant = $plantRepository->findOneInGarden($garden, $proposal->plantId);
         $space = null !== $proposal->spaceId ? $spaceRepository->findOneInGarden($garden, $proposal->spaceId) : null;
@@ -121,7 +115,6 @@ final class ProposalController extends AbstractController
 
         $space = $spaceRepository->findOneByProposalId($proposal->proposalId);
         if (null !== $space) {
-            $this->gardenOfTheResource->follow($space->getGarden());
             if (!$this->isGranted(GardenResourceVoter::SPACE_VIEW, $space)) {
                 throw $this->createNotFoundException(\sprintf('No space of the current garden was created from proposal %s.', $proposal->proposalId));
             }

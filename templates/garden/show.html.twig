@@ -15,7 +15,7 @@
     <div {% if recommendations is null -%}
         data-controller="drafting"
         data-drafting-drafting-value="{{ planting.drafting ? 'true' : 'false' }}"
-        data-drafting-status-url-value="{{ path('garden_drafting', {id: planting.id}) }}"
+        data-drafting-status-url-value="{{ path('garden_drafting', {planting: planting.slug}) }}"
         data-drafting-silence-value="{{ 'chat.silence'|trans }}"
         data-action="turbo:before-stream-render@document->drafting#watch"
     {%- endif %}>
@@ -73,7 +73,7 @@
             <footer class="card-foot">
                 <p>{{ 'planting.since'|trans({date: planting.createdAt|long_date}) }}</p>
                 <div class="actions">
-                    <twig:Button href="{{ path('garden_edit', {id: planting.id}) }}" icon="pencil" class="button-secondary">{{ 'planting.edit.breadcrumb'|trans }}</twig:Button>
+                    <twig:Button href="{{ path('garden_edit', {planting: planting.slug}) }}" icon="pencil" class="button-secondary">{{ 'planting.edit.breadcrumb'|trans }}</twig:Button>
                 </div>
             </footer>
         </article>
@@ -87,7 +87,7 @@
                         <twig:Recommendation :recommendation="recommendation"/>
                     {% endfor %}
                 </ul>
-                <p class="hint garden-source">{{ 'recommendation.source'|trans({species: '<a href="' ~ path('plant_show', {id: plant.id}) ~ '">' ~ plant.commonName|e ~ '</a>'})|raw }}</p>
+                <p class="hint garden-source">{{ 'recommendation.source'|trans({species: '<a href="' ~ path('plant_show', {plant: plant.slug}) ~ '">' ~ plant.commonName|e ~ '</a>'})|raw }}</p>
             {% else %}
                 <div id="planting-{{ planting.id }}-draft-status"><twig:Garden:DraftStatus :planting="planting"/></div>
                 <div class="garden-tool-calls" id="drafting-tool-calls">
@@ -99,7 +99,7 @@
                     <p class="warning" data-drafting-target="failureMessage">
                         {{- (planting.hasDraftingFailed() ? 'planting.drafting_failed' : 'planting.no_care_sheet')|trans -}}
                     </p>
-                    <form method="post" action="{{ path('garden_draft', {id: planting.id}) }}">
+                    <form method="post" action="{{ path('garden_draft', {planting: planting.slug}) }}">
                         <input type="hidden" name="_token" value="{{ csrf_token('planting') }}">
                         <twig:Button icon="sprout" :iconSize="18">{{ 'action.retry'|trans }}</twig:Button>
                     </form>
@@ -109,7 +109,7 @@
                     <p class="hint">{{ 'planting.same_species'|trans({species: '<em>' ~ planting.scientificName|e ~ '</em>'})|raw }}</p>
                     <div class="actions">
                         {% for same_species_plant in same_species_plants %}
-                            <form method="post" action="{{ path('garden_link_plant', {id: planting.id}) }}">
+                            <form method="post" action="{{ path('garden_link_plant', {planting: planting.slug}) }}">
                                 <input type="hidden" name="_token" value="{{ csrf_token('planting') }}">
                                 <input type="hidden" name="plant" value="{{ same_species_plant.id }}">
                                 <twig:Button class="button-secondary">{{ 'planting.use_the_sheet_of'|trans({name: same_species_plant.commonName}) }}</twig:Button>

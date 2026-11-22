@@ -20,19 +20,21 @@ final readonly class GardenExtension
      * My plant of this species, in the garden. When several plants follow its care sheet, the reminder is about all of
      * them: the page of the species lists them.
      *
-     * @param array<string, list<string>>|null $plantingIdsByPlant preloaded for a list, see PlantingRepository::findIdsForPlants()
+     * @param array<string, list<string>>|null $plantingSlugsByPlant preloaded for a list, see
+     *                                                               PlantingRepository::findSlugsForPlants()
      *
      * @return ?string null for a care sheet no plant of the garden follows yet
      */
     #[AsTwigFunction('my_plant_path')]
-    public function myPlantPath(Plant $plant, ?array $plantingIdsByPlant = null): ?string
+    public function myPlantPath(Plant $plant, ?array $plantingSlugsByPlant = null): ?string
     {
-        $plantingIds = ($plantingIdsByPlant ?? $this->plantingRepository->findIdsForPlants($plant->getGarden(), [$plant]))[$plant->getId()->toRfc4122()] ?? [];
+        $garden = $plant->getGarden();
+        $plantingSlugs = ($plantingSlugsByPlant ?? $this->plantingRepository->findSlugsForPlants($garden, [$plant]))[$plant->getId()->toRfc4122()] ?? [];
 
-        return match (\count($plantingIds)) {
+        return match (\count($plantingSlugs)) {
             0 => null,
-            1 => $this->urlGenerator->generate('garden_show', ['id' => $plantingIds[0]]),
-            default => $this->urlGenerator->generate('plant_show', ['id' => $plant->getId(), '_fragment' => 'in-your-garden']),
+            1 => $this->urlGenerator->generate('garden_show', ['garden' => $garden->getSlug(), 'planting' => $plantingSlugs[0]]),
+            default => $this->urlGenerator->generate('plant_show', ['garden' => $garden->getSlug(), 'plant' => $plant->getSlug(), '_fragment' => 'in-your-garden']),
         };
     }
 
@@ -46,6 +48,6 @@ final readonly class GardenExtension
     {
         $filename = $planting->getPhotoFilename();
 
-        return null !== $filename ? $this->urlGenerator->generate('garden_photo', ['id' => $planting->getId(), 'filename' => $filename]) : null;
+        return null !== $filename ? $this->urlGenerator->generate('garden_photo', ['garden' => $planting->getGarden()->getSlug(), 'planting' => $planting->getSlug(), 'filename' => $filename]) : null;
     }
 }

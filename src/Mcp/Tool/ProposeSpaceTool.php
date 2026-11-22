@@ -58,12 +58,13 @@ final readonly class ProposeSpaceTool
         #[Schema(description: 'Its soil, only when the user said it: "chalky", "clay", "loamy", "peaty", "sandy" or "silty". Omit it otherwise: the user picks it on the card.')]
         ?Soil $soil = null,
     ): array {
-        $existing = $this->spaceRepository->findOneByName($this->currentGarden->get(), trim($name));
+        $garden = $this->currentGarden->get();
+        $existing = $this->spaceRepository->findOneByName($garden, trim($name));
         if (null !== $existing) {
             throw new ToolCallException(\sprintf('The space "%s" exists already (id %s): propose the plant in it with propose_planting.', $existing->getName(), $existing->getId()));
         }
 
-        return $this->gardenNormalizer->spaceProposal(SpaceProposal::create(trim($name), $exposure, $soil)) + [
+        return $this->gardenNormalizer->spaceProposal(SpaceProposal::create(trim($name), $exposure, $soil), $garden) + [
             'next_step' => 'The card is shown to the user: they pick the exposure and the soil, then create the space. Until they say so, the space does not exist. Then call list_spaces for its id, and propose_planting.',
         ];
     }

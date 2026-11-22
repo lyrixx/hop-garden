@@ -1,10 +1,10 @@
 {#
     The call of the public pages: to join the waiting list, that is to sign up for an account that opens once validated;
-    for a member, to open their garden.
+    for a member, to open their last garden.
     No prop · The other attributes (class: a variant of Button) go on the link.
 #}
 {% if is_granted('ROLE_USER') %}
-    <twig:Button href="{{ path('chat') }}" {{ ...attributes }}>{{ 'public.open_garden'|trans }}</twig:Button>
+    <twig:Button href="{{ path('assistant') }}" {{ ...attributes }}>{{ 'public.open_garden'|trans }}</twig:Button>
 {% else %}
     <twig:Button href="{{ path('register') }}" {{ ...attributes }}>{{ 'public.join'|trans }}</twig:Button>
 {% endif %}

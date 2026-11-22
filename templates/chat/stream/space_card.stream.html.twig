@@ -1,2 +1,2 @@
-{# entry: App\Chat\Model\ChatEntry, of a space card #}
-<turbo-stream action="append" target="chat-log"><template><twig:Chat:SpaceCard :proposal="entry.spaceProposal" :arriving="true"/></template></turbo-stream>
+{# entry: App\Chat\Model\ChatEntry, of a space card · garden: App\Garden\Entity\Garden, of the run #}
+<turbo-stream action="append" target="chat-log"><template><twig:Chat:SpaceCard :proposal="entry.spaceProposal" :garden="garden" :arriving="true"/></template></turbo-stream>

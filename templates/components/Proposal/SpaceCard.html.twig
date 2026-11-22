@@ -22,7 +22,7 @@
     {% if space %}
         <twig:Space:Conditions :space="space"/>
         <div class="actions">
-            <twig:Button href="{{ path('space_show', {id: space.id}) }}" icon="grid" class="button-next" data-turbo-frame="_top">{{ 'action.see_the_space'|trans }}</twig:Button>
+            <twig:Button href="{{ path('space_show', {garden: space.garden.slug, space: space.slug}) }}" icon="grid" class="button-next" data-turbo-frame="_top">{{ 'action.see_the_space'|trans }}</twig:Button>
         </div>
     {% elseif form %}
         {{ form_start(form, {attr: {class: 'proposal-form', 'data-chat-follow-up': ''}}) }}

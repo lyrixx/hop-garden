@@ -15,7 +15,7 @@
         <header class="species-plantings-head">
             <h2>{{ 'status.in_garden'|trans }}</h2>
             {% if plant.validated %}
-                <twig:Button href="{{ path('garden_new', {plant: plant.id}) }}" icon="sprout" :iconSize="18" class="button-secondary">{{ 'action.add_to_my_garden'|trans }}</twig:Button>
+                <twig:Button href="{{ path('garden_new', {plant: plant.slug}) }}" icon="sprout" :iconSize="18" class="button-secondary">{{ 'action.add_to_my_garden'|trans }}</twig:Button>
             {% endif %}
         </header>
         {% if plantings is empty %}

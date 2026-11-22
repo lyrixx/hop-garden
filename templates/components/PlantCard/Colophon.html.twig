@@ -38,7 +38,7 @@
 </div>
 
 <div class="actions">
-    <twig:Button href="{{ path('plant_edit', {id: plant.id}) }}" icon="pencil" class="button-secondary">{{ 'action.edit'|trans }}</twig:Button>
+    <twig:Button href="{{ path('plant_edit', {garden: plant.garden.slug, plant: plant.slug}) }}" icon="pencil" class="button-secondary">{{ 'action.edit'|trans }}</twig:Button>
     {% if plant.validated %}
         {% set my_plant_path = my_plant_path(plant) %}
         {% if my_plant_path %}
@@ -46,7 +46,7 @@
         {% endif %}
     {% else %}
         <span class="hint">{{ 'plant_card.validate_for_reminders'|trans }}</span>
-        <form method="post" action="{{ path('plant_validate', {id: plant.id}) }}" data-chat-follow-up>
+        <form method="post" action="{{ path('plant_validate', {garden: plant.garden.slug, plant: plant.slug}) }}" data-chat-follow-up>
             <input type="hidden" name="_token" value="{{ csrf_token('plant') }}">
             <twig:Button icon="check">{{ 'action.validate'|trans }}</twig:Button>
         </form>

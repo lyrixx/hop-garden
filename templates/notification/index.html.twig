@@ -17,7 +17,7 @@
             {% else %}
                 <ul class="upcoming-list">
                     {% for upcoming in coming_up %}
-                        <twig:Reminder:Upcoming :upcoming="upcoming" :plantingIds="planting_ids"/>
+                        <twig:Reminder:Upcoming :upcoming="upcoming" :plantingSlugs="planting_slugs"/>
                     {% endfor %}
                 </ul>
             {% endif %}
@@ -34,7 +34,7 @@
                 <p class="hint">{{ 'forecast.hint'|trans }}</p>
                 <ul class="forecast-list">
                     {% for day in forecast_days %}
-                        <twig:Reminder:ForecastDay :day="day" :plantingIds="planting_ids"/>
+                        <twig:Reminder:ForecastDay :day="day" :plantingSlugs="planting_slugs"/>
                     {% endfor %}
                 </ul>
                 <p class="meta">{{ 'forecast.credit'|trans({open_meteo: '<a href="https://open-meteo.com/">Open-Meteo.com</a>'})|raw }}</p>
@@ -54,7 +54,7 @@
                     <div>
                         <span class="tag tag-{{ type.value }}">{{ type|trans }}</span>
                         <p>{{ notification.message }}</p>
-                        <p class="meta"><twig:Reminder:PlantLink :plant="notification.reminder.plant" :plantingIds="planting_ids"/> · {{ notification.createdAt|day_and_time }}</p>
+                        <p class="meta"><twig:Reminder:PlantLink :plant="notification.reminder.plant" :plantingSlugs="planting_slugs"/> · {{ notification.createdAt|day_and_time }}</p>
                     </div>
                 </li>
             {% endfor %}

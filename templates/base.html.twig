@@ -18,18 +18,20 @@
         {# The navigation of the application; a public page has its own (templates/public/layout.html.twig) #}
         {% block header %}
         <header class="topbar">
-            <a class="brand" href="{{ path(is_granted('ROLE_USER') ? 'chat' : 'home') }}">
+            {# The garden of the page, else the last one: its links stay in it. Without a garden yet, the wizard #}
+            {% set nav_garden = is_granted('ROLE_USER') ? nav_garden() : null %}
+            <a class="brand" href="{{ is_granted('ROLE_USER') ? path('assistant') : path('home') }}">
                 <span class="pict"><twig:Icon name="hop" :size="32"/></span>
                 <span>Hop Garden</span>
             </a>
             {% set route = app.current_route %}
             {% if is_granted('ROLE_USER') %}
             <nav class="nav">
-                <a href="{{ path('chat') }}" class="{{ route == 'chat' ? 'active' }}"><twig:Icon name="chat" :size="18"/> {{ 'nav.assistant'|trans }}</a>
-                <a href="{{ path('garden') }}" class="{{ route starts with 'garden' ? 'active' }}"><twig:Icon name="sprout" :size="18"/> {{ 'nav.garden'|trans }}</a>
-                <a href="{{ path('plant_index') }}" class="{{ route starts with 'plant_' ? 'active' }}"><twig:Icon name="flower" :size="18"/> {{ 'nav.species'|trans }}</a>
-                <a href="{{ path('spaces') }}" class="{{ route starts with 'space' ? 'active' }}"><twig:Icon name="grid" :size="18"/> {{ 'nav.spaces'|trans }}</a>
-                <a href="{{ path('notifications') }}" class="{{ route == 'notifications' ? 'active' }}">
+                <a href="{{ path(nav_garden ? 'chat' : 'garden_create') }}" class="{{ route == 'chat' ? 'active' }}"><twig:Icon name="chat" :size="18"/> {{ 'nav.assistant'|trans }}</a>
+                <a href="{{ path(nav_garden ? 'garden' : 'garden_create') }}" class="{{ route starts with 'garden' ? 'active' }}"><twig:Icon name="sprout" :size="18"/> {{ 'nav.garden'|trans }}</a>
+                <a href="{{ path(nav_garden ? 'plant_index' : 'garden_create') }}" class="{{ route starts with 'plant_' ? 'active' }}"><twig:Icon name="flower" :size="18"/> {{ 'nav.species'|trans }}</a>
+                <a href="{{ path(nav_garden ? 'spaces' : 'garden_create') }}" class="{{ route starts with 'space' ? 'active' }}"><twig:Icon name="grid" :size="18"/> {{ 'nav.spaces'|trans }}</a>
+                <a href="{{ path(nav_garden ? 'notifications' : 'garden_create') }}" class="{{ route == 'notifications' ? 'active' }}">
                     <twig:Icon name="bell" :size="18"/> {{ 'nav.notifications'|trans }}
                     <twig:Notification:Badge :unread="unread_notification_count()"/>
                 </a>
@@ -44,15 +46,16 @@
             {% endif %}
         </header>
 
-        {# Reminders pushed by the worker show up as toasts, on every page: the ones of the member in their current garden.
+        {# Reminders pushed by the worker show up as toasts, on every page: the ones of the member in the garden of the page.
            Both survive a Turbo Drive visit: the toasts on screen stay, and the stream is not closed and opened again,
-           until the member switches to another garden. Every page renews their subscriber cookie of the Mercure hub #}
+           until the member goes to another garden. Every page renews their subscriber cookie of the Mercure hub, for
+           each of their gardens: two tabs on two gardens both listen #}
         {% if is_granted('ROLE_USER') %}
         {{ grant_mercure_topics() }}
         {% set notifications_topic = notifications_topic() %}
         {% if notifications_topic %}
         <div class="toasts" id="toasts" data-turbo-permanent aria-live="polite"></div>
-        <div id="notifications-stream-{{ current_garden().id }}" data-turbo-permanent hidden>{{ turbo_stream_from(notifications_topic, private: true) }}</div>
+        <div id="notifications-stream-{{ nav_garden.id }}" data-turbo-permanent hidden>{{ turbo_stream_from(notifications_topic, private: true) }}</div>
         {% endif %}
         {% endif %}
         {% endblock %}

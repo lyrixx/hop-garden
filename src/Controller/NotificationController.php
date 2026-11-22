@@ -23,6 +23,7 @@ use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 /**
@@ -30,6 +31,7 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
  * get_frost_forecast: the reminders coming up, the frost forecast at the garden with the plants it threatens, then the
  * notifications the member received there.
  */
+#[Route('/g/{garden}', requirements: ['garden' => Requirement::ASCII_SLUG])]
 final class NotificationController extends AbstractController
 {
     /**
@@ -85,7 +87,7 @@ final class NotificationController extends AbstractController
             'forecast_days' => $forecastDays,
             'notifications' => $notifications,
             // Each plant links to my plant of its species, in the garden: see my_plant_path()
-            'planting_ids' => $this->plantingRepository->findIdsForPlants($garden, self::distinct($plants)),
+            'planting_slugs' => $this->plantingRepository->findSlugsForPlants($garden, self::distinct($plants)),
         ]);
 
         // Seen once listed: the "unread" highlight is computed before

@@ -3,7 +3,7 @@
     space: App\Garden\Entity\Space
 #}
 {% props space %}
-<a class="card plant-tile space-tile" href="{{ path('space_show', {id: space.id}) }}">
+<a class="card plant-tile space-tile" href="{{ path('space_show', {garden: space.garden.slug, space: space.slug}) }}">
     <span class="specimen-no">{{ 'specimen.number'|trans({number: space.id|specimen_number}) }}</span>
     <strong>{{ space.name }}</strong>
     <twig:Space:Conditions :space="space"/>

@@ -7,7 +7,7 @@
 {% set enabled = plant.hasEnabledReminder(type) %}
 {% set months = type.monthsIn(plant.careSheet) %}
 <turbo-frame id="plant-{{ plant.id }}-reminder-{{ type.value }}">
-<form class="plate-reminder {{ enabled ? 'is-enabled' }}" method="post" action="{{ path('plant_reminder', {id: plant.id, type: type.value}) }}">
+<form class="plate-reminder {{ enabled ? 'is-enabled' }}" method="post" action="{{ path('plant_reminder', {garden: plant.garden.slug, plant: plant.slug, type: type.value}) }}">
     <input type="hidden" name="_token" value="{{ csrf_token('plant') }}">
     <input type="hidden" name="enabled" value="{{ enabled ? 0 : 1 }}">
     <button type="submit" class="toggle {{ enabled ? 'is-on' }}" role="switch" aria-checked="{{ enabled ? 'true' : 'false' }}" {{ type.calendar and months is empty and not enabled ? 'disabled' }}>

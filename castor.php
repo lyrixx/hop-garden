@@ -220,11 +220,11 @@ function demo_frost(
     docker_compose_run($command, c: $c);
 }
 
-#[AsTask(description: 'Serves the MCP server over STDIO, for Claude Desktop, Claude Code, Cursor..., as a member: --user=<email> [--garden=<id>] (the stack must be started)', namespace: 'mcp', name: 'stdio')]
+#[AsTask(description: 'Serves the MCP server over STDIO, for Claude Desktop, Claude Code, Cursor..., as a member: --user=<email> [--garden=<slug>] (the stack must be started)', namespace: 'mcp', name: 'stdio')]
 function mcp_stdio(
     #[AsOption(description: 'The email of the member the tools act for')]
     string $user = '',
-    #[AsOption(description: 'The id of their garden, a UUID, the one they joined first by default')]
+    #[AsOption(description: 'The slug of their garden, as in its URL, the one they joined first by default')]
     ?string $garden = null,
 ): int {
     // Nothing but the JSON-RPC messages may reach STDOUT

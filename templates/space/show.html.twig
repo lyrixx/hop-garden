@@ -30,7 +30,7 @@
         <footer class="card-foot">
             <p>{{ 'space.added_on'|trans({date: space.createdAt|long_date}) }}</p>
             <div class="actions">
-                <twig:Button href="{{ path('space_edit', {id: space.id}) }}" icon="pencil" class="button-secondary">{{ 'space.edit.button'|trans }}</twig:Button>
+                <twig:Button href="{{ path('space_edit', {space: space.slug}) }}" icon="pencil" class="button-secondary">{{ 'space.edit.button'|trans }}</twig:Button>
             </div>
         </footer>
     </article>

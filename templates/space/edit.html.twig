@@ -4,7 +4,7 @@
 
 {% block body %}
     <header class="plate-head">
-        <nav class="breadcrumb"><a href="{{ path('spaces') }}">{{ 'nav.spaces'|trans }}</a> › <a href="{{ path('space_show', {id: space.id}) }}">{{ space.name }}</a> › {{ 'action.edit'|trans }}</nav>
+        <nav class="breadcrumb"><a href="{{ path('spaces') }}">{{ 'nav.spaces'|trans }}</a> › <a href="{{ path('space_show', {space: space.slug}) }}">{{ space.name }}</a> › {{ 'action.edit'|trans }}</nav>
         <h1>{{ 'space.edit.title'|trans({name: space.name}) }}</h1>
         <p>{{ 'space.edit.intro'|trans }}</p>
     </header>
@@ -14,7 +14,7 @@
         {{ include('space/_form.html.twig') }}
 
         <div class="actions">
-            <twig:Button href="{{ path('space_show', {id: space.id}) }}" class="button-secondary">{{ 'action.cancel'|trans }}</twig:Button>
+            <twig:Button href="{{ path('space_show', {space: space.slug}) }}" class="button-secondary">{{ 'action.cancel'|trans }}</twig:Button>
             <twig:Button icon="check" :iconSize="18">{{ 'action.save'|trans }}</twig:Button>
         </div>
     {{ form_end(form) }}

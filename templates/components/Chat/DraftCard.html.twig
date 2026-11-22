@@ -1,12 +1,12 @@
 {#
     The draft card of a plant the agent proposed.
-    plant: ?App\Plant\Entity\Plant, in the history, null once deleted · plantId: ?int, live, from the worker, which has
-    no session to sign the form of the card: the browser loads it in its frame
+    plant: ?App\Plant\Entity\Plant, null once deleted · arriving: bool, live, from the worker, which has no session to
+    sign the form of the card: the browser loads it in its frame, in the garden of the draft
 #}
-{%- props plant = null, plantId = null -%}
-<div class="chat-card{{ plantId is not null ? ' is-arriving' }}">
-    {%- if plantId is not null -%}
-        <turbo-frame id="plant-card-{{ plantId }}-frame" src="{{ path('plant_card', {id: plantId}) }}" data-action="turbo:frame-load->chat#scroll:once">
+{%- props plant = null, arriving = false -%}
+<div class="chat-card{{ arriving ? ' is-arriving' }}">
+    {%- if plant and arriving -%}
+        <turbo-frame id="plant-card-{{ plant.id }}-frame" src="{{ path('plant_card', {garden: plant.garden.slug, plant: plant.slug}) }}" data-action="turbo:frame-load->chat#scroll:once">
             <p class="callout">{{ 'chat.loading_draft'|trans }}</p>
         </turbo-frame>
     {%- elseif plant -%}

@@ -12,6 +12,6 @@
         <strong>{{ (frost ? 'toast.frost' : 'toast.reminder')|trans }}</strong>
         <p>{{ notification.message }}</p>
         {# My plant, in the garden, that the reminder is about #}
-        <a href="{{ my_plant_path(plant) ?? path('plant_show', {id: plant.id}) }}">{{ 'toast.see'|trans({name: plant.commonName}) }}</a>
+        <a href="{{ my_plant_path(plant) ?? path('plant_show', {garden: notification.garden.slug, plant: plant.slug}) }}">{{ 'toast.see'|trans({name: plant.commonName}) }}</a>
     </div>
 </div>

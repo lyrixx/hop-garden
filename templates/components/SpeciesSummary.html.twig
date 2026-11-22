@@ -12,7 +12,7 @@
         <span class="page-label page-label-species">{{ 'species.label'|trans }}</span>
         <twig:Status :validated="plant.validated">{{ (plant.validated ? 'status.care_sheet_validated' : 'status.draft_to_review')|trans }}</twig:Status>
     </header>
-    <a class="species-summary-name" href="{{ path('plant_show', {id: plant.id}) }}">
+    <a class="species-summary-name" href="{{ path('plant_show', {garden: plant.garden.slug, plant: plant.slug}) }}">
         <img class="species-summary-plate" src="{{ asset(plate.image) }}" alt="{{ plate.depicts ?? 'plate.schematic_alt'|trans }}" width="{{ plate.width }}" height="{{ plate.height }}" loading="lazy">
         <span>
             <strong>{{ plant.commonName }}</strong>
@@ -33,5 +33,5 @@
             <span class="hint">{{ 'species.validate_for_reminders'|trans }}</span>
         {% endif %}
     </p>
-    <twig:Button href="{{ path('plant_show', {id: plant.id}) }}" icon="note" class="button-next">{{ (plant.validated ? 'species.sheet_and_reminders' : 'species.review_and_validate')|trans }}</twig:Button>
+    <twig:Button href="{{ path('plant_show', {garden: plant.garden.slug, plant: plant.slug}) }}" icon="note" class="button-next">{{ (plant.validated ? 'species.sheet_and_reminders' : 'species.review_and_validate')|trans }}</twig:Button>
 </section>

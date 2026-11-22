@@ -32,9 +32,9 @@
                 {% elseif entry.kind == 'choices' %}
                     <twig:Chat:Choices :choices="entry.choices" :answered="entry.answered"/>
                 {% elseif entry.kind == 'planting_card' %}
-                    <twig:Chat:PlantingCard :proposal="entry.plantingProposal"/>
+                    <twig:Chat:PlantingCard :proposal="entry.plantingProposal" :garden="garden"/>
                 {% elseif entry.kind == 'space_card' %}
-                    <twig:Chat:SpaceCard :proposal="entry.spaceProposal"/>
+                    <twig:Chat:SpaceCard :proposal="entry.spaceProposal" :garden="garden"/>
                 {% endif %}
             {% else %}
                 <div class="chat-empty" id="chat-empty" data-chat-target="empty"><twig:BlankPlate/></div>

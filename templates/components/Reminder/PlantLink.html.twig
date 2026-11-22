@@ -1,7 +1,7 @@
 {#
     The name of a plant, linked to my plant of its species, in the garden, or to the species when several plants or
     none follow its care sheet.
-    plant: App\Plant\Entity\Plant · plantingIds: array<int, list<int>>, see App\Garden\PlantingRepository::findIdsForPlants()
+    plant: App\Plant\Entity\Plant · plantingSlugs: array<string, list<string>>, see App\Garden\PlantingRepository::findSlugsForPlants()
 #}
-{%- props plant, plantingIds -%}
-<a href="{{ my_plant_path(plant, plantingIds) ?? path('plant_show', {id: plant.id}) }}">{{ plant.commonName }}</a>
+{%- props plant, plantingSlugs -%}
+<a href="{{ my_plant_path(plant, plantingSlugs) ?? path('plant_show', {garden: plant.garden.slug, plant: plant.slug}) }}">{{ plant.commonName }}</a>

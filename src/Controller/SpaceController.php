@@ -14,6 +14,7 @@ use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\ValueResolver;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -23,6 +24,7 @@ use Symfony\Component\Translation\TranslatableMessage;
  * The spots of the current garden: each carries the exposure and the soil of the plants growing there. A space of
  * another garden answers 404.
  */
+#[Route('/g/{garden}', requirements: ['garden' => Requirement::ASCII_SLUG])]
 final class SpaceController extends AbstractController
 {
     public function __construct(
@@ -56,22 +58,22 @@ final class SpaceController extends AbstractController
 
             $this->addFlash('success', new TranslatableMessage('flash.space.added', ['name' => $space->getName()]));
 
-            return $this->redirectToRoute('space_show', ['id' => $space->getId()], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('space_show', ['space' => $space->getSlug()], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('space/new.html.twig', ['form' => $form]);
     }
 
-    #[Route('/spaces/{id}', name: 'space_show', requirements: ['id' => Requirement::UUID], methods: ['GET'])]
+    #[Route('/spaces/{space}', name: 'space_show', requirements: ['space' => Requirement::ASCII_SLUG], methods: ['GET'])]
     #[IsGranted(GardenResourceVoter::SPACE_VIEW, 'space', statusCode: Response::HTTP_NOT_FOUND)]
-    public function show(Space $space): Response
+    public function show(#[ValueResolver('in_garden')] Space $space): Response
     {
         return $this->render('space/show.html.twig', ['space' => $space]);
     }
 
-    #[Route('/spaces/{id}/edit', name: 'space_edit', requirements: ['id' => Requirement::UUID], methods: ['GET', 'POST'])]
+    #[Route('/spaces/{space}/edit', name: 'space_edit', requirements: ['space' => Requirement::ASCII_SLUG], methods: ['GET', 'POST'])]
     #[IsGranted(GardenResourceVoter::SPACE_EDIT, 'space', statusCode: Response::HTTP_NOT_FOUND)]
-    public function edit(Request $request, Space $space): Response
+    public function edit(Request $request, #[ValueResolver('in_garden')] Space $space): Response
     {
         $data = SpaceFormData::fromSpace($space);
         $form = $this->createForm(SpaceType::class, $data);
@@ -83,7 +85,7 @@ final class SpaceController extends AbstractController
 
             $this->addFlash('success', new TranslatableMessage('flash.space.saved', ['name' => $space->getName()]));
 
-            return $this->redirectToRoute('space_show', ['id' => $space->getId()], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('space_show', ['space' => $space->getSlug()], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('space/edit.html.twig', ['space' => $space, 'form' => $form]);

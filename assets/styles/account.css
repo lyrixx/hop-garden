@@ -38,8 +38,8 @@
 .garden-switcher[open] summary { background: rgb(255 255 255 / 12%); }
 .garden-switcher-list { position: absolute; top: calc(100% + .4rem); right: 0; z-index: 20; min-width: 14rem; margin: 0; padding: .5rem; list-style: none; }
 .garden-switcher-list li + li { margin-top: .15rem; }
-.garden-switcher-list button, .garden-switcher-list a, .garden-switcher-current { display: flex; align-items: center; gap: .4rem; width: 100%; padding: .5rem .7rem; border: 0; border-radius: 10px; background: none; color: var(--forest-deep); font: inherit; font-weight: 600; text-align: left; text-decoration: none; cursor: pointer; }
-.garden-switcher-list button:hover, .garden-switcher-list a:hover { background: var(--cream); }
+.garden-switcher-list a, .garden-switcher-current { display: flex; align-items: center; gap: .4rem; width: 100%; padding: .5rem .7rem; border: 0; border-radius: 10px; background: none; color: var(--forest-deep); font: inherit; font-weight: 600; text-align: left; text-decoration: none; cursor: pointer; }
+.garden-switcher-list a:hover { background: var(--cream); }
 .garden-switcher-current { cursor: default; color: var(--forest); }
 
 @media (max-width: 1100px) {

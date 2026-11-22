@@ -78,7 +78,7 @@ final readonly class ProposePlantingTool
             throw new ToolCallException(\sprintf('No space with id %s: call list_spaces.', $space_id));
         }
 
-        return $this->gardenNormalizer->plantingProposal(PlantingProposal::create($plant->getId(), $space?->getId(), trim($name))) + [
+        return $this->gardenNormalizer->plantingProposal(PlantingProposal::create($plant->getId(), $space?->getId(), trim($name)), $garden) + [
             'next_step' => 'The "Add to my garden" card is shown to the user. Until they tap it, the plant is not in the garden.',
         ];
     }

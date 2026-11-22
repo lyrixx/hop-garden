@@ -13,7 +13,7 @@
             <h2>{{ 'garden.drafts'|trans }}</h2>
             <ul class="card plant-list">
                 {% for plant in drafts %}
-                    <li><span class="page-label page-label-species">{{ 'species.label'|trans }}</span> <a href="{{ path('plant_show', {id: plant.id}) }}">{{ plant.commonName }}</a> <em>{{ plant.scientificName }}</em> <twig:Status/></li>
+                    <li><span class="page-label page-label-species">{{ 'species.label'|trans }}</span> <a href="{{ path('plant_show', {plant: plant.slug}) }}">{{ plant.commonName }}</a> <em>{{ plant.scientificName }}</em> <twig:Status/></li>
                 {% endfor %}
             </ul>
         </section>

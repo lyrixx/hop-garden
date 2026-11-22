@@ -12,7 +12,7 @@ use Mcp\Schema\ToolAnnotations;
     name: 'list_spaces',
     title: 'List the spaces of the garden',
     description: <<<'TXT'
-        List the spaces of the user's garden (the terrace, the north bed...): their id, their exposure, their soil and the plants growing there.
+        List the spaces of the user's garden (the terrace, the north bed...): their id, their exposure, their soil, the plants growing there and the URL of their page.
         The names are the user's own, in any language: match them by meaning, not by spelling ("terrasse" is the space "Terrace").
         TXT,
     annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false),
@@ -29,8 +29,9 @@ use Mcp\Schema\ToolAnnotations;
                         'exposure' => ['type' => ['string', 'null']],
                         'soil' => ['type' => ['string', 'null']],
                         'plantings' => ['type' => 'array', 'items' => ['type' => 'string']],
+                        'url' => ['type' => 'string'],
                     ],
-                    'required' => ['id', 'name', 'exposure', 'soil', 'plantings'],
+                    'required' => ['id', 'name', 'exposure', 'soil', 'plantings', 'url'],
                 ],
             ],
         ],

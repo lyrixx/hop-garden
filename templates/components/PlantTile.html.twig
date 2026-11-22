@@ -5,7 +5,7 @@
 #}
 {% props planting %}
 {% set plant = planting.plant %}
-<a class="card plant-tile" href="{{ path('garden_show', {id: planting.id}) }}">
+<a class="card plant-tile" href="{{ path('garden_show', {garden: planting.garden.slug, planting: planting.slug}) }}">
     <span class="specimen-no">{{ 'specimen.number'|trans({number: planting.id|specimen_number}) }}</span>
     <span class="plant-card-image"><twig:PlantingPhoto :planting="planting"/></span>
     <strong>{{ planting.name }}</strong>

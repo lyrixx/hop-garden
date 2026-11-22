@@ -9,7 +9,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 /**
  * The Mercure topics, all private (the hub has no anonymous subscriber): URLs under the one of the application, so that
  * a URL pattern grants them by owner (subscriberGrants()). A member subscribes to their own topics, and to the ones of
- * their current garden, every id a UUID:
+ * each of their gardens, every id a UUID:
  * - a conversation of the chat: /users/{id}/conversations/{id};
  * - the notifications of a garden: /users/{id}/gardens/{id}/notifications, each member their own;
  * - the drafting of a care sheet: /gardens/{id}/drafting/{id}, on the page of the planting, for every member.
@@ -41,15 +41,17 @@ final readonly class Topics
     }
 
     /**
-     * What the subscriber cookie of a member grants: their topics, and the ones of their current garden. Nothing of
-     * another member, nor of another garden.
+     * What the subscriber cookie of a member grants: their topics, and the ones of each of their gardens, so that two
+     * tabs on two gardens both listen. Nothing of another member, nor of another garden.
+     *
+     * @param list<Garden> $gardens of the member
      *
      * @return array{urlpattern: list<string>}
      */
-    public function subscriberGrants(User $user, ?Garden $garden): array
+    public function subscriberGrants(User $user, array $gardens): array
     {
         $patterns = [\sprintf('%s/users/%s/*', $this->base, $user->getId()->toRfc4122())];
-        if (null !== $garden) {
+        foreach ($gardens as $garden) {
             $patterns[] = \sprintf('%s/gardens/%s/*', $this->base, $garden->getId()->toRfc4122());
         }
 

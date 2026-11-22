@@ -49,6 +49,15 @@ class PlantRepository extends ServiceEntityRepository
     }
 
     /**
+     * The one of the URL, in the garden of the URL: null when this garden has none of this slug, whether another one has
+     * it or not.
+     */
+    public function findOneBySlug(Garden $garden, string $slug): ?Plant
+    {
+        return $this->findOneBy(['garden' => $garden, 'slug' => $slug]);
+    }
+
+    /**
      * The base, and the slugs it starts with a dash after: "rose", "rose-2"... See App\Garden\Slugs.
      *
      * @return list<string>

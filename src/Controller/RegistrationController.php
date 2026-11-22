@@ -46,7 +46,7 @@ final class RegistrationController extends AbstractController
     public function register(Request $request, PasswordHasherFactoryInterface $passwordHasherFactory): Response
     {
         if ($this->isGranted('ROLE_USER')) {
-            return $this->redirectToRoute('chat');
+            return $this->redirectToRoute('assistant');
         }
 
         $data = new RegistrationFormData();

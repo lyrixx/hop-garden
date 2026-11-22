@@ -13,26 +13,24 @@ use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * A token bound to a garden (CurrentGarden::TOKEN_ATTRIBUTE) gets that one, while its user is a member of it, and never
- * another. A member logged in on the website gets the one of their session, else the one they joined first. Nothing
- * else: no garden in the worker, the console or for a visitor.
+ * another. A page of the website gets the garden of its URL, which GardenOfTheUrl found and checked before. Nothing
+ * else: no garden on a page out of a garden, in the worker, the console or for a visitor.
  */
 final class UserCurrentGarden implements CurrentGarden, ResetInterface
 {
-    private const string SESSION_KEY = 'current_garden_id';
-
     /**
-     * Read once per security token: the templates and the voters ask several times a request.
+     * Read once per bound token: the tools and the voters ask several times a request.
      *
      * @var \WeakMap<TokenInterface, ?Garden>
      */
-    private \WeakMap $found;
+    private \WeakMap $bound;
 
     public function __construct(
         private readonly Security $security,
         private readonly RequestStack $requestStack,
         private readonly GardenRepository $gardenRepository,
     ) {
-        $this->found = new \WeakMap();
+        $this->bound = new \WeakMap();
     }
 
     public function get(): Garden
@@ -47,46 +45,30 @@ final class UserCurrentGarden implements CurrentGarden, ResetInterface
             return null;
         }
 
-        if (!$this->found->offsetExists($token)) {
-            $this->found[$token] = $this->lookUp($token);
+        if ($token->hasAttribute(self::TOKEN_ATTRIBUTE)) {
+            if (!$this->bound->offsetExists($token)) {
+                $this->bound[$token] = $this->boundGarden($token);
+            }
+
+            return $this->bound[$token];
         }
 
-        return $this->found[$token];
-    }
+        $garden = $this->requestStack->getMainRequest()?->attributes->get(GardenOfTheUrl::ATTRIBUTE);
 
-    public function switchTo(Garden $garden): void
-    {
-        $this->requestStack->getSession()->set(self::SESSION_KEY, $garden->getId()->toRfc4122());
-        $this->found = new \WeakMap();
+        return $garden instanceof Garden ? $garden : null;
     }
 
     public function reset(): void
     {
-        $this->found = new \WeakMap();
+        $this->bound = new \WeakMap();
     }
 
-    private function lookUp(TokenInterface $token): ?Garden
+    private function boundGarden(TokenInterface $token): ?Garden
     {
         /** @var User $user */
         $user = $token->getUser();
+        $gardenId = $token->getAttribute(self::TOKEN_ATTRIBUTE);
 
-        if ($token->hasAttribute(self::TOKEN_ATTRIBUTE)) {
-            $gardenId = $token->getAttribute(self::TOKEN_ATTRIBUTE);
-
-            return \is_string($gardenId) && Uuid::isValid($gardenId) ? $this->gardenRepository->findOneOfMember(Uuid::fromString($gardenId), $user) : null;
-        }
-
-        // The website only: a stateless firewall gets its garden from its token, or none
-        $request = $this->requestStack->getMainRequest();
-        if (null === $request || !$request->hasSession() || false !== $this->security->getFirewallConfig($request)?->isStateless()) {
-            return null;
-        }
-
-        $gardenId = $request->getSession()->get(self::SESSION_KEY);
-        // An int in a session of before the UUIDs: none
-        $garden = \is_string($gardenId) && Uuid::isValid($gardenId) ? $this->gardenRepository->findOneOfMember(Uuid::fromString($gardenId), $user) : null;
-
-        // Left since, or never chosen
-        return $garden ?? $this->gardenRepository->findOfMember($user)[0] ?? null;
+        return \is_string($gardenId) && Uuid::isValid($gardenId) ? $this->gardenRepository->findOneOfMember(Uuid::fromString($gardenId), $user) : null;
     }
 }
