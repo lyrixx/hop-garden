@@ -16,6 +16,7 @@ use App\Garden\Message\DraftCareSheet;
 use App\Garden\PlantingPhotoStorage;
 use App\Garden\PlantingRepository;
 use App\Garden\Recommendation\RecommendationEngine;
+use App\Locale\PreferredLocale;
 use App\Plant\Entity\Plant;
 use App\Plant\PlantRepository;
 use App\Reminder\ReminderChecker;
@@ -40,6 +41,7 @@ final class GardenController extends AbstractController
         private readonly PlantingRepository $plantingRepository,
         private readonly PlantRepository $plantRepository,
         private readonly MessageBusInterface $bus,
+        private readonly PreferredLocale $preferredLocale,
     ) {
     }
 
@@ -210,7 +212,7 @@ final class GardenController extends AbstractController
         // Committed before the worker reads it
         $this->entityManager->flush();
 
-        $this->bus->dispatch(new DraftCareSheet($planting->getId(), $conversationId->toRfc4122()));
+        $this->bus->dispatch(new DraftCareSheet($planting->getId(), $conversationId->toRfc4122(), $this->preferredLocale->get()->value));
     }
 
     private function validatedPlant(int $id): Plant

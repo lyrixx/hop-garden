@@ -12,6 +12,7 @@ use App\Plant\PlantRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Translation\LocaleSwitcher;
 
 /**
  * The agent drafts the care sheet through MCP, as in the chat, and the planting is linked to the draft as soon as
@@ -19,6 +20,8 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
  *
  * The page of the planting follows the tool calls, then shows the summary of the draft, streamed in place. A failure
  * refreshes the page instead: the worker cannot render its Retry button, it has no session to sign its form.
+ *
+ * In the locale of the user who added the plant: the agent drafts the care sheet in it.
  */
 #[AsMessageHandler]
 final readonly class DraftCareSheetHandler
@@ -30,10 +33,16 @@ final readonly class DraftCareSheetHandler
         private EntityManagerInterface $entityManager,
         private ChatPublisher $publisher,
         private LoggerInterface $logger,
+        private LocaleSwitcher $localeSwitcher,
     ) {
     }
 
     public function __invoke(DraftCareSheet $message): void
+    {
+        $this->localeSwitcher->runWithLocale($message->locale, fn () => $this->draft($message));
+    }
+
+    private function draft(DraftCareSheet $message): void
     {
         $planting = $this->currentAttempt($message);
         if (null === $planting) {
