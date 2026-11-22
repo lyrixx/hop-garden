@@ -36,6 +36,7 @@ final readonly class KernelHttpClient implements ClientInterface
 
         $symfonyRequest = Request::create((string) $request->getUri(), $request->getMethod(), server: $server, content: (string) $request->getBody());
         $workerLocale = $this->localeSwitcher->getLocale();
+
         try {
             $symfonyResponse = $this->kernel->handle($symfonyRequest, HttpKernelInterface::MAIN_REQUEST);
         } finally {
