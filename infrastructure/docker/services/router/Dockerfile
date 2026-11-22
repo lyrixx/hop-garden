@@ -1,4 +1,4 @@
-FROM traefik:v3.7.17
+FROM traefik:v3.7.18
 
 COPY traefik /etc/traefik
 
