@@ -1,0 +1,6 @@
+{#
+    What the publisher still has to write on a legal page, shown as such until it does: nothing made up stands in for it.
+    what: string, what goes there, translated
+#}
+{%- props what -%}
+<mark class="to-complete"><span class="to-complete-label"><twig:Icon name="pencil" :size="13"/> {{ 'legal.to_complete'|trans }}</span> {{ what }}</mark>

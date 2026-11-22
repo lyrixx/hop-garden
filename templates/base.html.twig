@@ -15,6 +15,8 @@
     <body>
         <twig:LocaleBanner/>
 
+        {# The navigation of the application; a public page has its own (templates/public/layout.html.twig) #}
+        {% block header %}
         <header class="topbar">
             <a class="brand" href="{{ path('chat') }}">
                 <span class="pict"><twig:Icon name="hop" :size="32"/></span>
@@ -37,6 +39,7 @@
            on screen stay, and the stream is not closed and opened again #}
         <div class="toasts" id="toasts" data-turbo-permanent aria-live="polite"></div>
         <div id="notifications-stream" data-turbo-permanent hidden>{{ turbo_stream_from('notifications') }}</div>
+        {% endblock %}
 
         <main class="main">
             {% for type, messages in app.flashes %}
@@ -49,6 +52,11 @@
         </main>
 
         <footer class="footer">
+            <nav class="footer-links" aria-label="{{ 'footer.legal'|trans }}">
+                <a href="{{ path('legal_notice') }}">{{ 'legal.notice.title'|trans }}</a>
+                <a href="{{ path('legal_terms') }}">{{ 'legal.terms.title'|trans }}</a>
+                <a href="{{ path('legal_privacy') }}">{{ 'legal.privacy.title'|trans }}</a>
+            </nav>
             <p>
                 {{ 'footer.plant_data'|trans({trefle: '<a href="https://trefle.io">Trefle</a>'})|raw }}
                 {{ 'footer.weather_data'|trans({open_meteo: '<a href="https://open-meteo.com/">Open-Meteo.com</a>', license: '<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>'})|raw }}

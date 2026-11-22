@@ -8,7 +8,7 @@
 // text of the chat, when the agent goes another way (run it again).
 //
 // Environment:
-//   BASE_URL        https://hop-garden.test
+//   BASE_URL        https://hop-garden.test (the chat is on /assistant)
 //   RESET_COMMAND   castor demo:reset
 //   FROST_COMMAND   castor demo:frost
 //   CHROMIUM_PATH   a Chromium binary, when Playwright's own is not installed
@@ -88,7 +88,7 @@ await context.addInitScript(CURSOR_SCRIPT);
 const page = await context.newPage();
 
 // Start from an empty conversation, before filming
-await page.goto(BASE_URL);
+await page.goto(`${BASE_URL}/assistant`);
 await page.click('button:has-text("New conversation")');
 await page.waitForSelector('.chat-empty');
 

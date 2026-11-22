@@ -142,7 +142,8 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
         self::getContainer()->get(EntityManagerInterface::class)->flush();
 
         $pages = [
-            '/' => 'Votre assistant de jardinage',
+            '/' => 'Ce que Hop Garden règle',
+            '/assistant' => 'Votre assistant de jardinage',
             '/garden' => 'Mon jardin',
             '/garden/new' => 'Ajouter une plante à votre jardin',
             '/garden/' . $planting->getId() => 'Recommandations',

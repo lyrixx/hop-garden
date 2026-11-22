@@ -28,7 +28,7 @@ final class ChatController extends AbstractController
     ) {
     }
 
-    #[Route('/', name: 'chat', methods: ['GET'])]
+    #[Route('/assistant', name: 'chat', methods: ['GET'])]
     public function index(ChatHistory $chatHistory, PlantRepository $plantRepository): Response
     {
         $conversationId = $this->chatSession->getConversationId();

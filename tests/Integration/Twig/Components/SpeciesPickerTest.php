@@ -116,11 +116,11 @@ final class SpeciesPickerTest extends KernelTestCase
 
         $crawler = $picker->render()->crawler();
         self::assertSame('Trefle does not know this name: try its Latin name.', $crawler->filter('.garden-species-candidates .hint')->text());
-        self::assertSame('/?message=' . rawurlencode('Draft the care sheet of unknown shrub'), $crawler->filter('.garden-species-assistant a')->attr('href'), 'The assistant, with the name as typed.');
+        self::assertSame('/assistant?message=' . rawurlencode('Draft the care sheet of unknown shrub'), $crawler->filter('.garden-species-assistant a')->attr('href'), 'The assistant, with the name as typed.');
 
         $crawler = $picker->set('name', 'hortensia')->render()->crawler();
         self::assertSame('Which species is it?', $crawler->filter('.garden-species-label')->text(), 'Not optional.');
-        self::assertSame('/?message=' . rawurlencode('Draft the care sheet of Hydrangea paniculata'), $picker->set('trefleId', '191052')->render()->crawler()->filter('.garden-species-assistant a')->attr('href'));
+        self::assertSame('/assistant?message=' . rawurlencode('Draft the care sheet of Hydrangea paniculata'), $picker->set('trefleId', '191052')->render()->crawler()->filter('.garden-species-assistant a')->attr('href'));
     }
 
     private function picker(string $name = ''): TestLiveComponent

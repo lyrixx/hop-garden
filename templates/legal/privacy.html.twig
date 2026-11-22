@@ -1,0 +1,73 @@
+{% extends 'legal/layout.html.twig' %}
+
+{% block heading %}{{ 'legal.privacy.title'|trans }}{% endblock %}
+
+{% block intro %}{{ 'legal.privacy.intro'|trans }}{% endblock %}
+
+{% block sections %}
+    <section>
+        <h2>{{ 'legal.privacy.controller.heading'|trans }}</h2>
+        <p>
+            {{ 'legal.privacy.controller.text'|trans({link: '<a href="' ~ path('legal_notice') ~ '">', link_end: '</a>'})|raw }}
+            <twig:Legal:ToComplete :what="'legal.privacy.controller.to_complete'|trans"/>
+        </p>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.privacy.data.heading'|trans }}</h2>
+        <ul>
+            <li>{{ 'legal.privacy.data.account'|trans }}</li>
+            <li>{{ 'legal.privacy.data.garden'|trans }}</li>
+            <li>{{ 'legal.privacy.data.photos'|trans }}</li>
+            <li>{{ 'legal.privacy.data.conversations'|trans }}</li>
+            <li>{{ 'legal.privacy.data.location'|trans }}</li>
+            <li>{{ 'legal.privacy.data.searches'|trans }}</li>
+            <li>{{ 'legal.privacy.data.logs'|trans }}</li>
+        </ul>
+        <p>{{ 'legal.privacy.data.third_parties'|trans }}</p>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.privacy.purposes.heading'|trans }}</h2>
+        <ul>
+            <li>{{ 'legal.privacy.purposes.service'|trans }}</li>
+            <li>{{ 'legal.privacy.purposes.security'|trans }}</li>
+            <li>{{ 'legal.privacy.purposes.billing'|trans }}</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.privacy.retention.heading'|trans }}</h2>
+        <ul>
+            <li>{{ 'legal.privacy.retention.account.text'|trans }} <twig:Legal:ToComplete :what="'legal.privacy.retention.account.to_complete'|trans"/></li>
+            <li>{{ 'legal.privacy.retention.conversations.text'|trans }} <twig:Legal:ToComplete :what="'legal.privacy.retention.conversations.to_complete'|trans"/></li>
+            {# framework.session.gc_maxlifetime, config/packages/framework.yaml #}
+            <li>{{ 'legal.privacy.retention.session'|trans }}</li>
+            <li>{{ 'legal.privacy.retention.logs.text'|trans }} <twig:Legal:ToComplete :what="'legal.privacy.retention.logs.to_complete'|trans"/></li>
+            <li>{{ 'legal.privacy.retention.invoices.text'|trans }} <twig:Legal:ToComplete :what="'legal.privacy.retention.invoices.to_complete'|trans"/></li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.privacy.recipients.heading'|trans }}</h2>
+        <p>{{ 'legal.privacy.recipients.text'|trans }}</p>
+        <p><twig:Legal:ToComplete :what="'legal.privacy.recipients.to_complete'|trans"/></p>
+        <p>{{ 'legal.privacy.recipients.transfers'|trans }}</p>
+    </section>
+
+    <section id="cookies">
+        <h2>{{ 'legal.privacy.cookies.heading'|trans }}</h2>
+        {# The cookie of the session; the second one is set by assets/controllers/csrf_protection_controller.js, and the
+           language is App\Locale\PreferredLocale. Checked by tests/Functional/Controller/LegalPagesTest.php #}
+        <p>{{ 'legal.privacy.cookies.session'|trans({name: app.session.name}) }}</p>
+        <p>{{ 'legal.privacy.cookies.form'|trans }}</p>
+        <p>{{ 'legal.privacy.cookies.language'|trans }}</p>
+        <p>{{ 'legal.privacy.cookies.none'|trans }}</p>
+    </section>
+
+    <section>
+        <h2>{{ 'legal.privacy.rights.heading'|trans }}</h2>
+        <p>{{ 'legal.privacy.rights.text'|trans }}</p>
+        <p>{{ 'legal.privacy.rights.complaint'|trans({link: '<a href="https://www.cnil.fr/">cnil.fr</a>'})|raw }}</p>
+    </section>
+{% endblock %}

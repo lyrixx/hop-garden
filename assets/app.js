@@ -5,6 +5,7 @@ import '@fontsource-variable/dm-sans/index.css';
 import './styles/app.css';
 import './styles/plate.css';
 import './styles/garden.css';
+import './styles/public.css';
 
 // A Turbo Frame changed by one of its own forms fades from its old content to the new one: the switch of a reminder,
 // a draft card validated in place, whose status grows into "Validated"
