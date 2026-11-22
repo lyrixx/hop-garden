@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tool;
 
+use App\Garden\CurrentGarden;
 use App\Plant\Exception\PlantNotFoundException;
 use App\Plant\Exception\PlantNotValidatedException;
 use App\Plant\PlantRepository;
@@ -19,6 +20,7 @@ final readonly class ReminderTools
     public function __construct(
         private PlantRepository $plantRepository,
         private EntityManagerInterface $entityManager,
+        private CurrentGarden $currentGarden,
     ) {
     }
 
@@ -66,7 +68,7 @@ final readonly class ReminderTools
     private function change(int $plantId, callable $change): array
     {
         try {
-            $plant = $this->plantRepository->get($plantId);
+            $plant = $this->plantRepository->get($this->currentGarden->get(), $plantId);
             $change($plant);
         } catch (PlantNotFoundException|PlantNotValidatedException $e) {
             throw new ToolCallException($e->getMessage());

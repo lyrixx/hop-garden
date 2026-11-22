@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tool;
 
+use App\Garden\CurrentGarden;
 use App\Garden\SpaceRepository;
 use App\Mcp\GardenNormalizer;
 use Mcp\Capability\Attribute\McpTool;
@@ -41,6 +42,7 @@ final readonly class ListSpacesTool
     public function __construct(
         private SpaceRepository $spaceRepository,
         private GardenNormalizer $gardenNormalizer,
+        private CurrentGarden $currentGarden,
     ) {
     }
 
@@ -50,7 +52,7 @@ final readonly class ListSpacesTool
     public function __invoke(): array
     {
         return [
-            'spaces' => array_map($this->gardenNormalizer->space(...), $this->spaceRepository->findAllByName()),
+            'spaces' => array_map($this->gardenNormalizer->space(...), $this->spaceRepository->findAllByName($this->currentGarden->get())),
         ];
     }
 }

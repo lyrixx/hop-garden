@@ -5,6 +5,7 @@ namespace App\Mcp\Tool;
 use App\DataSource\Exception\DataSourceUnavailableException;
 use App\DataSource\OpenMeteo\Model\DailyMinimum;
 use App\DataSource\OpenMeteo\OpenMeteoClient;
+use App\Garden\CurrentGarden;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
@@ -42,6 +43,7 @@ final readonly class GetFrostForecastTool
 
     public function __construct(
         private OpenMeteoClient $openMeteoClient,
+        private CurrentGarden $currentGarden,
     ) {
     }
 
@@ -53,7 +55,7 @@ final readonly class GetFrostForecastTool
         int $days = 3,
     ): array {
         try {
-            $forecast = $this->openMeteoClient->getFrostForecast($days);
+            $forecast = $this->openMeteoClient->getFrostForecast($this->currentGarden->get()->getLocation(), $days);
         } catch (DataSourceUnavailableException $e) {
             throw new ToolCallException($e->getMessage());
         }

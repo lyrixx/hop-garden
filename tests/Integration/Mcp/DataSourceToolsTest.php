@@ -74,8 +74,7 @@ final class DataSourceToolsTest extends McpTestCase
         $result = $this->callTool('get_frost_forecast');
 
         self::assertSame(['2026-12-03', '2026-12-04', '2026-12-05'], array_column($result['days'], 'date'));
-        self::assertSame(46.6, $result['latitude']);
-        self::assertSame(2.4, $result['longitude']);
+        self::assertSame([48.9, 2.3], [$result['latitude'], $result['longitude']], 'At the garden of the test, in Paris, rounded.');
         self::assertSame('Weather data by Open-Meteo.com (CC BY 4.0)', $result['attribution']);
     }
 

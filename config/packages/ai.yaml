@@ -45,3 +45,5 @@ mcp:
                 hopgarden:
                     transport: http
                     url: '%env(MCP_AGENT_URL)%'
+                    # Each request carries the token of the run: the tools answer in the garden of the sender
+                    http_client: 'App\Mcp\Agent\AgentRunHttpClient'

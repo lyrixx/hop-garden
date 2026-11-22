@@ -2,7 +2,9 @@
 
 namespace App\Mcp\Confirmation;
 
+use App\Garden\CurrentGarden;
 use App\Garden\PlantValidation;
+use App\Garden\Security\PlantValidationVoter;
 use App\Mcp\PlantNormalizer;
 use App\Plant\Exception\PlantAlreadyValidatedException;
 use App\Plant\Exception\PlantNotFoundException;
@@ -12,6 +14,7 @@ use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
 use Mcp\Schema\ToolAnnotations;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 /**
  * Only on the server for external MCP clients (/_mcp, STDIO): the agent of the web UI never validates,
@@ -34,6 +37,8 @@ final readonly class ConfirmPlantTool
         private EntityManagerInterface $entityManager,
         private PlantNormalizer $plantNormalizer,
         private PlantValidation $plantValidation,
+        private CurrentGarden $currentGarden,
+        private AuthorizationCheckerInterface $authorizationChecker,
     ) {
     }
 
@@ -45,7 +50,10 @@ final readonly class ConfirmPlantTool
         int $id,
     ): array {
         try {
-            $plant = $this->plantRepository->get($id);
+            $plant = $this->plantRepository->get($this->currentGarden->get(), $id);
+            if (!$this->authorizationChecker->isGranted(PlantValidationVoter::VALIDATE, $plant)) {
+                throw new ToolCallException('Only the user validates a care sheet, in Hop Garden.');
+            }
             $this->entityManager->getConnection()->transactional(function () use ($plant): void {
                 $this->plantValidation->validate($plant);
                 $this->entityManager->flush();

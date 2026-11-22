@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tool;
 
+use App\Garden\CurrentGarden;
 use App\Mcp\PlantNormalizer;
 use App\Plant\Exception\PlantNotFoundException;
 use App\Plant\PlantRepository;
@@ -21,6 +22,7 @@ final readonly class GetPlantTool
     public function __construct(
         private PlantRepository $plantRepository,
         private PlantNormalizer $plantNormalizer,
+        private CurrentGarden $currentGarden,
     ) {
     }
 
@@ -32,7 +34,7 @@ final readonly class GetPlantTool
         int $id,
     ): array {
         try {
-            return $this->plantNormalizer->detail($this->plantRepository->get($id));
+            return $this->plantNormalizer->detail($this->plantRepository->get($this->currentGarden->get(), $id));
         } catch (PlantNotFoundException $e) {
             throw new ToolCallException($e->getMessage());
         }

@@ -5,6 +5,8 @@ namespace App\Mcp\Tool;
 use App\DataSource\Exception\DataSourceUnavailableException;
 use App\DataSource\OpenMeteo\Model\DailyMinimum;
 use App\DataSource\OpenMeteo\OpenMeteoClient;
+use App\Garden\CurrentGarden;
+use App\Garden\Entity\Garden;
 use App\Reminder\CalendarSchedule;
 use App\Reminder\FrostRiskEvaluator;
 use App\Reminder\Model\ReminderType;
@@ -31,6 +33,7 @@ final readonly class UpcomingRemindersTool
         private FrostRiskEvaluator $frostRiskEvaluator,
         private OpenMeteoClient $openMeteoClient,
         private ClockInterface $clock,
+        private CurrentGarden $currentGarden,
     ) {
     }
 
@@ -41,7 +44,8 @@ final readonly class UpcomingRemindersTool
         #[Schema(description: 'How many days ahead to look for calendar reminders.', minimum: 1, maximum: 366)]
         int $days = 30,
     ): array {
-        $reminders = $this->reminderRepository->findEnabled();
+        $garden = $this->currentGarden->get();
+        $reminders = $this->reminderRepository->findEnabled($garden);
         $today = $this->clock->now();
 
         $calendar = array_map(static fn (UpcomingReminder $upcoming): array => [
@@ -55,7 +59,7 @@ final readonly class UpcomingRemindersTool
 
         return [
             'calendar' => $calendar,
-            'frost' => $this->frostRisks($frostReminders),
+            'frost' => $this->frostRisks($garden, $frostReminders),
         ];
     }
 
@@ -64,14 +68,14 @@ final readonly class UpcomingRemindersTool
      *
      * @return array<string, mixed>
      */
-    private function frostRisks(array $frostReminders): array
+    private function frostRisks(Garden $garden, array $frostReminders): array
     {
         if ([] === $frostReminders) {
             return ['plants_at_risk' => [], 'forecast_available' => true];
         }
 
         try {
-            $forecast = $this->openMeteoClient->getFrostForecast(ReminderChecker::FROST_FORECAST_DAYS);
+            $forecast = $this->openMeteoClient->getFrostForecast($garden->getLocation(), ReminderChecker::FROST_FORECAST_DAYS);
         } catch (DataSourceUnavailableException) {
             return ['plants_at_risk' => [], 'forecast_available' => false];
         }

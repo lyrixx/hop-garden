@@ -1,6 +1,7 @@
 mcp:
     servers:
-        # For external MCP clients (Claude Desktop, Claude Code, Cursor...): HTTP on /_mcp, and STDIO with "bin/console mcp:server"
+        # For external MCP clients (Claude Desktop, Claude Code, Cursor...): HTTP on /_mcp, refused until OAuth (phase 3), and
+        # STDIO as a member, in one of their gardens: "bin/console app:mcp:stdio --user=<email>" (App\Mcp\Command\StdioServerCommand)
         default:
             name: 'hop-garden'
             description: 'Manage the plants of a garden: identify plants, draft their care sheets, set pruning and frost reminders.'
@@ -26,7 +27,8 @@ mcp:
                 resource_templates: ['App\Mcp\Resource\']
 
         # For the chat agent of the web UI: the same tools, but no confirm_plant. Only the user validates, with the card.
-        # offer_choices shows buttons in the chat: it only makes sense there.
+        # offer_choices shows buttons in the chat: it only makes sense there. Called by the worker with the token of each run
+        # (config/packages/security.yaml, firewall mcp_agent)
         agent:
             name: 'hop-garden-agent'
             transports:
@@ -37,11 +39,3 @@ mcp:
                 allowed_hosts: '%env(csv:MCP_ALLOWED_HOSTS)%'
             registry:
                 tools: ['App\Mcp\Tool\', 'App\Mcp\Chat\']
-
-when@test:
-    mcp:
-        clients:
-            chat:
-                servers:
-                    hopgarden:
-                        http_client: 'App\Tests\Utils\Mcp\KernelHttpClient'

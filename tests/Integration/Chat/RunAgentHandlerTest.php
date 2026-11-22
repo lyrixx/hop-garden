@@ -3,19 +3,19 @@
 namespace App\Tests\Integration\Chat;
 
 use App\Chat\ChatHistory;
-use App\Chat\Message\RunAgent;
 use App\Chat\Model\ChatEntry;
 use App\Chat\RunAgentHandler;
 use App\Plant\Model\PlantStatus;
 use App\Plant\PlantRepository;
+use App\Tests\Utils\Chat\AgentRunsTrait;
 use App\Tests\Utils\Chat\ScriptedGardener;
 use App\Tests\Utils\Env\EnvVarsTrait;
-use App\Tests\Utils\Mercure\ChatStreams;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Uid\UuidV7;
 
 final class RunAgentHandlerTest extends KernelTestCase
 {
+    use AgentRunsTrait;
     use EnvVarsTrait;
 
     public function testTheAgentGoesThroughMcpAndOnlyProposesADraft(): void
@@ -24,14 +24,14 @@ final class RunAgentHandlerTest extends KernelTestCase
         $conversationId = new UuidV7();
         $handler = self::getContainer()->get(RunAgentHandler::class);
 
-        $handler(new RunAgent($conversationId->toRfc4122(), 'hortensia', 'en'));
+        $handler($this->runAgentMessage($conversationId->toRfc4122(), 'hortensia', 'en'));
 
         $events = $this->events($conversationId);
         self::assertSame(['start', 'tool_call', 'answer', 'done'], array_values(array_unique(array_column($events, 'type'))));
         self::assertSame('search_plant(query: "hortensia")', $events[1]['summary']);
         self::assertSame(['type' => 'answer', 'bubble' => 'new', 'html' => '<p>' . ScriptedGardener::QUESTION . '</p>'], $events[2], 'Rendered on the server, as the history.');
 
-        $handler(new RunAgent($conversationId->toRfc4122(), 'paniculata', 'en'));
+        $handler($this->runAgentMessage($conversationId->toRfc4122(), 'paniculata', 'en'));
 
         $events = \array_slice($this->events($conversationId), \count($events));
         $toolCalls = array_column(array_filter($events, static fn (array $event): bool => 'tool_call' === $event['type']), 'summary');
@@ -40,7 +40,7 @@ final class RunAgentHandlerTest extends KernelTestCase
 
         $cards = array_values(array_filter($events, static fn (array $event): bool => 'draft_card' === $event['type']));
         self::assertCount(1, $cards);
-        $plant = self::getContainer()->get(PlantRepository::class)->get($cards[0]['plant_id']);
+        $plant = self::getContainer()->get(PlantRepository::class)->get(self::defaultGarden(), $cards[0]['plant_id']);
         self::assertSame('Hydrangea paniculata', $plant->getScientificName());
         self::assertSame(PlantStatus::Draft, $plant->getStatus(), 'The agent never validates a plant.');
         self::assertSame('done', $events[\count($events) - 1]['type']);
@@ -58,7 +58,7 @@ final class RunAgentHandlerTest extends KernelTestCase
         self::bootKernel();
         $conversationId = new UuidV7();
 
-        self::getContainer()->get(RunAgentHandler::class)(new RunAgent($conversationId->toRfc4122(), ScriptedGardener::STREAMED, 'en'));
+        self::getContainer()->get(RunAgentHandler::class)($this->runAgentMessage($conversationId->toRfc4122(), ScriptedGardener::STREAMED, 'en'));
 
         self::assertSame(
             [
@@ -80,7 +80,7 @@ final class RunAgentHandlerTest extends KernelTestCase
         self::bootKernel();
         $conversationId = new UuidV7();
 
-        self::getContainer()->get(RunAgentHandler::class)(new RunAgent($conversationId->toRfc4122(), ScriptedGardener::NARRATED, 'en'));
+        self::getContainer()->get(RunAgentHandler::class)($this->runAgentMessage($conversationId->toRfc4122(), ScriptedGardener::NARRATED, 'en'));
 
         self::assertSame(
             [
@@ -102,7 +102,7 @@ final class RunAgentHandlerTest extends KernelTestCase
         $conversationId = new UuidV7();
         $handler = self::getContainer()->get(RunAgentHandler::class);
 
-        $handler(new RunAgent($conversationId->toRfc4122(), ScriptedGardener::NARRATED, 'en'));
+        $handler($this->runAgentMessage($conversationId->toRfc4122(), ScriptedGardener::NARRATED, 'en'));
 
         $events = $this->events($conversationId);
         self::assertSame(
@@ -116,7 +116,7 @@ final class RunAgentHandlerTest extends KernelTestCase
             $events,
         );
 
-        $handler(new RunAgent($conversationId->toRfc4122(), 'paniculata', 'en'));
+        $handler($this->runAgentMessage($conversationId->toRfc4122(), 'paniculata', 'en'));
 
         $events = \array_slice($this->events($conversationId), \count($events));
         self::assertSame(['start', 'draft_card', 'answer', 'done'], array_values(array_unique(array_column($events, 'type'))), 'The draft card still comes.');
@@ -133,7 +133,7 @@ final class RunAgentHandlerTest extends KernelTestCase
         $conversationId = new UuidV7();
 
         // Handled: the worker goes on with the next message
-        self::getContainer()->get(RunAgentHandler::class)(new RunAgent($conversationId->toRfc4122(), 'hortensia, ' . ScriptedGardener::UNREACHABLE, 'en'));
+        self::getContainer()->get(RunAgentHandler::class)($this->runAgentMessage($conversationId->toRfc4122(), 'hortensia, ' . ScriptedGardener::UNREACHABLE, 'en'));
 
         self::assertSame(
             [['type' => 'start'], ['type' => 'error', 'message' => 'The assistant could not answer: The model provider does not answer.'], ['type' => 'done']],
@@ -147,7 +147,7 @@ final class RunAgentHandlerTest extends KernelTestCase
         $conversationId = new UuidV7();
 
         try {
-            self::getContainer()->get(RunAgentHandler::class)(new RunAgent($conversationId->toRfc4122(), ScriptedGardener::BROKEN, 'en'));
+            self::getContainer()->get(RunAgentHandler::class)($this->runAgentMessage($conversationId->toRfc4122(), ScriptedGardener::BROKEN, 'en'));
             self::fail('A bug is not hidden.');
         } catch (\LogicException $e) {
             self::assertSame('The agent is broken.', $e->getMessage());
@@ -164,6 +164,6 @@ final class RunAgentHandlerTest extends KernelTestCase
      */
     private function events(UuidV7 $conversationId): array
     {
-        return ChatStreams::of($conversationId->toRfc4122());
+        return $this->conversationStreams($conversationId->toRfc4122());
     }
 }

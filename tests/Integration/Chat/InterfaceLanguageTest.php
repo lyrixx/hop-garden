@@ -3,15 +3,12 @@
 namespace App\Tests\Integration\Chat;
 
 use App\Chat\ChatHistory;
-use App\Chat\ChatPublisher;
-use App\Chat\Message\RunAgent;
 use App\Chat\Model\ChatEntry;
 use App\Chat\RunAgentHandler;
 use App\Factory\PlantingFactory;
 use App\Garden\DraftCareSheetHandler;
-use App\Garden\Message\DraftCareSheet;
+use App\Tests\Utils\Chat\AgentRunsTrait;
 use App\Tests\Utils\Chat\ScriptedGardener;
-use App\Tests\Utils\Mercure\ChatStreams;
 use App\Tests\Utils\Mercure\RecordingHub;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Uid\UuidV7;
@@ -23,6 +20,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 final class InterfaceLanguageTest extends KernelTestCase
 {
+    use AgentRunsTrait;
+
     protected function setUp(): void
     {
         self::bootKernel();
@@ -56,7 +55,7 @@ final class InterfaceLanguageTest extends KernelTestCase
     {
         $conversationId = $this->send('paniculata', 'fr');
 
-        $cards = array_values(array_filter(ChatStreams::of($conversationId->toRfc4122()), static fn (array $event): bool => 'draft_card' === $event['type']));
+        $cards = array_values(array_filter($this->conversationStreams($conversationId->toRfc4122()), static fn (array $event): bool => 'draft_card' === $event['type']));
         self::assertCount(1, $cards, 'After the MCP call of propose_plant.');
         self::assertStringContainsString('Chargement du brouillon…', $this->published($conversationId));
 
@@ -64,7 +63,7 @@ final class InterfaceLanguageTest extends KernelTestCase
 
         self::assertSame(
             ['type' => 'error', 'message' => "L’assistant n’a pas pu répondre\u{a0}: The model provider does not answer."],
-            ChatStreams::of($conversationId->toRfc4122())[1],
+            $this->conversationStreams($conversationId->toRfc4122())[1],
             'The reason is the one of the provider, as is.',
         );
     }
@@ -73,9 +72,9 @@ final class InterfaceLanguageTest extends KernelTestCase
     {
         $planting = PlantingFactory::new()->drafting()->create(['name' => 'Hortensia du portail', 'trefleId' => 191052, 'scientificName' => 'Hydrangea paniculata']);
 
-        self::getContainer()->get(DraftCareSheetHandler::class)(new DraftCareSheet($planting->getId(), $planting->getConversationId() ?? self::fail(), 'fr'));
+        self::getContainer()->get(DraftCareSheetHandler::class)($this->draftCareSheetMessage($planting, 'fr'));
 
-        $drafted = array_values(array_filter(ChatStreams::of($planting->getConversationId() ?? self::fail()), static fn (array $event): bool => 'care_sheet_drafted' === $event['type']));
+        $drafted = array_values(array_filter($this->draftingStreams($planting), static fn (array $event): bool => 'care_sheet_drafted' === $event['type']));
         self::assertStringContainsString('Le brouillon de sa fiche de culture attend votre relecture', (string) $drafted[0]['html']);
         self::assertStringContainsString('Relire et valider la fiche de culture', (string) $drafted[1]['html']);
     }
@@ -90,7 +89,7 @@ final class InterfaceLanguageTest extends KernelTestCase
     private function send(string $text, string $locale): UuidV7
     {
         $conversationId = new UuidV7();
-        self::getContainer()->get(RunAgentHandler::class)(new RunAgent($conversationId->toRfc4122(), $text, $locale));
+        self::getContainer()->get(RunAgentHandler::class)($this->runAgentMessage($conversationId->toRfc4122(), $text, $locale));
 
         return $conversationId;
     }
@@ -100,13 +99,13 @@ final class InterfaceLanguageTest extends KernelTestCase
      */
     private function answer(UuidV7 $conversationId): string
     {
-        $answers = array_values(array_filter(ChatStreams::of($conversationId->toRfc4122()), static fn (array $event): bool => 'answer' === $event['type']));
+        $answers = array_values(array_filter($this->conversationStreams($conversationId->toRfc4122()), static fn (array $event): bool => 'answer' === $event['type']));
 
         return (string) preg_replace('/\s+/', ' ', html_entity_decode(strip_tags((string) end($answers)['html']), ENT_QUOTES | ENT_HTML5));
     }
 
     private function published(UuidV7 $conversationId): string
     {
-        return implode("\n", RecordingHub::published(ChatPublisher::topic($conversationId->toRfc4122())));
+        return implode("\n", RecordingHub::published($this->conversationTopic($conversationId->toRfc4122())));
     }
 }

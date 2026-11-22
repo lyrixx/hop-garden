@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tool;
 
+use App\Garden\CurrentGarden;
 use App\Mcp\CareSheetInput;
 use App\Mcp\PlantNormalizer;
 use App\Plant\Entity\Plant;
@@ -41,6 +42,7 @@ final readonly class ProposePlantTool
         private EntityManagerInterface $entityManager,
         private PlantNormalizer $plantNormalizer,
         private ClockInterface $clock,
+        private CurrentGarden $currentGarden,
     ) {
     }
 
@@ -71,7 +73,7 @@ final readonly class ProposePlantTool
             throw new ToolCallException($e->getMessage());
         }
 
-        $plant = Plant::propose(trim($common_name), trim($scientific_name), trim($family), $careSheet, $this->clock->now(), $trefle_id, $image_url, $notes);
+        $plant = Plant::propose($this->currentGarden->get(), trim($common_name), trim($scientific_name), trim($family), $careSheet, $this->clock->now(), $trefle_id, $image_url, $notes);
         $this->plantRepository->add($plant);
         $this->entityManager->flush();
 

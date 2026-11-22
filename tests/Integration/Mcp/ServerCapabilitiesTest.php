@@ -103,7 +103,7 @@ final class ServerCapabilitiesTest extends McpTestCase
         }
 
         self::getContainer()->get(EntityManagerInterface::class)->clear();
-        self::assertFalse(self::getContainer()->get(PlantRepository::class)->get($plant->getId())->isValidated(), 'Only the user validates.');
+        self::assertFalse(self::getContainer()->get(PlantRepository::class)->get(self::gardenOfTheTest(), $plant->getId())->isValidated(), 'Only the user validates.');
     }
 
     public function testTheExternalServerIntroducesItself(): void
@@ -114,11 +114,11 @@ final class ServerCapabilitiesTest extends McpTestCase
 
     public function testTheServerOfTheAgentHasToolsOnly(): void
     {
-        $this->mcp('/_mcp/agent');
+        $agent = $this->mcp('/_mcp/agent');
 
-        self::assertSame('hop-garden-agent', $this->mcp()->getServerInfo()?->name);
-        self::assertSame([], $this->mcp()->listPrompts()->prompts);
-        self::assertSame([], $this->mcp()->listResources()->resources);
+        self::assertSame('hop-garden-agent', $agent->getServerInfo()?->name);
+        self::assertSame([], $agent->listPrompts()->prompts);
+        self::assertSame([], $agent->listResources()->resources);
     }
 
     public function testADraftCareSheetIsReadableToo(): void

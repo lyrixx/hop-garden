@@ -34,7 +34,8 @@ final class ChatControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('#chat-log .chat-empty#chat-empty');
         self::assertSelectorNotExists('#chat-log .bubble');
-        self::assertMatchesRegularExpression('#=chat%2F[0-9a-f-]{36}$#', $this->streamSource($crawler), 'The page listens to its conversation.');
+        self::assertMatchesRegularExpression('#=' . preg_quote(rawurlencode(\sprintf('https://hop-garden.test/users/%d/conversations/', $this->gardenOfTheTest()->getOwner()->getId())), '#') . '[0-9a-f-]{36}$#', $this->streamSource($crawler), 'The page listens to its conversation, of its member.');
+        self::assertNotNull($crawler->filter('.chat turbo-mercure-stream-source')->attr('private'), 'With the subscriber cookie.');
         self::assertSelectorExists('#chat-run[data-busy="false"]');
         self::assertSelectorTextSame('.nav a.active', 'Assistant');
     }
@@ -195,7 +196,7 @@ final class ChatControllerTest extends WebTestCase
 
     private function conversationId(string $hubUrl): string
     {
-        self::assertSame(1, preg_match('#=chat%2F([0-9a-f-]{36})$#', $hubUrl, $matches));
+        self::assertSame(1, preg_match('#%2Fconversations%2F([0-9a-f-]{36})$#', $hubUrl, $matches));
 
         return $matches[1];
     }

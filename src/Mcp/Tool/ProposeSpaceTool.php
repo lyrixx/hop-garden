@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tool;
 
+use App\Garden\CurrentGarden;
 use App\Garden\Model\Soil;
 use App\Garden\Model\SpaceProposal;
 use App\Garden\SpaceRepository;
@@ -42,6 +43,7 @@ final readonly class ProposeSpaceTool
     public function __construct(
         private SpaceRepository $spaceRepository,
         private GardenNormalizer $gardenNormalizer,
+        private CurrentGarden $currentGarden,
     ) {
     }
 
@@ -56,7 +58,7 @@ final readonly class ProposeSpaceTool
         #[Schema(description: 'Its soil, only when the user said it: "chalky", "clay", "loamy", "peaty", "sandy" or "silty". Omit it otherwise: the user picks it on the card.')]
         ?Soil $soil = null,
     ): array {
-        $existing = $this->spaceRepository->findOneByName(trim($name));
+        $existing = $this->spaceRepository->findOneByName($this->currentGarden->get(), trim($name));
         if (null !== $existing) {
             throw new ToolCallException(\sprintf('The space "%s" exists already (id %d): propose the plant in it with propose_planting.', $existing->getName(), $existing->getId()));
         }

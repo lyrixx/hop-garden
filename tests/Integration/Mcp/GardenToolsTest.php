@@ -90,9 +90,7 @@ final class GardenToolsTest extends McpTestCase
 
     public function testOfferChoicesOnTheServerOfTheAgent(): void
     {
-        $this->mcp('/_mcp/agent');
-
-        $result = $this->callTool('offer_choices', ['question' => ' Where did you plant it? ', 'options' => ['Terrace ', 'A new space']]);
+        $result = $this->callTool('offer_choices', ['question' => ' Where did you plant it? ', 'options' => ['Terrace ', 'A new space']], $this->mcp('/_mcp/agent'));
 
         self::assertSame(['Where did you plant it?', ['Terrace', 'A new space']], [$result['question'], $result['options']]);
         self::assertStringContainsString('Stop here', $result['next_step']);

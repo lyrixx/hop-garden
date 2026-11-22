@@ -128,7 +128,7 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
 
         $created = $this->tap($card, 'Create the space', ['exposure' => 'sun', 'soil' => 'loamy']);
 
-        $balcony = $this->spaces()->findOneByName('Balcon') ?? throw new \LogicException('The space is not created.');
+        $balcony = $this->spaces()->findOneByName($this->gardenOfTheTest(), 'Balcon') ?? throw new \LogicException('The space is not created.');
         self::assertSame(Exposure::Sun, $balcony->getExposure());
         self::assertSame(Soil::Loamy, $balcony->getSoil());
         self::assertSame('Created', $created->filter('.status')->text());

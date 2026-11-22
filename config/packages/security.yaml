@@ -14,6 +14,25 @@ security:
             # Ensure dev tools and static assets are always allowed
             pattern: ^/(_profiler|_wdt|assets|build|bundles)/
             security: false
+        # The MCP server of the chat agent, called by the worker: the token of each run (App\Mcp\Agent\AgentRunTokens)
+        # logs in whoever sent the message, bound to its garden. Before "mcp", whose pattern covers it
+        mcp_agent:
+            pattern: ^/_mcp/agent
+            stateless: true
+            provider: users
+            user_checker: App\Account\Security\UserChecker
+            custom_authenticators:
+                - App\Mcp\Agent\Security\AgentRunAuthenticator
+            entry_point: App\Mcp\Security\McpEntryPoint
+        # The MCP server of the external clients (Claude Desktop, Claude Code, Cursor...): no authenticator until OAuth
+        # (phase 3), so a 401 for every request. Its authenticator will log in the user of the access token, bound to the
+        # garden they chose (App\Garden\CurrentGarden::TOKEN_ATTRIBUTE), as "app:mcp:stdio --user" does over STDIO
+        mcp:
+            pattern: ^/_mcp
+            stateless: true
+            provider: users
+            user_checker: App\Account\Security\UserChecker
+            entry_point: App\Mcp\Security\McpEntryPoint
         main:
             lazy: true
             provider: users
@@ -39,19 +58,30 @@ security:
 
     # Denied by default: only the first matching rule applies. ROLE_USER comes with the approval (App\Account\Entity\User::getRoles())
     access_control:
-        # The MCP server of the external clients keeps its access until OAuth (phase 3)
-        - { path: ^/_mcp/agent, roles: PUBLIC_ACCESS } # TODO The worker calls it: a short token signed for each run of the agent (next step)
-        - { path: ^/_mcp, roles: PUBLIC_ACCESS }
+        # Both MCP servers: a member, from the token of an agent run, or of an external client (OAuth, phase 3)
+        - { path: ^/_mcp, roles: ROLE_USER }
         # The public page and the legal pages, by the name of their routes (home, legal_*), whatever their paths
         - { route: ^home$, roles: PUBLIC_ACCESS }
         - { route: ^legal_, roles: PUBLIC_ACCESS }
         - { path: ^/(login|register|reset-password|locale)(/|$), roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }
-        # The chat (/assistant, /chat), the garden, the species, the spaces, the notifications, the account, /_components...
+        # The chat (/assistant, /chat), the garden, the species, the spaces, the notifications, the account, the wizard of
+        # a first garden, the live components of /_components...
         - { path: ^/, roles: ROLE_USER }
 
 when@test:
     security:
+        firewalls:
+            # The same firewall, with what stands for the authenticator of phase 3 (OAuth): a token that names the user
+            # and the garden, and binds them as the real one will
+            mcp:
+                pattern: ^/_mcp
+                stateless: true
+                provider: users
+                user_checker: App\Account\Security\UserChecker
+                custom_authenticators:
+                    - App\Tests\Utils\Mcp\McpClientAuthenticator
+                entry_point: App\Mcp\Security\McpEntryPoint
         password_hashers:
             # Password hashers are resource-intensive by design to ensure security.
             # In tests, it's safe to reduce their cost to improve performance.

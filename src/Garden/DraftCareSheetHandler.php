@@ -2,12 +2,17 @@
 
 namespace App\Garden;
 
+use App\Account\UserRepository;
 use App\Chat\AgentRunner;
 use App\Chat\ChatPublisher;
 use App\Chat\Model\AgentRun;
 use App\Chat\Model\ChatEvent;
+use App\Garden\Entity\Garden;
 use App\Garden\Entity\Planting;
 use App\Garden\Message\DraftCareSheet;
+use App\Mcp\Agent\AgentRunTokens;
+use App\Mcp\Agent\Exception\InvalidAgentRunTokenException;
+use App\Mercure\Topics;
 use App\Plant\PlantRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -21,7 +26,9 @@ use Symfony\Component\Translation\LocaleSwitcher;
  * The page of the planting follows the tool calls, then shows the summary of the draft, streamed in place. A failure
  * refreshes the page instead: the worker cannot render its Retry button, it has no session to sign its form.
  *
- * In the locale of the user who added the plant: the agent drafts the care sheet in it.
+ * In the locale of the user who added the plant: the agent drafts the care sheet in it. In the garden of the planting,
+ * while they are a member of it, and while the token of the run is valid: the page of the planting shows the outcome to
+ * every member (App\Mercure\Topics::drafting()).
  */
 #[AsMessageHandler]
 final readonly class DraftCareSheetHandler
@@ -34,6 +41,9 @@ final readonly class DraftCareSheetHandler
         private ChatPublisher $publisher,
         private LoggerInterface $logger,
         private LocaleSwitcher $localeSwitcher,
+        private UserRepository $userRepository,
+        private AgentRunTokens $agentRunTokens,
+        private Topics $topics,
     ) {
     }
 
@@ -51,15 +61,25 @@ final readonly class DraftCareSheetHandler
             return;
         }
 
+        $garden = $planting->getGarden();
+        $topic = $this->topics->drafting($garden, $message->conversationId);
+        if (!$this->mayRun($message, $garden)) {
+            $planting->failDrafting();
+            $this->entityManager->flush();
+            $this->publisher->publish($topic, ChatEvent::Refresh);
+
+            return;
+        }
+
         $run = null;
 
         try {
-            $run = $this->agentRunner->run($message->conversationId, CareSheetDraftPrompt::for($planting), function (int $plantId) use ($message): void {
+            $run = $this->agentRunner->run($topic, $message->conversationId, $message->agentRunToken, CareSheetDraftPrompt::for($planting), function (int $plantId) use ($message, $garden, $topic): void {
                 $planting = $this->currentAttempt($message);
                 if (null !== $planting) {
-                    $planting->linkTo($this->plantRepository->get($plantId));
+                    $planting->linkTo($this->plantRepository->get($garden, $plantId));
                     $this->entityManager->flush();
-                    $this->publisher->publish($message->conversationId, ChatEvent::CareSheetDrafted, ['planting' => $planting]);
+                    $this->publisher->publish($topic, ChatEvent::CareSheetDrafted, ['planting' => $planting]);
                 }
             });
         } finally {
@@ -68,7 +88,7 @@ final readonly class DraftCareSheetHandler
                 if (null !== $planting) {
                     $planting->failDrafting();
                     $this->entityManager->flush();
-                    $this->publisher->publish($message->conversationId, ChatEvent::Refresh);
+                    $this->publisher->publish($topic, ChatEvent::Refresh);
                 }
             }
         }
@@ -79,12 +99,37 @@ final readonly class DraftCareSheetHandler
     }
 
     /**
-     * Read again at each step: a run lasts long enough for the user to retry, or to link another care sheet.
+     * The one who added the plant is still a member of its garden, and the token of the run is valid: a failure
+     * otherwise, which the user may retry.
+     */
+    private function mayRun(DraftCareSheet $message, Garden $garden): bool
+    {
+        $user = $this->userRepository->find($message->userId);
+        if (null === $user || !$garden->isMember($user)) {
+            $this->logger->warning('Care sheet draft skipped: whoever added the plant is no member of its garden any more.', ['planting_id' => $message->plantingId, 'user_id' => $message->userId]);
+
+            return false;
+        }
+
+        try {
+            $this->agentRunTokens->verify($message->agentRunToken);
+        } catch (InvalidAgentRunTokenException $e) {
+            $this->logger->warning('Care sheet draft skipped: the token of its run is no longer valid.', ['exception' => $e, 'planting_id' => $message->plantingId]);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Read again at each step: a run lasts long enough for the user to retry, or to link another care sheet. Of the
+     * garden of the message only.
      */
     private function currentAttempt(DraftCareSheet $message): ?Planting
     {
         $planting = $this->plantingRepository->find($message->plantingId);
-        if (null === $planting) {
+        if (null === $planting || $planting->getGarden()->getId() !== $message->gardenId) {
             return null;
         }
 

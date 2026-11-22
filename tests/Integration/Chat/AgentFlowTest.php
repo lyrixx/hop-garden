@@ -3,8 +3,6 @@
 namespace App\Tests\Integration\Chat;
 
 use App\Chat\ChatHistory;
-use App\Chat\ChatPublisher;
-use App\Chat\Message\RunAgent;
 use App\Chat\Model\ChatEntry;
 use App\Chat\RunAgentHandler;
 use App\Factory\PlantFactory;
@@ -12,6 +10,7 @@ use App\Factory\SpaceFactory;
 use App\Garden\Entity\Space;
 use App\Garden\Model\Soil;
 use App\Plant\Model\Exposure;
+use App\Tests\Utils\Chat\AgentRunsTrait;
 use App\Tests\Utils\Chat\ScriptedGardener;
 use App\Tests\Utils\Env\EnvVarsTrait;
 use App\Tests\Utils\Mercure\RecordingHub;
@@ -25,6 +24,7 @@ use Symfony\Component\Uid\UuidV7;
  */
 final class AgentFlowTest extends KernelTestCase
 {
+    use AgentRunsTrait;
     use EnvVarsTrait;
 
     #[TestWith(['1'])]
@@ -37,10 +37,10 @@ final class AgentFlowTest extends KernelTestCase
         $conversationId = (new UuidV7())->toRfc4122();
         $handler = self::getContainer()->get(RunAgentHandler::class);
 
-        $handler(new RunAgent($conversationId, ScriptedGardener::PLANTED . ' sur le balcon', 'en'));
+        $handler($this->runAgentMessage($conversationId, ScriptedGardener::PLANTED . ' sur le balcon', 'en'));
         // What the space card does once tapped
         SpaceFactory::createOne(['name' => 'Balcon', 'exposure' => Exposure::Sun, 'soil' => Soil::Loamy, 'createdAt' => new \DateTimeImmutable('2026-11-22')]);
-        $handler(new RunAgent($conversationId, 'I created the space Balcon.', 'en'));
+        $handler($this->runAgentMessage($conversationId, 'I created the space Balcon.', 'en'));
 
         self::assertSame(['chat-card chat-proposal is-arriving', 'chat-card chat-proposal is-arriving'], $this->appended($conversationId));
 
@@ -61,13 +61,13 @@ final class AgentFlowTest extends KernelTestCase
         $conversationId = (new UuidV7())->toRfc4122();
         $handler = self::getContainer()->get(RunAgentHandler::class);
 
-        $handler(new RunAgent($conversationId, ScriptedGardener::PLANTED . ' sur la terrasse', 'en'));
+        $handler($this->runAgentMessage($conversationId, ScriptedGardener::PLANTED . ' sur la terrasse', 'en'));
         $choices = $this->choices($conversationId);
         self::assertCount(1, $choices);
         self::assertFalse($choices[0]->answered, 'The last question stays on.');
         self::assertSame(ScriptedGardener::SPECIES_QUESTION, $choices[0]->choices?->question);
 
-        $handler(new RunAgent($conversationId, (string) $choices[0]->choices->options[0], 'en'));
+        $handler($this->runAgentMessage($conversationId, (string) $choices[0]->choices->options[0], 'en'));
 
         self::assertSame(['chat-choices is-arriving', 'chat-card is-arriving'], $this->appended($conversationId));
         self::assertTrue($this->choices($conversationId)[0]->answered, 'Answered by the next message.');
@@ -81,7 +81,7 @@ final class AgentFlowTest extends KernelTestCase
     private function appended(string $conversationId): array
     {
         $appended = [];
-        foreach (RecordingHub::published(ChatPublisher::topic($conversationId)) as $update) {
+        foreach (RecordingHub::published($this->conversationTopic($conversationId)) as $update) {
             foreach (TurboStream::parseAll($update) as $stream) {
                 if ('append' === $stream->action && 'chat-log' === $stream->target) {
                     $appended[] = (string) $stream->element()->attr('class');

@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Resource;
 
+use App\Garden\CurrentGarden;
 use App\Locale\Model\SupportedLocale;
 use App\Mcp\PlantNormalizer;
 use App\Plant\PlantRepository;
@@ -21,6 +22,7 @@ final readonly class CollectionResources
         private PlantNormalizer $plantNormalizer,
         private Environment $twig,
         private LocaleSwitcher $localeSwitcher,
+        private CurrentGarden $currentGarden,
     ) {
     }
 
@@ -34,7 +36,7 @@ final readonly class CollectionResources
     public function collection(): string
     {
         return $this->render('mcp/collection.md.twig', [
-            'plants' => $this->plantRepository->findValidated(),
+            'plants' => $this->plantRepository->findValidated($this->currentGarden->get()),
             'normalizer' => $this->plantNormalizer,
         ]);
     }
@@ -48,7 +50,8 @@ final readonly class CollectionResources
     )]
     public function plant(string $id): string
     {
-        $plant = ctype_digit($id) ? $this->plantRepository->find((int) $id) : null;
+        // The same answer for a plant of another garden: it is not said to exist
+        $plant = ctype_digit($id) ? $this->plantRepository->findOneInGarden($this->currentGarden->get(), (int) $id) : null;
         if (null === $plant) {
             throw new ResourceReadException(\sprintf('No plant with id "%s".', $id));
         }

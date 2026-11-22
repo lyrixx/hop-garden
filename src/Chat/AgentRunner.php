@@ -5,6 +5,7 @@ namespace App\Chat;
 use App\Chat\Model\AgentRun;
 use App\Chat\Model\ChatEvent;
 use App\Chat\Model\StreamedAnswer;
+use App\Mcp\Agent\AgentRunContext;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface as AgentException;
@@ -23,9 +24,11 @@ use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * Runs the gardener agent on a message of a conversation, and streams what it does to the Mercure topic of that
- * conversation, as Turbo Streams: its answer as it comes, MCP tool calls (in demo mode only, see ToolCallDisplay), the
- * cards and choices of its tools (whatever the mode, see ToolCards), then "done", or "error" when it fails.
+ * Runs the gardener agent on a message of a conversation, and streams what it does to a Mercure topic (of the
+ * conversation, or of the drafting of a care sheet), as Turbo Streams: its answer as it comes, MCP tool calls (in demo
+ * mode only, see ToolCallDisplay), the cards and choices of its tools (whatever the mode, see ToolCards), then "done", or
+ * "error" when it fails. Every request of its MCP client carries the token of the run: the tools answer in the garden
+ * of whoever sent the message (App\Mcp\Agent\AgentRunHttpClient).
  */
 final readonly class AgentRunner
 {
@@ -42,6 +45,7 @@ final readonly class AgentRunner
         private EventDispatcherInterface $eventDispatcher,
         private LoggerInterface $logger,
         private TranslatorInterface $translator,
+        private AgentRunContext $agentRunContext,
     ) {
     }
 
@@ -49,12 +53,20 @@ final readonly class AgentRunner
      * @param ?\Closure(int): void $onDraftProposed called with the plant of each successful propose_plant, before its
      *                                              card is pushed
      */
-    public function run(string $conversationId, string $text, ?\Closure $onDraftProposed = null): AgentRun
+    public function run(string $topic, string $conversationId, string $agentRunToken, string $text, ?\Closure $onDraftProposed = null): AgentRun
+    {
+        return $this->agentRunContext->run($agentRunToken, fn (): AgentRun => $this->runWithToken($topic, $conversationId, $text, $onDraftProposed));
+    }
+
+    /**
+     * @param ?\Closure(int): void $onDraftProposed
+     */
+    private function runWithToken(string $topic, string $conversationId, string $text, ?\Closure $onDraftProposed): AgentRun
     {
         $proposedPlantIds = [];
         $answer = new StreamedAnswer();
 
-        $onToolCallSucceeded = function (ToolCallSucceeded $event) use ($conversationId, $onDraftProposed, &$proposedPlantIds, $answer): void {
+        $onToolCallSucceeded = function (ToolCallSucceeded $event) use ($topic, $onDraftProposed, &$proposedPlantIds, $answer): void {
             $entry = ToolCards::entryOf($event->getDefinition()->getName(), $event->getResult()->getResult());
             if (null === $entry) {
                 return;
@@ -66,7 +78,7 @@ final readonly class AgentRunner
                     $onDraftProposed($entry->plantId);
                 }
             }
-            $this->publisher->publish($conversationId, ToolCards::eventOf($entry), ['entry' => $entry]);
+            $this->publisher->publish($topic, ToolCards::eventOf($entry), ['entry' => $entry]);
             $answer->close();
         };
         $this->eventDispatcher->addListener(ToolCallSucceeded::class, $onToolCallSucceeded);
@@ -75,27 +87,27 @@ final readonly class AgentRunner
         $answered = false;
 
         try {
-            $this->publisher->publish($conversationId, ChatEvent::Start);
-            $this->stream($conversationId, $text, $answer);
+            $this->publisher->publish($topic, ChatEvent::Start);
+            $this->stream($topic, $conversationId, $text, $answer);
             $completed = true;
             $answered = true;
         } catch (AgentException|PlatformException|HttpException $e) {
             $this->logger->error('The gardener agent failed.', ['exception' => $e]);
-            $this->publisher->publish($conversationId, ChatEvent::Error, ['message' => $this->translator->trans('chat.error.failed', ['reason' => $e->getMessage()])]);
+            $this->publisher->publish($topic, ChatEvent::Error, ['message' => $this->translator->trans('chat.error.failed', ['reason' => $e->getMessage()])]);
             $answered = true;
         } finally {
             $this->eventDispatcher->removeListener(ToolCallSucceeded::class, $onToolCallSucceeded);
 
             // Whatever went wrong, the page must not wait forever
             if (!$answered) {
-                $this->publisher->publish($conversationId, ChatEvent::Error, ['message' => $this->translator->trans('chat.error.unknown')]);
+                $this->publisher->publish($topic, ChatEvent::Error, ['message' => $this->translator->trans('chat.error.unknown')]);
             }
         }
 
         return new AgentRun($completed, $proposedPlantIds);
     }
 
-    private function stream(string $conversationId, string $text, StreamedAnswer $answer): void
+    private function stream(string $topic, string $conversationId, string $text, StreamedAnswer $answer): void
     {
         $execution = $this->agent->call(MessageBag::forId(UuidV7::fromString($conversationId), $text), ['stream' => true]);
 
@@ -124,7 +136,7 @@ final readonly class AgentRunner
                 $batch .= $separator . $payload->getText();
                 $separator = '';
                 if (mb_strlen($batch) >= self::DELTA_BATCH_LENGTH || str_contains($batch, "\n")) {
-                    $this->publishAnswer($conversationId, $answer, $batch);
+                    $this->publishAnswer($topic, $answer, $batch);
                     $batch = '';
                 }
 
@@ -133,12 +145,12 @@ final readonly class AgentRunner
 
             if (Progress::STAGE_TOOL_CALL === $update->getStage() && $payload instanceof ToolCall) {
                 if ('' !== $batch) {
-                    $this->publishAnswer($conversationId, $answer, $batch);
+                    $this->publishAnswer($topic, $answer, $batch);
                     $batch = '';
                 }
 
                 if ($this->toolCallDisplay->isShown()) {
-                    $this->publisher->publish($conversationId, ChatEvent::ToolCall, [
+                    $this->publisher->publish($topic, ChatEvent::ToolCall, [
                         'summary' => ToolCallSummary::of($payload->getName(), $payload->getArguments()),
                     ]);
                     $answer->close();
@@ -151,18 +163,18 @@ final readonly class AgentRunner
         }
 
         if ('' !== $batch) {
-            $this->publishAnswer($conversationId, $answer, $batch);
+            $this->publishAnswer($topic, $answer, $batch);
         }
 
-        $this->publisher->publish($conversationId, ChatEvent::Done);
+        $this->publisher->publish($topic, ChatEvent::Done);
     }
 
     /**
      * The whole answer so far, rendered from its Markdown on the server, as the history renders it.
      */
-    private function publishAnswer(string $conversationId, StreamedAnswer $answer, string $batch): void
+    private function publishAnswer(string $topic, StreamedAnswer $answer, string $batch): void
     {
         $event = $answer->append($batch) ? ChatEvent::AnswerStarted : ChatEvent::AnswerContinued;
-        $this->publisher->publish($conversationId, $event, ['answer' => $answer]);
+        $this->publisher->publish($topic, $event, ['answer' => $answer]);
     }
 }

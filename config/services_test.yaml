@@ -9,14 +9,22 @@ services:
         factory: ['App\Tests\Utils\Chat\ScriptedGardener', 'createPlatform']
         arguments: ['@event_dispatcher']
 
-    # The agent reaches the MCP server over HTTP, handled by the kernel in process
+    # The agent reaches the MCP server over HTTP, handled by the kernel in process, with the token of its run
     App\Tests\Utils\Mcp\KernelHttpClient:
         arguments: ['@kernel']
+
+    # Stands for the OAuth authenticator of /_mcp (phase 3), see config/packages/security.yaml
+    App\Tests\Utils\Mcp\McpClientAuthenticator: ~
+
+    App\Mcp\Agent\AgentRunHttpClient:
+        arguments:
+            $inner: '@App\Tests\Utils\Mcp\KernelHttpClient'
 
     App\Tests\Utils\Http\UnexpectedRequestGuard: ~
 
     mercure.hub.default:
         class: App\Tests\Utils\Mercure\RecordingHub
+        arguments: ['@mercure.hub.default.subscriber.jwt.factory.default_claims']
         public: true
         # Where UX Turbo finds the hubs of its stream sources
         tags: ['mercure.hub']

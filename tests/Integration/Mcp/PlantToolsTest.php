@@ -25,7 +25,7 @@ final class PlantToolsTest extends McpTestCase
         self::assertSame('draft', $result['status']);
         self::assertStringEndsWith('/plants/' . $result['plant_id'], $result['validation_url']);
 
-        $plant = $this->plants()->get($result['plant_id']);
+        $plant = $this->plants()->get(self::gardenOfTheTest(), $result['plant_id']);
         self::assertSame(PlantStatus::Draft, $plant->getStatus());
         self::assertSame('Panicled hydrangea', $plant->getCommonName());
         self::assertSame(-25, $plant->getCareSheet()->getMinTemperatureC());
@@ -114,7 +114,7 @@ final class PlantToolsTest extends McpTestCase
         $result = $this->callTool('confirm_plant', ['id' => $plant->getId()]);
 
         self::assertSame('validated', $result['status']);
-        self::assertTrue($this->plants()->get($plant->getId())->isValidated());
+        self::assertTrue($this->plants()->get(self::gardenOfTheTest(), $plant->getId())->isValidated());
         self::assertStringContainsString('already validated', $this->callToolExpectingError('confirm_plant', ['id' => $plant->getId()]));
 
         self::assertSame([], self::getContainer()->get(PlantingRepository::class)->findBy(['plant' => $plant->getId()]), 'Validated only: propose_planting adds a plant, once the user taps its card.');
@@ -130,7 +130,7 @@ final class PlantToolsTest extends McpTestCase
 
         $result = $this->callTool('propose_plant', $proposal);
 
-        $plant = $this->plants()->get($result['plant_id']);
+        $plant = $this->plants()->get(self::gardenOfTheTest(), $result['plant_id']);
         self::assertSame('Panicled hydrangea', $plant->getCommonName());
         self::assertNull($plant->getTrefleId(), 'Trefle did not know it.');
         self::assertSame('https://bs.plantnet.org/paniculata.jpg', $plant->getImageUrl());

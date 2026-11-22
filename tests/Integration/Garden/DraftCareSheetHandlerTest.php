@@ -3,15 +3,13 @@
 namespace App\Tests\Integration\Garden;
 
 use App\Chat\ChatHistory;
-use App\Chat\ChatPublisher;
 use App\Factory\PlantFactory;
 use App\Factory\PlantingFactory;
 use App\Garden\DraftCareSheetHandler;
 use App\Garden\Entity\Planting;
-use App\Garden\Message\DraftCareSheet;
 use App\Garden\PlantingRepository;
+use App\Tests\Utils\Chat\AgentRunsTrait;
 use App\Tests\Utils\Chat\ScriptedGardener;
-use App\Tests\Utils\Mercure\ChatStreams;
 use App\Tests\Utils\Mercure\RecordingHub;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -22,6 +20,8 @@ use Symfony\Component\Uid\UuidV7;
  */
 final class DraftCareSheetHandlerTest extends KernelTestCase
 {
+    use AgentRunsTrait;
+
     protected function setUp(): void
     {
         self::bootKernel();
@@ -85,9 +85,9 @@ final class DraftCareSheetHandlerTest extends KernelTestCase
         $planting->startDrafting(new UuidV7());
         self::getContainer()->get(EntityManagerInterface::class)->flush();
 
-        self::getContainer()->get(DraftCareSheetHandler::class)(new DraftCareSheet($planting->getId(), $staleConversationId, 'en'));
+        self::getContainer()->get(DraftCareSheetHandler::class)($this->draftCareSheetMessage($planting, 'en', $staleConversationId));
 
-        self::assertSame([], RecordingHub::published(ChatPublisher::topic($staleConversationId)));
+        self::assertSame([], RecordingHub::published($this->draftingTopic($planting, $staleConversationId)));
         $planting = $this->reload($planting);
         self::assertNull($planting->getPlant());
         self::assertTrue($planting->isDrafting(), 'The retry goes on.');
@@ -129,14 +129,14 @@ final class DraftCareSheetHandlerTest extends KernelTestCase
     public function testAPlantingDeletedMeanwhileIsSkipped(): void
     {
         $planting = self::hortensia()->create();
-        $message = new DraftCareSheet($planting->getId(), $planting->getConversationId() ?? self::fail(), 'en');
+        $message = $this->draftCareSheetMessage($planting, 'en');
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
         $entityManager->remove($planting);
         $entityManager->flush();
 
         self::getContainer()->get(DraftCareSheetHandler::class)($message);
 
-        self::assertSame([], RecordingHub::published(ChatPublisher::topic($message->conversationId)));
+        self::assertSame([], RecordingHub::published($this->draftingTopic($planting, $message->conversationId)));
     }
 
     public function testAPlantingLinkedMeanwhileIsSkipped(): void
@@ -162,7 +162,7 @@ final class DraftCareSheetHandlerTest extends KernelTestCase
 
     private function handle(Planting $planting): void
     {
-        self::getContainer()->get(DraftCareSheetHandler::class)(new DraftCareSheet($planting->getId(), $planting->getConversationId() ?? self::fail(), 'en'));
+        self::getContainer()->get(DraftCareSheetHandler::class)($this->draftCareSheetMessage($planting, 'en'));
     }
 
     /**
@@ -170,7 +170,7 @@ final class DraftCareSheetHandlerTest extends KernelTestCase
      */
     private function events(Planting $planting): array
     {
-        return ChatStreams::of($planting->getConversationId() ?? self::fail());
+        return $this->draftingStreams($planting);
     }
 
     private function reload(Planting $planting): Planting

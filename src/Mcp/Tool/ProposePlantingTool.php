@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tool;
 
+use App\Garden\CurrentGarden;
 use App\Garden\Model\PlantingProposal;
 use App\Garden\SpaceRepository;
 use App\Mcp\GardenNormalizer;
@@ -43,6 +44,7 @@ final readonly class ProposePlantingTool
         private PlantRepository $plantRepository,
         private SpaceRepository $spaceRepository,
         private GardenNormalizer $gardenNormalizer,
+        private CurrentGarden $currentGarden,
     ) {
     }
 
@@ -57,8 +59,10 @@ final readonly class ProposePlantingTool
         #[Schema(description: 'Id of the space where it grows, from list_spaces. Omit it only when the user does not know yet.', minimum: 1)]
         ?int $space_id = null,
     ): array {
+        $garden = $this->currentGarden->get();
+
         try {
-            $plant = $this->plantRepository->get($plant_id);
+            $plant = $this->plantRepository->get($garden, $plant_id);
         } catch (PlantNotFoundException $e) {
             throw new ToolCallException($e->getMessage());
         }
@@ -67,7 +71,7 @@ final readonly class ProposePlantingTool
             throw new ToolCallException(\sprintf('The care sheet of %s (id %d) is a draft: the user validates its card first.', $plant->getCommonName(), $plant->getId()));
         }
 
-        if (null !== $space_id && null === $this->spaceRepository->find($space_id)) {
+        if (null !== $space_id && null === $this->spaceRepository->findOneInGarden($garden, $space_id)) {
             throw new ToolCallException(\sprintf('No space with id %d: call list_spaces.', $space_id));
         }
 

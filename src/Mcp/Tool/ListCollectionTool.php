@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tool;
 
+use App\Garden\CurrentGarden;
 use App\Mcp\PlantNormalizer;
 use App\Plant\PlantRepository;
 use Mcp\Capability\Attribute\McpTool;
@@ -18,6 +19,7 @@ final readonly class ListCollectionTool
     public function __construct(
         private PlantRepository $plantRepository,
         private PlantNormalizer $plantNormalizer,
+        private CurrentGarden $currentGarden,
     ) {
     }
 
@@ -27,7 +29,7 @@ final readonly class ListCollectionTool
     public function __invoke(): array
     {
         return [
-            'plants' => array_map($this->plantNormalizer->summary(...), $this->plantRepository->findValidated()),
+            'plants' => array_map($this->plantNormalizer->summary(...), $this->plantRepository->findValidated($this->currentGarden->get())),
         ];
     }
 }
