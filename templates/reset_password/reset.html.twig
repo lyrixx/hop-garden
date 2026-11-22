@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'reset_password.reset.title'|trans }} · Hop Garden{% endblock %}
+
+{% block body %}
+<div class="with-specimen auth">
+<div>
+    <header class="plate-head">
+        <h1>{{ 'reset_password.reset.title'|trans }}</h1>
+        <p>{{ 'reset_password.reset.subtitle'|trans }}</p>
+    </header>
+
+    {{ form_start(form, {attr: {class: 'card crowned care-sheet-form auth-form'}}) }}
+        {{ form_errors(form) }}
+        {{ form_row(form.plainPassword) }}
+        <div class="actions">
+            <twig:Button>{{ 'reset_password.reset.submit'|trans }}</twig:Button>
+        </div>
+    {{ form_end(form) }}
+</div>
+<twig:Specimen plate="wormia-subsessilis"/>
+</div>
+{% endblock %}
