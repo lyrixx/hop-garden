@@ -1,0 +1,11 @@
+{% extends 'email/layout.html.twig' %}
+{% import 'email/_ui.html.twig' as ui %}
+
+{% block content %}
+    <p>{{ 'email.layout.hello'|trans({name: name}) }}</p>
+    <p>{{ 'email.address_in_use.intro'|trans }}</p>
+    {{ ui.button(login_url, 'email.address_in_use.login'|trans) }}
+    <p>{{ 'email.address_in_use.reset'|trans }}</p>
+    {{ ui.button(reset_url, 'email.address_in_use.reset_button'|trans) }}
+    {{ ui.note('email.address_in_use.ignore'|trans) }}
+{% endblock %}

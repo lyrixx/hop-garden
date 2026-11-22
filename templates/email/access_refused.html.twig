@@ -1,0 +1,8 @@
+{% extends 'email/layout.html.twig' %}
+{% import 'email/_ui.html.twig' as ui %}
+
+{% block content %}
+    <p>{{ 'email.layout.hello'|trans({name: name}) }}</p>
+    <p>{{ 'email.access_refused.intro'|trans }}</p>
+    {{ ui.note('email.access_refused.thanks'|trans) }}
+{% endblock %}
