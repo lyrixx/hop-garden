@@ -16,6 +16,9 @@ video
 .castor.stub.php
 .env.dev
 .env.test
+# Foundry is a dev dependency: its factories and the demo story stay out, like the tests
+src/Factory
+src/Story
 # Only at the root: config/agent/gardener.md is the prompt of the agent
 *.md
 castor.php

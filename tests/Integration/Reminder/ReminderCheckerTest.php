@@ -2,14 +2,15 @@
 
 namespace App\Tests\Integration\Reminder;
 
-use App\Plant\Entity\Plant;
+use App\Factory\CareSheetFactory;
+use App\Factory\PlantFactory;
+use App\Factory\PlantingFactory;
+use App\Factory\ReminderFactory;
 use App\Reminder\Message\CheckRemindersMessage;
 use App\Reminder\Model\ReminderType;
 use App\Reminder\NotificationRepository;
 use App\Reminder\Notifier\NotificationToastPublisher;
 use App\Reminder\ReminderChecker;
-use App\Tests\Utils\Factory\PlantFactory;
-use App\Tests\Utils\Factory\PlantingFactory;
 use App\Tests\Utils\Http\UnavailableDataSources;
 use App\Tests\Utils\Mercure\RecordingHub;
 use App\Tests\Utils\Mercure\TurboStream;
@@ -36,9 +37,7 @@ final class ReminderCheckerTest extends KernelTestCase
 
     public function testACalendarReminderFiresOncePerMonthOfTheCareSheet(): void
     {
-        $plant = PlantFactory::validated('Rose', PlantFactory::careSheet(pruningMonths: [2, 3]));
-        $plant->enableReminder(ReminderType::Pruning);
-        $this->save($plant);
+        PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning)->create(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['pruningMonths' => [2, 3]])]);
 
         self::assertSame(1, $this->check('2026-02-01 07:00'));
         self::assertSame(['Time to prune Rose. Cut the faded flower heads back to the first pair of buds.'], $this->messages());
@@ -51,23 +50,19 @@ final class ReminderCheckerTest extends KernelTestCase
 
     public function testDisabledRemindersAndDraftsStaySilent(): void
     {
-        $validated = PlantFactory::validated('Rose', PlantFactory::careSheet(pruningMonths: [3]));
-        $validated->enableReminder(ReminderType::Pruning);
-        $validated->disableReminder(ReminderType::Pruning);
-        $this->save($validated);
-        $this->save(PlantFactory::draft('Draft', PlantFactory::careSheet(pruningMonths: [3])));
+        ReminderFactory::new()->disabled()->create([
+            'plant' => PlantFactory::new()->validated()->with(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['pruningMonths' => [3]])]),
+            'type' => ReminderType::Pruning,
+        ]);
+        PlantFactory::createOne(['commonName' => 'Draft', 'careSheet' => CareSheetFactory::new(['pruningMonths' => [3]])]);
 
         self::assertSame(0, $this->check('2026-03-01 07:00'));
     }
 
     public function testFrostBelowTheHardinessWithItsMargin(): void
     {
-        $hardy = PlantFactory::validated('Hardy', PlantFactory::careSheet(minTemperatureC: -15));
-        $hardy->enableReminder(ReminderType::Frost);
-        $this->save($hardy);
-        $tender = PlantFactory::validated('Lavender', PlantFactory::careSheet(minTemperatureC: -12));
-        $tender->enableReminder(ReminderType::Frost);
-        $this->save($tender);
+        PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Frost)->create(['commonName' => 'Hardy', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -15])]);
+        PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Frost)->create(['commonName' => 'Lavender', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -12])]);
 
         self::assertSame(1, $this->check('2026-12-01 07:00'));
         // -12 °C + 2 °C: the -12.4 °C of Thursday only
@@ -76,9 +71,7 @@ final class ReminderCheckerTest extends KernelTestCase
 
     public function testAnyFrostWarnsAboutAFrostSensitivePlant(): void
     {
-        $lemonTree = PlantFactory::validated('Lemon tree', PlantFactory::careSheet(minTemperatureC: -3, frostSensitive: true));
-        $lemonTree->enableReminder(ReminderType::Frost);
-        $this->save($lemonTree);
+        PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Frost)->create(['commonName' => 'Lemon tree', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -3, 'frostSensitive' => true])]);
 
         self::assertSame(1, $this->check('2026-12-01 07:00'));
         self::assertSame(['Frost expected on Tuesday 1 December (-3.2 °C): bring Lemon tree indoors. Down to -12.4 °C on Thursday 3 December.'], $this->messages());
@@ -86,9 +79,7 @@ final class ReminderCheckerTest extends KernelTestCase
 
     public function testOneFrostAlertPerColdEpisode(): void
     {
-        $lemonTree = PlantFactory::validated('Lemon tree', PlantFactory::careSheet(frostSensitive: true));
-        $lemonTree->enableReminder(ReminderType::Frost);
-        $this->save($lemonTree);
+        PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Frost)->create(['commonName' => 'Lemon tree', 'careSheet' => CareSheetFactory::new(['frostSensitive' => true])]);
 
         self::assertSame(1, $this->check('2026-12-01 07:00'));
         self::assertSame(0, $this->check('2026-12-02 07:00'), 'The same cold episode goes on.');
@@ -99,10 +90,7 @@ final class ReminderCheckerTest extends KernelTestCase
     public function testWithoutForecastOnlyTheFrostRemindersWait(): void
     {
         UnavailableDataSources::openMeteo(self::getContainer());
-        $rose = PlantFactory::validated('Rose', PlantFactory::careSheet(frostSensitive: true, pruningMonths: [12]));
-        $rose->enableReminder(ReminderType::Pruning);
-        $rose->enableReminder(ReminderType::Frost);
-        $this->save($rose);
+        PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning, ReminderType::Frost)->create(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['frostSensitive' => true, 'pruningMonths' => [12]])]);
 
         self::assertSame(1, $this->check('2026-12-01 07:00'));
         self::assertSame(['Time to prune Rose. Cut the faded flower heads back to the first pair of buds.'], $this->messages());
@@ -111,22 +99,17 @@ final class ReminderCheckerTest extends KernelTestCase
     public function testNoForecastIsAskedWithoutFrostReminder(): void
     {
         UnavailableDataSources::openMeteo(self::getContainer());
-        $rose = PlantFactory::validated('Rose', PlantFactory::careSheet(pruningMonths: [12]));
-        $rose->enableReminder(ReminderType::Pruning);
-        $this->save($rose);
+        PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning)->create(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['pruningMonths' => [12]])]);
 
         self::assertSame(1, $this->check('2026-12-01 07:00'));
     }
 
     public function testTheToastIsPushedOnceTheNotificationIsStored(): void
     {
-        $this->save(self::withReminder(PlantFactory::validated('Rose', PlantFactory::careSheet(pruningMonths: [12])), ReminderType::Pruning));
+        PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning)->create(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['pruningMonths' => [12]])]);
         $this->check('2026-12-01 07:00');
-        $lemonTree = PlantFactory::validated('Lemon tree', PlantFactory::careSheet(frostSensitive: true));
-        $lemonTree->enableReminder(ReminderType::Frost);
-        $this->save($lemonTree);
-        $terrace = PlantingFactory::of($lemonTree);
-        self::getContainer()->get(EntityManagerInterface::class)->persist($terrace);
+        $lemonTree = PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Frost)->create(['commonName' => 'Lemon tree', 'careSheet' => CareSheetFactory::new(['frostSensitive' => true])]);
+        $terrace = PlantingFactory::new()->of($lemonTree)->create();
         RecordingHub::reset();
 
         self::getContainer()->get(ReminderChecker::class)->check(self::mockTime('2026-12-01 07:00')->now());
@@ -155,7 +138,7 @@ final class ReminderCheckerTest extends KernelTestCase
     public function testAHubDownLosesTheToastOnly(): void
     {
         self::getContainer()->set('mercure.hub.default', new UnreachableHub());
-        $this->save(self::withReminder(PlantFactory::validated('Rose', PlantFactory::careSheet(pruningMonths: [12])), ReminderType::Pruning));
+        PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning)->create(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['pruningMonths' => [12]])]);
 
         self::assertSame(1, $this->check('2026-12-01 07:00'));
 
@@ -165,7 +148,7 @@ final class ReminderCheckerTest extends KernelTestCase
 
     public function testTheSchedulerMessageChecksTheRemindersOfToday(): void
     {
-        $this->save(self::withReminder(PlantFactory::validated('Rose', PlantFactory::careSheet(pruningMonths: [3])), ReminderType::Pruning));
+        PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning)->create(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['pruningMonths' => [3]])]);
         self::mockTime('2026-03-01 07:00');
 
         self::getContainer()->get(MessageBusInterface::class)->dispatch(new CheckRemindersMessage());
@@ -177,9 +160,7 @@ final class ReminderCheckerTest extends KernelTestCase
 
     public function testTheCommandSimulatesADate(): void
     {
-        $plant = PlantFactory::validated('Rose', PlantFactory::careSheet(pruningMonths: [3]));
-        $plant->enableReminder(ReminderType::Pruning);
-        $this->save($plant);
+        PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning)->create(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['pruningMonths' => [3]])]);
 
         $tester = new CommandTester((new Application(self::$kernel ?? throw new \LogicException()))->find('app:reminders:run'));
         $tester->execute(['--date' => '2026-03-14']);
@@ -198,7 +179,7 @@ final class ReminderCheckerTest extends KernelTestCase
 
     public function testWithoutDateTheCommandChecksNow(): void
     {
-        $this->save(self::withReminder(PlantFactory::validated('Rose', PlantFactory::careSheet(pruningMonths: [3])), ReminderType::Pruning));
+        PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning)->create(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['pruningMonths' => [3]])]);
         self::mockTime('2026-03-02 18:45');
 
         $tester = new CommandTester((new Application(self::$kernel ?? throw new \LogicException()))->find('app:reminders:run'));
@@ -223,19 +204,5 @@ final class ReminderCheckerTest extends KernelTestCase
     private function messages(): array
     {
         return array_map(static fn ($notification): string => $notification->getMessage(), self::getContainer()->get(NotificationRepository::class)->findLatest());
-    }
-
-    private static function withReminder(Plant $plant, ReminderType $type): Plant
-    {
-        $plant->enableReminder($type);
-
-        return $plant;
-    }
-
-    private function save(Plant $plant): void
-    {
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($plant);
-        $entityManager->flush();
     }
 }

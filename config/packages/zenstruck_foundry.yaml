@@ -1,0 +1,21 @@
+when@dev: &dev
+    # See full configuration: https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#full-default-bundle-configuration
+    zenstruck_foundry:
+        persistence:
+            # Flush only once per call of `PersistentObjectFactory::create()`
+            flush_once: true
+        orm:
+            reset:
+                # foundry:load-fixtures recreates the database with the migrations: the schema of the entities lacks
+                # chat_conversation and the migration versions
+                mode: migrate
+
+    # Out of config/services.yaml, as Foundry is not installed in production. The factories need no service: without
+    # dependency, Foundry creates them, the unit tests too
+    services:
+        App\Story\:
+            resource: '%kernel.project_dir%/src/Story/'
+            autowire: true
+            autoconfigure: true
+
+when@test: *dev

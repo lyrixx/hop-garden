@@ -2,31 +2,28 @@
 
 namespace App\Tests\Integration\Reminder;
 
+use App\Factory\NotificationFactory;
+use App\Factory\ReminderFactory;
 use App\Reminder\Entity\Notification;
 use App\Reminder\Entity\Reminder;
-use App\Reminder\Model\ReminderType;
 use App\Reminder\NotificationRepository;
-use App\Tests\Utils\Factory\PlantFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 final class NotificationRepositoryTest extends KernelTestCase
 {
-    private EntityManagerInterface $entityManager;
-
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->entityManager = self::getContainer()->get(EntityManagerInterface::class);
     }
 
     public function testTheLatestNotificationsFirst(): void
     {
-        $reminder = $this->reminder('Rose', ReminderType::Pruning);
-        $this->notify($reminder, 'Older', '2026-03-01 07:00');
-        $this->notify($reminder, 'Same time, stored first', '2026-04-01 07:00');
-        $this->notify($reminder, 'Same time, stored last', '2026-04-01 07:00');
-        $this->notify($reminder, 'Newest', '2026-05-01 07:00');
+        $reminder = ReminderFactory::createOne();
+        self::notify($reminder, 'Older', '2026-03-01 07:00');
+        self::notify($reminder, 'Same time, stored first', '2026-04-01 07:00');
+        self::notify($reminder, 'Same time, stored last', '2026-04-01 07:00');
+        self::notify($reminder, 'Newest', '2026-05-01 07:00');
 
         $repository = self::getContainer()->get(NotificationRepository::class);
 
@@ -36,12 +33,12 @@ final class NotificationRepositoryTest extends KernelTestCase
 
     public function testTheUnreadOnes(): void
     {
-        $reminder = $this->reminder('Rose', ReminderType::Pruning);
-        $read = $this->notify($reminder, 'Read', '2026-03-01 07:00');
-        $this->notify($reminder, 'Unread', '2026-04-01 07:00');
+        $reminder = ReminderFactory::createOne();
+        $read = self::notify($reminder, 'Read', '2026-03-01 07:00');
+        self::notify($reminder, 'Unread', '2026-04-01 07:00');
         $read->markRead(new \DateTimeImmutable('2026-03-01 08:00'));
         $read->markRead(new \DateTimeImmutable('2026-03-02 08:00'));
-        $this->entityManager->flush();
+        self::getContainer()->get(EntityManagerInterface::class)->flush();
 
         $repository = self::getContainer()->get(NotificationRepository::class);
 
@@ -50,23 +47,9 @@ final class NotificationRepositoryTest extends KernelTestCase
         self::assertSame('2026-03-01 08:00', $read->getReadAt()?->format('Y-m-d H:i'), 'Read the first time.');
     }
 
-    private function reminder(string $plantName, ReminderType $type): Reminder
+    private static function notify(Reminder $reminder, string $message, string $createdAt): Notification
     {
-        $plant = PlantFactory::validated($plantName);
-        $reminder = $plant->enableReminder($type);
-        $this->entityManager->persist($plant);
-        $this->entityManager->flush();
-
-        return $reminder;
-    }
-
-    private function notify(Reminder $reminder, string $message, string $createdAt): Notification
-    {
-        $notification = new Notification($reminder, $message, new \DateTimeImmutable($createdAt));
-        self::getContainer()->get(NotificationRepository::class)->add($notification);
-        $this->entityManager->flush();
-
-        return $notification;
+        return NotificationFactory::createOne(['reminder' => $reminder, 'message' => $message, 'createdAt' => new \DateTimeImmutable($createdAt)]);
     }
 
     /**

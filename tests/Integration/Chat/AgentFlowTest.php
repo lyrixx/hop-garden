@@ -7,15 +7,15 @@ use App\Chat\ChatPublisher;
 use App\Chat\Message\RunAgent;
 use App\Chat\Model\ChatEntry;
 use App\Chat\RunAgentHandler;
+use App\Factory\PlantFactory;
+use App\Factory\SpaceFactory;
 use App\Garden\Entity\Space;
 use App\Garden\Model\Soil;
 use App\Plant\Model\Exposure;
 use App\Tests\Utils\Chat\ScriptedGardener;
 use App\Tests\Utils\Env\EnvVarsTrait;
-use App\Tests\Utils\Factory\PlantFactory;
 use App\Tests\Utils\Mercure\RecordingHub;
 use App\Tests\Utils\Mercure\TurboStream;
-use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\TestWith;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Uid\UuidV7;
@@ -33,17 +33,13 @@ final class AgentFlowTest extends KernelTestCase
     {
         $this->setEnvVar('APP_DEMO', $demo);
         self::bootKernel();
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $plant = PlantFactory::validated();
-        $entityManager->persist($plant);
-        $entityManager->flush();
+        $plant = PlantFactory::new()->validated()->create();
         $conversationId = (new UuidV7())->toRfc4122();
         $handler = self::getContainer()->get(RunAgentHandler::class);
 
         $handler(new RunAgent($conversationId, ScriptedGardener::PLANTED . ' sur le balcon'));
         // What the space card does once tapped
-        $entityManager->persist(new Space('Balcon', Exposure::Sun, Soil::Loamy, new \DateTimeImmutable('2026-11-22')));
-        $entityManager->flush();
+        SpaceFactory::createOne(['name' => 'Balcon', 'exposure' => Exposure::Sun, 'soil' => Soil::Loamy, 'createdAt' => new \DateTimeImmutable('2026-11-22')]);
         $handler(new RunAgent($conversationId, 'I created the space Balcon.'));
 
         self::assertSame(['chat-card chat-proposal is-arriving', 'chat-card chat-proposal is-arriving'], $this->appended($conversationId));

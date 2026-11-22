@@ -2,6 +2,8 @@
 
 namespace App\Tests\Functional\Chat;
 
+use App\Factory\PlantFactory;
+use App\Factory\SpaceFactory;
 use App\Garden\Entity\Planting;
 use App\Garden\Entity\Space;
 use App\Garden\Model\Soil;
@@ -13,7 +15,6 @@ use App\Plant\PlantRepository;
 use App\Tests\Utils\Chat\ScriptedGardener;
 use App\Tests\Utils\Chat\WorkerTrait;
 use App\Tests\Utils\Env\EnvVarsTrait;
-use App\Tests\Utils\Factory\PlantFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\TestWith;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -47,8 +48,8 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
         $this->setEnvVar('APP_DEMO', $demo);
         self::ensureKernelShutdown();
         $this->client = self::createClient();
-        $hydrangea = $this->save(PlantFactory::validated());
-        $terrace = $this->save(new Space('Terrace', Exposure::PartShade, Soil::Loamy, new \DateTimeImmutable('2026-11-01')));
+        $hydrangea = PlantFactory::new()->validated()->create();
+        $terrace = SpaceFactory::createOne(['name' => 'Terrace', 'exposure' => Exposure::PartShade, 'soil' => Soil::Loamy]);
 
         $page = $this->say(ScriptedGardener::PLANTED . ' sur la terrasse');
 
@@ -85,9 +86,9 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
         $this->setEnvVar('APP_DEMO', $demo);
         self::ensureKernelShutdown();
         $this->client = self::createClient();
-        $hydrangea = $this->save(PlantFactory::validated());
-        $this->save(new Space('Balcony', null, null, new \DateTimeImmutable('2026-11-01')));
-        $terrace = $this->save(new Space('Terrace', Exposure::PartShade, Soil::Loamy, new \DateTimeImmutable('2026-11-01')));
+        $hydrangea = PlantFactory::new()->validated()->create();
+        SpaceFactory::createOne(['name' => 'Balcony']);
+        $terrace = SpaceFactory::createOne(['name' => 'Terrace', 'exposure' => Exposure::PartShade, 'soil' => Soil::Loamy]);
 
         $page = $this->say(ScriptedGardener::PLANTED);
 
@@ -108,7 +109,7 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
      */
     public function testAKnownSpeciesInANewSpace(): void
     {
-        $hydrangea = $this->save(PlantFactory::validated());
+        $hydrangea = PlantFactory::new()->validated()->create();
 
         $page = $this->say(ScriptedGardener::PLANTED . ' sur le balcon');
 
@@ -138,7 +139,7 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
      */
     public function testANewSpecies(): void
     {
-        $this->save(new Space('Terrace', Exposure::PartShade, Soil::Loamy, new \DateTimeImmutable('2026-11-01')));
+        SpaceFactory::createOne(['name' => 'Terrace', 'exposure' => Exposure::PartShade, 'soil' => Soil::Loamy]);
 
         $page = $this->say(ScriptedGardener::PLANTED . ' sur la terrasse');
 
@@ -222,22 +223,6 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
         self::assertNotNull($plantings[0]->getProposalId());
 
         return $plantings[0];
-    }
-
-    /**
-     * @template T of object
-     *
-     * @param T $entity
-     *
-     * @return T
-     */
-    private function save(object $entity): object
-    {
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($entity);
-        $entityManager->flush();
-
-        return $entity;
     }
 
     private function plantings(): PlantingRepository

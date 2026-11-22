@@ -2,13 +2,14 @@
 
 namespace App\Tests\Functional\Controller;
 
+use App\Factory\PlantFactory;
+use App\Factory\SpaceFactory;
 use App\Garden\Entity\Space;
 use App\Garden\Model\Soil;
 use App\Garden\PlantingRepository;
 use App\Garden\SpaceRepository;
 use App\Plant\Entity\Plant;
 use App\Plant\Model\Exposure;
-use App\Tests\Utils\Factory\PlantFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -86,7 +87,7 @@ final class ProposalControllerTest extends WebTestCase
 
     public function testAPlantWithoutASpace(): void
     {
-        $plant = $this->save(PlantFactory::validated());
+        $plant = PlantFactory::new()->validated()->create();
         $url = $this->plantingUrl(['plant_id' => $plant->getId(), 'name' => 'Hortensia']);
 
         $crawler = $this->client->request('GET', $url);
@@ -112,7 +113,7 @@ final class ProposalControllerTest extends WebTestCase
 
     public function testADraftSpeciesIsNotAddedYet(): void
     {
-        $plant = $this->save(PlantFactory::draft());
+        $plant = PlantFactory::createOne();
         $url = $this->plantingUrl(['plant_id' => $plant->getId(), 'name' => 'Hortensia']);
 
         $crawler = $this->client->request('GET', $url);
@@ -196,7 +197,7 @@ final class ProposalControllerTest extends WebTestCase
 
     public function testASpaceCardRefusesAName(): void
     {
-        $this->save(new Space('Balcon', null, null, new \DateTimeImmutable('2026-11-01')));
+        SpaceFactory::createOne(['name' => 'Balcon']);
         $url = $this->spaceUrl(['name' => 'Balcon']);
         $frame = 'space-proposal-' . self::proposalIdOf($url);
         $form = $this->client->request('GET', $url, server: ['HTTP_TURBO_FRAME' => $frame])->selectButton('Create the space')->form();
@@ -219,8 +220,8 @@ final class ProposalControllerTest extends WebTestCase
      */
     private function plantingCard(): array
     {
-        $plant = $this->save(PlantFactory::validated());
-        $space = $this->save(new Space('Terrace', Exposure::PartShade, Soil::Loamy, new \DateTimeImmutable('2026-11-01')));
+        $plant = PlantFactory::new()->validated()->create();
+        $space = SpaceFactory::createOne(['name' => 'Terrace', 'exposure' => Exposure::PartShade, 'soil' => Soil::Loamy]);
         $url = $this->plantingUrl(['plant_id' => $plant->getId(), 'space_id' => $space->getId(), 'name' => 'Hortensia']);
 
         return [$url, 'planting-proposal-' . self::proposalIdOf($url), $plant, $space];
@@ -250,22 +251,6 @@ final class ProposalControllerTest extends WebTestCase
         self::assertSame(1, preg_match('#/([0-9a-f-]{36})\?#', $url, $matches));
 
         return $matches[1];
-    }
-
-    /**
-     * @template T of object
-     *
-     * @param T $entity
-     *
-     * @return T
-     */
-    private function save(object $entity): object
-    {
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($entity);
-        $entityManager->flush();
-
-        return $entity;
     }
 
     private function plantings(): PlantingRepository

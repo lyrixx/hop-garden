@@ -4,9 +4,9 @@ Hop Garden manages the plants of your garden with an AI agent. Name a plant in t
 drafts its care sheet with a confidence level for every value, and you validate it. Then it reminds you when to
 prune, deadhead and take cuttings, and warns you before frost.
 
-![Adding a hydrangea, validating its card, then a frost alert](media/hop-garden.gif)
+[![The demo video: "I just planted a hydrangea on the terrace", a choice to tap, the care sheet to validate, the plant added to the terrace, then a frost alert](media/hop-garden.jpg)](media/hop-garden.mp4)
 
-<sub>Recorded in demo mode, with a scripted model standing in for the LLM (no API key where it was recorded).</sub>
+<sub>The demo video, 85 seconds: click the picture to play it. Recorded with a real LLM, in demo mode (Trefle and Open-Meteo answer from recorded responses).</sub>
 
 **Symfony AI & MCP Hackathon** · Tags: `MCP` `Agent` `Symfony AI`
 
@@ -231,6 +231,10 @@ running stack (with your LLM key) and `castor video:render` adds the captions, t
 The tests call every MCP tool with the MCP SDK client over HTTP, run the whole chat flow (worker, agent, MCP
 client, MCP server) with a scripted model, check the reminders with a mock clock, and the validation controller.
 See [AGENTS.md](AGENTS.md) for the conventions.
+
+The demo data is a [Foundry](https://github.com/zenstruck/foundry) story, `src/Story/DemoStory.php`, built with the
+factories of `src/Factory/` that the tests use too. `castor demo:reset` loads it with `foundry:load-fixtures demo`, in
+a database recreated from the migrations (the Messenger worker is stopped meanwhile).
 
 ## Production image
 

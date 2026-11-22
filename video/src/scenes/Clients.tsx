@@ -47,7 +47,7 @@ export const Clients = () => {
                     );
                 })}
             </div>
-            <div style={{ position: 'absolute', top: 760, left: 160, padding: '12px 26px', borderRadius: 999, background: colors.veil, fontFamily: font, fontSize: 26, fontWeight: 700, color: colors.pink, opacity: interpolate(frame, [fps * 4, fps * 4.5], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) }}>
+            <div style={{ position: 'absolute', top: 800, left: 160, padding: '12px 26px', borderRadius: 999, background: colors.veil, fontFamily: font, fontSize: 26, fontWeight: 700, color: colors.pink, opacity: interpolate(frame, [fps * 4, fps * 4.5], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) }}>
                 {script.clients.note}
             </div>
         </Background>

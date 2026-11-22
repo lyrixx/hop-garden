@@ -21,10 +21,10 @@ castor stop                                  # stop the stack
 castor logs [--service=service]              # logs (frontend, worker_messenger, postgres, ...)
 castor app:install                           # composer install + importmap:install + qa:install
 castor app:db:migrate                        # Doctrine migrations (alias: castor migrate)
-castor app:db:fixtures                       # fixtures (alias: castor fixtures)
+castor app:db:fixtures                       # the demo story, as demo:reset does (alias: castor fixtures)
 castor postgres                              # psql shell on the app database (alias: castor pg)
 castor postgres -- select 1 from foobar      # one-off command database query
-castor demo:reset                            # 2 validated plants with their reminders, 3 plantings in 3 spaces (one empty)
+castor demo:reset                            # new database: 2 validated plants, 3 plantings in 3 spaces (one empty)
 castor demo:frost [--date=YYYY-MM-DD]        # reminder check with the recorded frost forecast
 castor mcp:stdio                             # MCP server over STDIO (Claude Desktop, Claude Code...)
 ```
@@ -143,8 +143,8 @@ After any PHP/Twig code change: `castor qa:cs --dry-run`,
 10. Three test suites, declared in `phpunit.xml.dist`: `tests/Unit` (no kernel), `tests/Integration` (the kernel and
     the database) and `tests/Functional` (HTTP requests through the kernel); run one with
     `castor --context=test qa:phpunit --testsuite=unit`. The helpers they share live in `tests/Utils/`
-    (`App\Tests\Utils\`): every class of `tests/` that is not a concrete test, such as the doubles, the factories, the
-    traits, the PHPUnit extensions and the abstract test cases.
+    (`App\Tests\Utils\`): every class of `tests/` that is not a concrete test, such as the doubles, the traits, the
+    PHPUnit extensions and the abstract test cases. The Foundry factories are no test helpers: see 14.
 11. No network in the tests: every HTTP client of the test environment goes through
     `App\Tests\Utils\Http\UnexpectedRequestGuard`, so an HTTP request that nothing simulates fails the test, even when
     the code under test catches the exception. Simulate it with a `MockHttpClient`, or with the recorded responses of
@@ -152,3 +152,11 @@ After any PHP/Twig code change: `castor qa:cs --dry-run`,
 12. A piece of interface shown in two places, or rendered both by a page and by the worker, is a Twig Component, so
     that a page, a frame and a stream render the same markup.
 13. `/garden/new?plant={id}` fixes the species of a new planting to a validated care sheet (no agent).
+14. Test and demo data come from Foundry, a dev dependency: the factories in `src/Factory/` (one per entity, and
+    `CareSheetFactory` for the embeddable), the demo data in `src/Story/DemoStory.php` (`#[AsFixture(name: 'demo')]`,
+    loaded by `foundry:load-fixtures demo` in a database recreated from the migrations). `config/services.yaml` and
+    `.dockerignore` leave both out of production; `config/packages/zenstruck_foundry.yaml` registers the story in dev
+    and test. A factory goes through the named constructors and the intent methods of the model, with named states
+    (`validated()`, `withEnabledReminders()`, `of()`, `inSpace()`, `linkedTo()`, `drafting()`...), never through a
+    setter or the reflection, and its dates are explicit. The tests get Foundry from its PHPUnit extension, without
+    trait: no persistence in `tests/Unit`, and DAMA still rolls each test back.

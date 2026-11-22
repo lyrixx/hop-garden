@@ -2,6 +2,7 @@
 
 namespace App\Tests\Unit\Plant;
 
+use App\Factory\CareSheetFactory;
 use App\Plant\CareSheetPresenter;
 use App\Plant\Entity\CareSheet;
 use App\Plant\Model\CareSheetField;
@@ -10,14 +11,13 @@ use App\Plant\Model\Confidence;
 use App\Plant\Model\Exposure;
 use App\Plant\Model\Source;
 use App\Plant\Model\Watering;
-use App\Tests\Utils\Factory\PlantFactory;
 use PHPUnit\Framework\TestCase;
 
 final class CareSheetPresenterTest extends TestCase
 {
     public function testOneRowPerFieldWithItsConfidence(): void
     {
-        $rows = (new CareSheetPresenter())->rows(PlantFactory::careSheet(pruningMonths: [3, 11], deadheadingMonths: [], exposure: Exposure::PartShade, watering: Watering::High));
+        $rows = (new CareSheetPresenter())->rows(CareSheetFactory::createOne(['pruningMonths' => [3, 11], 'deadheadingMonths' => [], 'exposure' => Exposure::PartShade, 'watering' => Watering::High]));
 
         self::assertSame(
             [

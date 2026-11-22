@@ -2,20 +2,21 @@
 
 namespace App\Tests\Unit\Plant;
 
+use App\Factory\CareSheetFactory;
+use App\Factory\PlantFactory;
 use App\Plant\Entity\Plant;
 use App\Plant\Exception\PlantAlreadyValidatedException;
 use App\Plant\Exception\PlantNotValidatedException;
 use App\Plant\Model\PlantStatus;
 use App\Reminder\Model\ReminderType;
 use App\Tests\Utils\Factory\EntityId;
-use App\Tests\Utils\Factory\PlantFactory;
 use PHPUnit\Framework\TestCase;
 
 final class PlantTest extends TestCase
 {
     public function testAProposedPlantIsADraft(): void
     {
-        $plant = Plant::propose('Panicled hydrangea', 'Hydrangea paniculata', 'Hydrangeaceae', PlantFactory::careSheet(), new \DateTimeImmutable('2026-11-21 09:55'), 191052, 'https://example.com/paniculata.jpg', 'Grows fast.');
+        $plant = Plant::propose('Panicled hydrangea', 'Hydrangea paniculata', 'Hydrangeaceae', CareSheetFactory::createOne(), new \DateTimeImmutable('2026-11-21 09:55'), 191052, 'https://example.com/paniculata.jpg', 'Grows fast.');
 
         self::assertSame(PlantStatus::Draft, $plant->getStatus());
         self::assertFalse($plant->isValidated());
@@ -28,7 +29,7 @@ final class PlantTest extends TestCase
 
     public function testTheUserValidatesItOnce(): void
     {
-        $plant = EntityId::assign(PlantFactory::draft(), 7);
+        $plant = EntityId::assign(PlantFactory::createOne(), 7);
 
         $plant->validate(new \DateTimeImmutable('2026-11-21 10:00'));
 
@@ -43,7 +44,7 @@ final class PlantTest extends TestCase
 
     public function testADraftHasNoReminder(): void
     {
-        $plant = EntityId::assign(PlantFactory::draft(), 7);
+        $plant = EntityId::assign(PlantFactory::createOne(), 7);
 
         $this->expectException(PlantNotValidatedException::class);
         $this->expectExceptionMessageIs('Plant 7 is still a draft: the user must validate it before reminders can be set.');
@@ -53,7 +54,7 @@ final class PlantTest extends TestCase
 
     public function testADraftHasNoReminderToDisableEither(): void
     {
-        $plant = EntityId::assign(PlantFactory::draft(), 7);
+        $plant = EntityId::assign(PlantFactory::createOne(), 7);
 
         $this->expectException(PlantNotValidatedException::class);
 
@@ -62,7 +63,7 @@ final class PlantTest extends TestCase
 
     public function testAReminderIsCreatedOnceThenToggled(): void
     {
-        $plant = PlantFactory::validated();
+        $plant = PlantFactory::new()->validated()->create();
 
         $frost = $plant->enableReminder(ReminderType::Frost);
         $plant->enableReminder(ReminderType::Pruning);
@@ -77,7 +78,7 @@ final class PlantTest extends TestCase
 
     public function testDisablingAReminderNeverEnabledChangesNothing(): void
     {
-        $plant = PlantFactory::validated();
+        $plant = PlantFactory::new()->validated()->create();
 
         $plant->disableReminder(ReminderType::Cutting);
 
@@ -86,8 +87,8 @@ final class PlantTest extends TestCase
 
     public function testAValidatedPlantStaysValidatedOnceRevised(): void
     {
-        $plant = PlantFactory::validated();
-        $careSheet = PlantFactory::careSheet(minTemperatureC: -20);
+        $plant = PlantFactory::new()->validated()->create();
+        $careSheet = CareSheetFactory::createOne(['minTemperatureC' => -20]);
 
         $plant->revise('Hortensia', $careSheet, 'Moved to the shed.');
 
@@ -102,6 +103,6 @@ final class PlantTest extends TestCase
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessageIs('The plant has not been persisted yet.');
 
-        PlantFactory::draft()->getId();
+        PlantFactory::createOne()->getId();
     }
 }

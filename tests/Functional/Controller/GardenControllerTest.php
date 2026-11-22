@@ -2,9 +2,12 @@
 
 namespace App\Tests\Functional\Controller;
 
+use App\Factory\CareSheetFactory;
+use App\Factory\PlantFactory;
+use App\Factory\PlantingFactory;
+use App\Factory\SpaceFactory;
 use App\Garden\DraftCareSheetHandler;
 use App\Garden\Entity\Planting;
-use App\Garden\Entity\Space;
 use App\Garden\Message\DraftCareSheet;
 use App\Garden\Model\CareTask;
 use App\Garden\Model\Soil;
@@ -14,8 +17,6 @@ use App\Plant\Model\Exposure;
 use App\Reminder\Model\ReminderType;
 use App\Tests\Utils\Chat\ScriptedGardener;
 use App\Tests\Utils\Env\EnvVarsTrait;
-use App\Tests\Utils\Factory\PlantFactory;
-use App\Tests\Utils\Factory\PlantingFactory;
 use App\Tests\Utils\Http\UnavailableDataSources;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -24,7 +25,6 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
-use Symfony\Component\Uid\UuidV7;
 
 final class GardenControllerTest extends WebTestCase
 {
@@ -60,8 +60,8 @@ final class GardenControllerTest extends WebTestCase
     public function testAddAPlantingWithItsSpeciesAPhotoAndItsSpace(): void
     {
         self::mockTime('2026-11-21 10:00');
-        $northBed = $this->saveSpace(new Space('North bed', Exposure::PartShade, Soil::Clay, new \DateTimeImmutable('2026-11-01')));
-        $rose = $this->save(new Planting('Rose by the gate', $northBed, null, new \DateTimeImmutable('2026-11-01')));
+        $northBed = SpaceFactory::createOne(['name' => 'North bed', 'exposure' => Exposure::PartShade, 'soil' => Soil::Clay]);
+        $rose = PlantingFactory::new()->inSpace($northBed)->create(['name' => 'Rose by the gate']);
         $crawler = $this->client->request('GET', '/garden/new');
         self::assertResponseIsSuccessful();
 
@@ -108,7 +108,7 @@ final class GardenControllerTest extends WebTestCase
     public function testAPlantOfASpeciesAlreadyValidatedNeedsNoAgent(): void
     {
         self::mockTime('2026-03-15 10:00');
-        $hydrangea = $this->savePlant(PlantFactory::validated('Bigleaf hydrangea', PlantFactory::careSheet(pruningMonths: [3])));
+        $hydrangea = PlantFactory::new()->validated()->create(['commonName' => 'Bigleaf hydrangea', 'careSheet' => CareSheetFactory::new(['pruningMonths' => [3]])]);
         $crawler = $this->client->request('GET', '/garden/new');
 
         $this->client->submit($crawler->selectButton('Add to my garden')->form(), [
@@ -128,10 +128,7 @@ final class GardenControllerTest extends WebTestCase
 
     public function testRetryAfterARunWithoutDraft(): void
     {
-        $planting = new Planting('The mystery shrub', null, null, new \DateTimeImmutable('2026-03-01'));
-        $planting->startDrafting(new UuidV7());
-        $planting->failDrafting();
-        $this->save($planting);
+        $planting = PlantingFactory::new()->draftingFailed()->create(['name' => 'The mystery shrub', 'createdAt' => new \DateTimeImmutable('2026-03-01')]);
         $failedConversationId = $planting->getConversationId();
 
         $crawler = $this->client->request('GET', '/garden/' . $planting->getId());
@@ -259,10 +256,10 @@ final class GardenControllerTest extends WebTestCase
     public function testAPlantingUsesAValidatedCareSheetOfTheSameSpecies(): void
     {
         self::mockTime('2026-03-15 10:00');
-        $hydrangea = $this->savePlant(PlantFactory::validated('Bigleaf hydrangea', PlantFactory::careSheet(pruningMonths: [3], exposure: Exposure::PartShade)));
-        $this->savePlant(PlantFactory::draft('Draft hydrangea'));
-        $shed = $this->saveSpace(new Space('By the shed', Exposure::Shade, Soil::Loamy, new \DateTimeImmutable('2026-03-01')));
-        $planting = $this->save(new Planting('Hydrangea by the shed', $shed, null, new \DateTimeImmutable('2026-03-01'), 191047, 'hydrangea MACROPHYLLA'));
+        $hydrangea = PlantFactory::new()->validated()->create(['commonName' => 'Bigleaf hydrangea', 'careSheet' => CareSheetFactory::new(['pruningMonths' => [3], 'exposure' => Exposure::PartShade])]);
+        PlantFactory::createOne(['commonName' => 'Draft hydrangea']);
+        $shed = SpaceFactory::createOne(['name' => 'By the shed', 'exposure' => Exposure::Shade, 'soil' => Soil::Loamy, 'createdAt' => new \DateTimeImmutable('2026-03-01')]);
+        $planting = PlantingFactory::new()->inSpace($shed)->create(['name' => 'Hydrangea by the shed', 'createdAt' => new \DateTimeImmutable('2026-03-01'), 'trefleId' => 191047, 'scientificName' => 'hydrangea MACROPHYLLA']);
 
         $crawler = $this->client->request('GET', '/garden/' . $planting->getId());
         self::assertSelectorTextContains('.garden-failure', 'No care sheet yet.');
@@ -283,9 +280,7 @@ final class GardenControllerTest extends WebTestCase
 
     public function testADraftCareSheetIsWaitingForReview(): void
     {
-        $planting = new Planting('Hydrangea by the shed', null, null, new \DateTimeImmutable('2026-03-01'));
-        $planting->linkTo($this->savePlant(PlantFactory::draft()));
-        $this->save($planting);
+        $planting = PlantingFactory::new()->linkedTo(PlantFactory::new())->create(['name' => 'Hydrangea by the shed', 'createdAt' => new \DateTimeImmutable('2026-03-01')]);
 
         $this->client->request('GET', '/garden/' . $planting->getId());
 
@@ -303,11 +298,9 @@ final class GardenControllerTest extends WebTestCase
 
     public function testACareSheetOfAnotherSpeciesIsRefused(): void
     {
-        $otherSpecies = Plant::propose('Rose', 'Rosa canina', 'Rosaceae', PlantFactory::careSheet(), new \DateTimeImmutable('2026-03-01'));
-        $otherSpecies->validate(new \DateTimeImmutable('2026-03-01'));
-        $this->savePlant($otherSpecies);
-        $this->savePlant(PlantFactory::validated());
-        $planting = $this->save(new Planting('Hydrangea by the shed', null, null, new \DateTimeImmutable('2026-03-01'), scientificName: 'Hydrangea macrophylla'));
+        $otherSpecies = PlantFactory::new()->validated()->create(['commonName' => 'Rose', 'scientificName' => 'Rosa canina']);
+        PlantFactory::new()->validated()->create();
+        $planting = PlantingFactory::createOne(['name' => 'Hydrangea by the shed', 'createdAt' => new \DateTimeImmutable('2026-03-01'), 'scientificName' => 'Hydrangea macrophylla']);
         $crawler = $this->client->request('GET', '/garden/' . $planting->getId());
 
         // A forged plant id in the form of the hydrangea sheet
@@ -321,15 +314,11 @@ final class GardenControllerTest extends WebTestCase
 
     public function testTheGardenListsTheDraftsOfTheChatThenThePlantings(): void
     {
-        $this->savePlant(PlantFactory::draft('Panicled hydrangea'));
-        $this->save(new Planting('The mystery shrub', null, null, new \DateTimeImmutable('2026-11-01')));
-        $shed = new Planting('Hydrangea by the shed', null, null, new \DateTimeImmutable('2026-11-01'), 191047, 'Hydrangea macrophylla');
-        $shedDraft = $this->savePlant(PlantFactory::draft());
-        $shed->linkTo($shedDraft);
-        $this->save($shed);
-        $rose = PlantFactory::validated('Climbing rose');
-        $rose->enableReminder(ReminderType::Pruning);
-        $this->save(PlantingFactory::of($this->savePlant($rose)));
+        PlantFactory::createOne(['commonName' => 'Panicled hydrangea']);
+        PlantingFactory::createOne(['name' => 'The mystery shrub']);
+        $shedDraft = PlantFactory::createOne();
+        PlantingFactory::new()->linkedTo($shedDraft)->create(['name' => 'Hydrangea by the shed', 'trefleId' => 191047, 'scientificName' => 'Hydrangea macrophylla']);
+        PlantingFactory::new()->of(PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning)->create(['commonName' => 'Climbing rose']))->create();
 
         $crawler = $this->client->request('GET', '/garden');
 
@@ -352,9 +341,7 @@ final class GardenControllerTest extends WebTestCase
 
     public function testNoDraftSectionWhenEveryDraftHasItsPlanting(): void
     {
-        $shed = new Planting('Hydrangea by the shed', null, null, new \DateTimeImmutable('2026-11-01'));
-        $shed->linkTo($this->savePlant(PlantFactory::draft()));
-        $this->save($shed);
+        PlantingFactory::new()->linkedTo(PlantFactory::new())->create(['name' => 'Hydrangea by the shed']);
 
         $this->client->request('GET', '/garden');
 
@@ -366,7 +353,7 @@ final class GardenControllerTest extends WebTestCase
     public function testAPlantValidatedFromTheChatAsksWhereItGrows(): void
     {
         self::mockTime('2026-07-01 10:00');
-        $planting = $this->save(PlantingFactory::of($this->savePlant(PlantFactory::validated(careSheet: PlantFactory::careSheet(exposure: Exposure::Sun)))));
+        $planting = PlantingFactory::new()->of(PlantFactory::new()->validated()->create(['careSheet' => CareSheetFactory::new(['exposure' => Exposure::Sun])]))->create();
 
         $crawler = $this->client->request('GET', '/garden/' . $planting->getId());
 
@@ -381,9 +368,8 @@ final class GardenControllerTest extends WebTestCase
 
     public function testThePageOfMyPlantLinksToItsSpecies(): void
     {
-        $plant = PlantFactory::validated(careSheet: PlantFactory::careSheet(minTemperatureC: -15, exposure: Exposure::PartShade));
-        $plant->enableReminder(ReminderType::Pruning);
-        $planting = $this->save(PlantingFactory::of($this->savePlant($plant)));
+        $plant = PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning)->create(['careSheet' => CareSheetFactory::new(['minTemperatureC' => -15, 'exposure' => Exposure::PartShade])]);
+        $planting = PlantingFactory::new()->of($plant)->create();
 
         $crawler = $this->client->request('GET', '/garden/' . $planting->getId());
 
@@ -409,8 +395,8 @@ final class GardenControllerTest extends WebTestCase
 
     public function testTheSpeciesHaveTheirTabAndMyPlantsTheirs(): void
     {
-        $plant = $this->savePlant(PlantFactory::validated());
-        $planting = $this->save(PlantingFactory::of($plant));
+        $plant = PlantFactory::new()->validated()->create();
+        $planting = PlantingFactory::new()->of($plant)->create();
 
         foreach (['/plants', '/plants/new', '/plants/' . $plant->getId(), '/plants/' . $plant->getId() . '/edit'] as $url) {
             $this->client->request('GET', $url);
@@ -425,10 +411,8 @@ final class GardenControllerTest extends WebTestCase
     public function testAddAPlantOfAValidatedSpeciesFromItsPage(): void
     {
         self::mockTime('2026-11-21 10:00');
-        $plant = $this->savePlant(Plant::propose('Panicled hydrangea', 'Hydrangea paniculata', 'Hydrangeaceae', PlantFactory::careSheet(), new \DateTimeImmutable('2026-11-01'), 191052));
-        $plant->validate(new \DateTimeImmutable('2026-11-01'));
-        self::getContainer()->get(EntityManagerInterface::class)->flush();
-        $northBed = $this->saveSpace(new Space('North bed', Exposure::PartShade, Soil::Clay, new \DateTimeImmutable('2026-11-01')));
+        $plant = PlantFactory::new()->validated()->create(['commonName' => 'Panicled hydrangea', 'scientificName' => 'Hydrangea paniculata', 'trefleId' => 191052]);
+        $northBed = SpaceFactory::createOne(['name' => 'North bed', 'exposure' => Exposure::PartShade, 'soil' => Soil::Clay]);
         $crawler = $this->client->request('GET', '/plants/' . $plant->getId());
 
         $crawler = $this->client->click($crawler->filter('#in-your-garden')->selectLink('Add to my garden')->link());
@@ -457,7 +441,7 @@ final class GardenControllerTest extends WebTestCase
 
     public function testTheSpeciesOfANewPlantCannotBeChangedOnceFixed(): void
     {
-        $plant = $this->savePlant(PlantFactory::validated());
+        $plant = PlantFactory::new()->validated()->create();
         $crawler = $this->client->request('GET', '/garden/new?plant=' . $plant->getId());
         $form = $crawler->selectButton('Add to my garden')->form();
 
@@ -476,7 +460,7 @@ final class GardenControllerTest extends WebTestCase
     #[TestWith(['abc'])]
     public function testOnlyAValidatedSpeciesIsFixed(string $plant): void
     {
-        $draft = $this->savePlant(PlantFactory::draft());
+        $draft = PlantFactory::createOne();
 
         $this->client->request('GET', '/garden/new?plant=' . ('draft' === $plant ? $draft->getId() : $plant));
 
@@ -485,9 +469,9 @@ final class GardenControllerTest extends WebTestCase
 
     public function testThePageOfAPlantingShowsItsSpaceAndItsNeighbours(): void
     {
-        $northBed = $this->saveSpace(new Space('North bed', Exposure::Shade, Soil::Clay, new \DateTimeImmutable('2026-11-01')));
-        $hosta = $this->save(new Planting('Hosta', $northBed, null, new \DateTimeImmutable('2026-11-01')));
-        $fern = $this->save(new Planting('Fern', $northBed, null, new \DateTimeImmutable('2026-11-01')));
+        $northBed = SpaceFactory::createOne(['name' => 'North bed', 'exposure' => Exposure::Shade, 'soil' => Soil::Clay]);
+        $hosta = PlantingFactory::new()->inSpace($northBed)->create(['name' => 'Hosta']);
+        $fern = PlantingFactory::new()->inSpace($northBed)->create(['name' => 'Fern']);
 
         $crawler = $this->client->request('GET', '/garden/' . $hosta->getId());
 
@@ -502,10 +486,8 @@ final class GardenControllerTest extends WebTestCase
 
     public function testTheSpeciesOfMyPlantFacesTheExposureOfItsSpace(): void
     {
-        $northBed = $this->saveSpace(new Space('North bed', Exposure::Shade, null, new \DateTimeImmutable('2026-11-01')));
-        $planting = PlantingFactory::of($this->savePlant(PlantFactory::validated(careSheet: PlantFactory::careSheet(exposure: Exposure::PartShade))));
-        $planting->revise($planting->getName(), $northBed, null);
-        $this->save($planting);
+        $northBed = SpaceFactory::createOne(['name' => 'North bed', 'exposure' => Exposure::Shade]);
+        $planting = PlantingFactory::new()->of(PlantFactory::new()->validated()->create(['careSheet' => CareSheetFactory::new(['exposure' => Exposure::PartShade])]))->inSpace($northBed)->create();
 
         $crawler = $this->client->request('GET', '/garden/' . $planting->getId());
 
@@ -518,14 +500,16 @@ final class GardenControllerTest extends WebTestCase
     public function testEditTheGardenInfoOfAPlanting(): void
     {
         self::mockTime('2026-11-21 10:00');
-        $balcony = $this->saveSpace(new Space('Balcony', Exposure::Sun, null, new \DateTimeImmutable('2026-11-01')));
-        $northBed = $this->saveSpace(new Space('North bed', Exposure::PartShade, Soil::Clay, new \DateTimeImmutable('2026-11-01')));
-        $lavender = $this->save(new Planting('Lavender', $balcony, null, new \DateTimeImmutable('2026-11-01')));
-        $this->save(new Planting('Sage', $northBed, null, new \DateTimeImmutable('2026-11-01')));
-        $hydrangea = PlantingFactory::of($this->savePlant(PlantFactory::validated()));
-        $hydrangea->revise($hydrangea->getName(), $balcony, null);
-        $hydrangea->recordCare(CareTask::Watering, new \DateTimeImmutable('2026-11-10'));
-        $this->save($hydrangea);
+        $balcony = SpaceFactory::createOne(['name' => 'Balcony', 'exposure' => Exposure::Sun]);
+        $northBed = SpaceFactory::createOne(['name' => 'North bed', 'exposure' => Exposure::PartShade, 'soil' => Soil::Clay]);
+        $lavender = PlantingFactory::new()->inSpace($balcony)->create(['name' => 'Lavender']);
+        PlantingFactory::new()->inSpace($northBed)->create(['name' => 'Sage']);
+        $hydrangea = PlantingFactory::new()
+            ->of(PlantFactory::new()->validated()->create())
+            ->inSpace($balcony)
+            ->withCareRecord(CareTask::Watering, new \DateTimeImmutable('2026-11-10'))
+            ->create()
+        ;
 
         $crawler = $this->client->request('GET', '/garden/' . $hydrangea->getId());
         $crawler = $this->client->click($crawler->selectLink('Edit garden info')->link());
@@ -580,7 +564,7 @@ final class GardenControllerTest extends WebTestCase
 
     public function testTheEditOfAPlantingIsValidated(): void
     {
-        $planting = $this->save(new Planting('Rose', null, null, new \DateTimeImmutable('2026-11-01')));
+        $planting = PlantingFactory::createOne(['name' => 'Rose']);
         $crawler = $this->client->request('GET', '/garden/' . $planting->getId() . '/edit');
 
         $this->client->submit($crawler->selectButton('Save')->form(), ['planting[name]' => ' ']);
@@ -603,7 +587,7 @@ final class GardenControllerTest extends WebTestCase
     {
         UnavailableDataSources::openMeteo(self::getContainer());
         self::mockTime('2026-12-01 10:00');
-        $planting = $this->save(PlantingFactory::of($this->savePlant(PlantFactory::validated(careSheet: PlantFactory::careSheet(minTemperatureC: -15)))));
+        $planting = PlantingFactory::new()->of(PlantFactory::new()->validated()->create(['careSheet' => CareSheetFactory::new(['minTemperatureC' => -15])]))->create();
 
         $this->client->request('GET', '/garden/' . $planting->getId());
 
@@ -613,7 +597,7 @@ final class GardenControllerTest extends WebTestCase
 
     public function testThePollOfAPlantingNotDrafting(): void
     {
-        $planting = $this->save(new Planting('Rose', null, null, new \DateTimeImmutable('2026-11-01')));
+        $planting = PlantingFactory::createOne(['name' => 'Rose']);
 
         $this->client->request('GET', '/garden/' . $planting->getId() . '/drafting');
 
@@ -623,14 +607,11 @@ final class GardenControllerTest extends WebTestCase
 
     public function testARetryOfAPlantingLinkedMeanwhileDraftsNothing(): void
     {
-        $planting = new Planting('The mystery shrub', null, null, new \DateTimeImmutable('2026-03-01'));
-        $planting->startDrafting(new UuidV7());
-        $planting->failDrafting();
-        $this->save($planting);
+        $planting = PlantingFactory::new()->draftingFailed()->create(['name' => 'The mystery shrub', 'createdAt' => new \DateTimeImmutable('2026-03-01')]);
         $crawler = $this->client->request('GET', '/garden/' . $planting->getId());
         $form = $crawler->selectButton('Retry')->form();
         // Linked in another tab
-        $plant = $this->savePlant(PlantFactory::validated());
+        $plant = PlantFactory::new()->validated()->create();
         $planting = $this->reload($planting);
         $planting->linkTo(self::getContainer()->get(EntityManagerInterface::class)->getReference(Plant::class, $plant->getId()));
         self::getContainer()->get(EntityManagerInterface::class)->flush();
@@ -644,11 +625,8 @@ final class GardenControllerTest extends WebTestCase
 
     public function testRetryAndLinkRequireAValidCsrfToken(): void
     {
-        $planting = new Planting('Hydrangea by the shed', null, null, new \DateTimeImmutable('2026-03-01'), scientificName: 'Hydrangea macrophylla');
-        $planting->startDrafting(new UuidV7());
-        $planting->failDrafting();
-        $this->save($planting);
-        $plant = $this->savePlant(PlantFactory::validated());
+        $planting = PlantingFactory::new()->draftingFailed()->create(['name' => 'Hydrangea by the shed', 'createdAt' => new \DateTimeImmutable('2026-03-01'), 'scientificName' => 'Hydrangea macrophylla']);
+        $plant = PlantFactory::new()->validated()->create();
 
         $this->client->request('POST', '/garden/' . $planting->getId() . '/draft', ['_token' => 'forged']);
         self::assertResponseStatusCodeSame(401);
@@ -709,40 +687,11 @@ final class GardenControllerTest extends WebTestCase
      */
     private function draftWithoutResult(): Planting
     {
-        $planting = new Planting(ScriptedGardener::NARRATED, null, null, new \DateTimeImmutable('2026-03-01'));
-        $planting->startDrafting(new UuidV7());
-        $this->save($planting);
+        $planting = PlantingFactory::new()->drafting()->create(['name' => ScriptedGardener::NARRATED, 'createdAt' => new \DateTimeImmutable('2026-03-01')]);
 
         self::getContainer()->get(DraftCareSheetHandler::class)(new DraftCareSheet($planting->getId(), $planting->getConversationId() ?? self::fail()));
 
         return $planting;
-    }
-
-    private function save(Planting $planting): Planting
-    {
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($planting);
-        $entityManager->flush();
-
-        return $planting;
-    }
-
-    private function saveSpace(Space $space): Space
-    {
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($space);
-        $entityManager->flush();
-
-        return $space;
-    }
-
-    private function savePlant(Plant $plant): Plant
-    {
-        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
-        $entityManager->persist($plant);
-        $entityManager->flush();
-
-        return $plant;
     }
 
     private function reload(Planting $planting): Planting

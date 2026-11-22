@@ -25,7 +25,9 @@ export const DemoSegment = ({ segment, frostOutput }: { segment: PlannedSegment;
     const frame = useCurrentFrame();
     const { fps } = useVideoConfig();
     const toFrame = (at: number) => Math.max(0, Math.round(((at - segment.from) / segment.rate) * fps));
-    const zoom = interpolate(frame, [0, segment.frames], [1, 1.025]);
+    // Up to 1.02: more would push the toasts, at the right edge of the page, out of the window
+    const zoom = interpolate(segment.offset + frame, [0, segment.demoFrames], [1, 1.02]);
+    const leaving = segment.terminal ? interpolate(frame, [toFrame(segment.terminal.leaveAt), toFrame(segment.terminal.leaveAt) + 12], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) : 0;
 
     return (
         <Background>
@@ -33,8 +35,8 @@ export const DemoSegment = ({ segment, frostOutput }: { segment: PlannedSegment;
                 <div style={{ position: 'absolute', inset: 0, transform: `scale(${zoom})`, transformOrigin: '50% 40%' }}>
                     <OffthreadVideo
                         src={staticFile('capture/demo.mp4')}
-                        startFrom={Math.round(segment.from * fps)}
-                        endAt={Math.round(segment.to * fps)}
+                        startFrom={segment.startFrom}
+                        endAt={segment.endAt}
                         playbackRate={segment.rate}
                         muted
                         style={{ width: BROWSER.width, height: (BROWSER.width * 9) / 16 }}
@@ -58,7 +60,14 @@ export const DemoSegment = ({ segment, frostOutput }: { segment: PlannedSegment;
                         command={segment.terminal.command}
                         output={frostOutput}
                         enterAt={toFrame(segment.terminal.enterAt)}
-                        style={{ position: 'absolute', left: 150, bottom: 70, width: 760 }}
+                        style={{
+                            position: 'absolute',
+                            left: 150,
+                            bottom: 70,
+                            width: 760,
+                            opacity: 1 - leaving,
+                            transform: `translateY(${leaving * 24}px)`,
+                        }}
                     />
                 </Sequence>
             )}
