@@ -157,7 +157,7 @@ home:
             text: "The assistant drafts the care sheet from the botanical data of Trefle and its own knowledge. Each value has a confidence level, the uncertain ones are highlighted, and the sheet names its sources. You check, you correct what you know better, and the sheet stays a draft until you validate it."
         frost:
             heading: "A late frost kills a plant."
-            text: "Turn on the frost alert of a plant: every morning at 7, Hop Garden reads the Open-Meteo forecast for the next three days and compares it with the hardiness of the plant, plus 2 °C of margin. If a night will be too cold for your lemon tree, you know it that same morning, in time to bring it in."
+            text: "Turn on the frost alert of a plant: every morning at 7, Hop Garden reads the Open-Meteo forecast for the next three days and compares it with the hardiness of the plant, plus 2 °C of margin. If a night will be too cold for your lemon tree, a notification in Hop Garden warns you that same morning, in time to bring it in."
         mcp:
             heading: "Your AI assistant does not know your garden."
             text: "Hop Garden is also an MCP server. Connect Claude Desktop, Claude Code, Cursor or another MCP client: it searches plants, reads your care sheets and your spaces, checks the frost forecast. To add a plant, it gives you the link to its card, and you confirm."
@@ -221,18 +221,20 @@ legal:
             text: "The controller of your data is the publisher of Hop Garden, named in the {link}legal notice{link_end}. For any question about your data, write to:"
             to_complete: "the contact email address for personal data, and the data protection officer if there is one"
         cookies:
-            form: "When you send some forms, a second technical cookie protects the sending, and is removed right after."
+            form: "When you send some forms, a technical cookie also protects the sending, and is removed right after."
             heading: "Cookies"
             language: "Your choice of language is kept on the server, not in a cookie."
             none: "No cookie for audience measurement or advertising, and no resource loaded from another site: the fonts are served by Hop Garden. These cookies are strictly necessary to the service and need no consent: there is no cookie banner."
-            session: "Hop Garden sets one cookie, the session cookie ({name}). It keeps your session, such as your conversation with the assistant, and protects the forms against forged requests. It is deleted when you close your browser, and the session ends after 12 hours without a visit."
+            session: "Hop Garden uses the session cookie ({name}): it keeps your session, such as your conversation with the assistant, and protects the forms against forged requests. It is deleted when you close your browser, and the session ends after 12 hours without a visit."
         data:
             account: "Your account: your email address, your display name, your password (stored hashed, never in clear) and your language."
             conversations: "Your conversations with the assistant: your messages and its answers are stored, and sent to the provider of the language model that writes the answers. To answer, the assistant reads your garden (care sheets, plants, spaces), and what it reads goes to the same provider. The name of a species you look up may be sent to it too, to find its Latin name or draft its care sheet."
             garden: "Your garden: the care sheets of your species, your plants and their spaces, the care you record, your notes, your reminders and your notifications."
             heading: "The data Hop Garden processes"
             location: "The location of your garden (latitude and longitude), sent to Open-Meteo for the frost forecast."
-            logs: "The logs of the web server: IP address, date, page requested and browser."
+            logs:
+                text: "Technical logs:"
+                to_complete: "what the logs of the server and of the host record, such as the IP address, the date and the page requested"
             photos: "The photos you add to your plants, stored on the server of Hop Garden."
             searches: "The names of the plants you search, sent to Trefle to identify the species."
             third_parties: "Open-Meteo and Trefle receive these requests from the server of Hop Garden, never from your browser, and nothing else about you."

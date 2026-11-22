@@ -157,7 +157,7 @@ home:
             text: "L’assistant rédige la fiche de culture à partir des données botaniques de Trefle et de ses propres connaissances. Chaque valeur a un niveau de confiance, les incertaines sont surlignées, et la fiche cite ses sources. Vous vérifiez, vous corrigez ce que vous savez mieux, et la fiche reste un brouillon tant que vous ne l’avez pas validée."
         frost:
             heading: "Un gel tardif tue une plante."
-            text: "Activez l’alerte gel d’une plante : chaque matin à 7 h, Hop Garden lit la prévision Open-Meteo des trois prochains jours et la compare à sa rusticité, plus 2 °C de marge. Si une nuit s’annonce trop froide pour votre citronnier, vous le savez le matin même, à temps pour le rentrer."
+            text: "Activez l’alerte gel d’une plante : chaque matin à 7 h, Hop Garden lit la prévision Open-Meteo des trois prochains jours et la compare à sa rusticité, plus 2 °C de marge. Si une nuit s’annonce trop froide pour votre citronnier, une notification dans Hop Garden vous prévient le matin même, à temps pour le rentrer."
         mcp:
             heading: "Votre assistant IA ne connaît pas votre jardin."
             text: "Hop Garden est aussi un serveur MCP. Branchez Claude Desktop, Claude Code, Cursor ou un autre client MCP : il cherche des plantes, lit vos fiches et vos espaces, consulte la prévision de gel. Pour ajouter une plante, il vous donne le lien de sa carte, et c’est vous qui confirmez."
@@ -221,18 +221,20 @@ legal:
             text: "Le responsable du traitement de vos données est l’éditeur de Hop Garden, désigné dans les {link}mentions légales{link_end}. Pour toute question sur vos données, écrivez à :"
             to_complete: "l’adresse email de contact pour les données personnelles, et le délégué à la protection des données s’il y en a un"
         cookies:
-            form: "À l’envoi de certains formulaires, un second cookie technique protège l’envoi, puis il est supprimé aussitôt."
+            form: "À l’envoi de certains formulaires, un cookie technique protège aussi l’envoi, puis il est supprimé aussitôt."
             heading: "Cookies"
             language: "Votre choix de langue est conservé sur le serveur, pas dans un cookie."
             none: "Aucun cookie de mesure d’audience ni de publicité, et aucune ressource chargée depuis un autre site : les polices sont servies par Hop Garden. Ces cookies sont strictement nécessaires au service et dispensés de consentement : il n’y a pas de bannière cookies."
-            session: "Hop Garden pose un seul cookie, le cookie de session ({name}). Il garde votre session, comme votre conversation avec l’assistant, et protège les formulaires contre les requêtes falsifiées. Il disparaît à la fermeture du navigateur, et la session prend fin après 12 heures sans visite."
+            session: "Hop Garden utilise le cookie de session ({name}) : il garde votre session, comme votre conversation avec l’assistant, et protège les formulaires contre les requêtes falsifiées. Il disparaît à la fermeture du navigateur, et la session prend fin après 12 heures sans visite."
         data:
             account: "Votre compte : votre adresse email, votre nom affiché, votre mot de passe (enregistré haché, jamais en clair) et votre langue."
             conversations: "Vos conversations avec l’assistant : vos messages et ses réponses sont enregistrés, et envoyés au fournisseur du modèle de langage qui rédige les réponses. Pour répondre, l’assistant lit votre jardin (fiches, plantes, espaces), et ce qu’il lit part chez le même fournisseur. Le nom d’une espèce que vous cherchez peut aussi lui être envoyé, pour trouver son nom latin ou rédiger sa fiche."
             garden: "Votre jardin : les fiches de culture de vos espèces, vos plantes et leurs espaces, les soins que vous notez, vos notes, vos rappels et vos notifications."
             heading: "Les données que Hop Garden traite"
             location: "La position de votre jardin (latitude et longitude), envoyée à Open-Meteo pour la prévision de gel."
-            logs: "Les journaux du serveur web : adresse IP, date, page demandée et navigateur."
+            logs:
+                text: "Les journaux techniques :"
+                to_complete: "ce qu’enregistrent les journaux du serveur et de l’hébergeur, comme l’adresse IP, la date et la page demandée"
             photos: "Les photos que vous ajoutez à vos plantes, stockées sur le serveur de Hop Garden."
             searches: "Les noms des plantes que vous cherchez, envoyés à Trefle pour identifier l’espèce."
             third_parties: "Open-Meteo et Trefle reçoivent ces requêtes du serveur de Hop Garden, jamais de votre navigateur, et rien d’autre sur vous."
