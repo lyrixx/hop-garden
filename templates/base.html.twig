@@ -13,6 +13,8 @@
         {% block importmap %}{{ importmap('app') }}{% endblock %}
     </head>
     <body>
+        <twig:LocaleBanner/>
+
         <header class="topbar">
             <a class="brand" href="{{ path('chat') }}">
                 <span class="pict"><twig:Icon name="hop" :size="32"/></span>
@@ -54,6 +56,7 @@
             </p>
             <p>{{ 'footer.plates'|trans({library: '<a href="https://www.flickr.com/photos/biodivlibrary/">Biodiversity Heritage Library</a>'})|raw }}</p>
             {% if app_demo %}<p><span class="demo-mode">{{ 'footer.demo_mode'|trans }}</span></p>{% endif %}
+            <twig:LocaleSwitch/>
         </footer>
     </body>
 </html>
