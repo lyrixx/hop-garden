@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Account\AccountDeletion;
 use App\Account\AccountMailer;
 use App\Account\Entity\User;
 use App\Account\Form\AccountDeletionType;
@@ -14,6 +15,7 @@ use App\Account\Form\PasswordChangeType;
 use App\Account\Form\ProfileType;
 use App\Account\PasswordResetRequestRepository;
 use App\Account\UserRepository;
+use App\Garden\PlantingPhotoStorage;
 use App\Locale\PreferredLocale;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -153,8 +155,11 @@ final class AccountController extends AbstractController
         return $this->back(new TranslatableMessage('flash.account.password_changed'));
     }
 
+    /**
+     * Their gardens of their own go with it, their shared gardens stay with the others: see AccountDeletion.
+     */
     #[Route('/account/delete', name: 'account_delete', methods: ['POST'])]
-    public function delete(Request $request, #[CurrentUser] User $user, UserRepository $userRepository): Response
+    public function delete(Request $request, #[CurrentUser] User $user, AccountDeletion $accountDeletion, PlantingPhotoStorage $photoStorage): Response
     {
         $form = $this->createForm(AccountDeletionType::class, new AccountDeletionFormData(), ['action' => $this->generateUrl('account_delete')]);
         $form->handleRequest($request);
@@ -163,10 +168,16 @@ final class AccountController extends AbstractController
             return $this->renderAccount($user, deletion: $form);
         }
 
-        // TODO With the gardens (next step): delete the gardens they are the only member of, with their plants, spaces
-        // and conversations, and leave the others
-        $userRepository->remove($user);
-        $this->entityManager->flush();
+        // The messages of the conversations, in the table of the message store, go in the same transaction
+        $photos = $this->entityManager->wrapInTransaction(function () use ($accountDeletion, $user): array {
+            $photos = $accountDeletion->delete($user);
+            $this->entityManager->flush();
+
+            return $photos;
+        });
+        foreach ($photos as $photo) {
+            $photoStorage->remove($photo);
+        }
 
         // Its response clears the cookies, the remember me one too
         $response = $this->security->logout(validateCsrfToken: false) ?? $this->redirectToRoute('login');
