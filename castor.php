@@ -128,7 +128,42 @@ function user_create(#[AsRawTokens] array $rawTokens = []): int
     return docker_exit_code(['bin/console', 'app:user:create', ...$rawTokens]);
 }
 
-#[AsTask(description: 'Resets the demo data: 4 accounts, 2 validated plants with their reminders, their plantings in 3 spaces, no notification', namespace: 'demo', name: 'reset')]
+/**
+ * @param list<string> $rawTokens
+ */
+#[AsTask(description: 'Gives the data of before the gardens to a new garden of a member: --email=... [--name=...] --city=... (the migrations around it included)', namespace: 'app:garden', name: 'adopt-orphans')]
+function garden_adopt_orphans(#[AsRawTokens] array $rawTokens = []): int
+{
+    io()->title('Adopting the data of before the gardens');
+
+    // The migration that adds the gardens, not the next one, which refuses a row without garden. Never down: a database
+    // past it has no orphan
+    $gardens = 'DoctrineMigrations\Version20261122212315';
+    docker_compose_run(['bin/console', 'doctrine:database:create', '--if-not-exists']);
+    $current = explode(' ', trim(docker_compose_run(['bin/console', 'doctrine:migrations:current', '--no-ansi'], c: context()->withQuiet())->getOutput()))[0];
+    if (strcmp($current, $gardens) < 0) {
+        docker_compose_run(['bin/console', 'doctrine:migration:migrate', $gardens, '-n', '--all-or-nothing']);
+    }
+
+    $exitCode = docker_exit_code(['bin/console', 'app:garden:adopt-orphans', ...$rawTokens]);
+    if (0 !== $exitCode) {
+        return $exitCode;
+    }
+
+    migrate();
+
+    return 0;
+}
+
+#[AsTask(description: 'Moves the photos of the plantings out of public/uploads, to the private storage of var/share', namespace: 'app:plantings', name: 'move-photos')]
+function plantings_move_photos(): int
+{
+    io()->title('Moving the photos of the plantings');
+
+    return docker_exit_code(['bin/console', 'app:plantings:move-photos']);
+}
+
+#[AsTask(description: 'Resets the demo data: 5 accounts, 2 gardens (one shared by Alice and Bob), their plants, spaces and reminders, no notification', namespace: 'demo', name: 'reset')]
 function demo_reset(): void
 {
     io()->title('Resetting the demo data');
@@ -139,11 +174,12 @@ function demo_reset(): void
 
     // Keep in sync with App\Story\DemoStory, and App\Factory\UserFactory::PASSWORD
     io()->section('Log in at ' . get_project_url(variable('root_domain')) . '/login');
-    io()->table(['Email', 'Password', 'Account'], [
-        ['admin@hop-garden.test', 'hop-garden-demo', 'the administrator, of the back-office too (/admin)'],
-        ['alice@hop-garden.test', 'hop-garden-demo', 'a member, in English'],
-        ['bob@hop-garden.test', 'hop-garden-demo', 'a member, in French'],
-        ['dave@hop-garden.test', 'hop-garden-demo', 'on the waiting list: approve him in the back-office'],
+    io()->table(['Email', 'Password', 'Account', 'Garden'], [
+        ['admin@hop-garden.test', 'hop-garden-demo', 'the administrator, of the back-office too (/admin)', 'none: the wizard makes one'],
+        ['alice@hop-garden.test', 'hop-garden-demo', 'a member, in English', 'The allotment, its owner'],
+        ['bob@hop-garden.test', 'hop-garden-demo', 'a member, in French', 'The allotment, a member'],
+        ['carol@hop-garden.test', 'hop-garden-demo', 'a member, in English', 'Carol\'s balcony, its owner'],
+        ['dave@hop-garden.test', 'hop-garden-demo', 'on the waiting list: approve him in the back-office', 'none yet'],
     ]);
     if (has_router()) {
         io()->comment('Their emails land in Mailpit: ' . get_project_url('mail.' . variable('root_domain')));
@@ -177,20 +213,30 @@ function demo_frost(
         $command[] = '--date=' . $date;
     }
 
-    // The recorded forecast is served in demo mode only, whatever the keys in .env.local
-    $c = context()->withData(['docker_compose_run_environment' => ['APP_DEMO' => '1']]);
+    // The recorded forecast is served in demo mode only, whatever the keys in .env.local. The toasts go to the Mercure
+    // topics of the pages of this checkout, under its URL (App\Mercure\Topics)
+    $c = context()->withData(['docker_compose_run_environment' => ['APP_DEMO' => '1', 'DEFAULT_URI' => get_project_url(variable('root_domain'))]]);
 
     docker_compose_run($command, c: $c);
 }
 
-#[AsTask(description: 'Serves the MCP server over STDIO, for Claude Desktop, Claude Code, Cursor... (the stack must be started)', namespace: 'mcp', name: 'stdio')]
-function mcp_stdio(): int
-{
+#[AsTask(description: 'Serves the MCP server over STDIO, for Claude Desktop, Claude Code, Cursor..., as a member: --user=<email> [--garden=<id>] (the stack must be started)', namespace: 'mcp', name: 'stdio')]
+function mcp_stdio(
+    #[AsOption(description: 'The email of the member the tools act for')]
+    string $user = '',
+    #[AsOption(description: 'The id of their garden, the one they joined first by default')]
+    ?int $garden = null,
+): int {
     // Nothing but the JSON-RPC messages may reach STDOUT
     $c = context()->withInput(\STDIN)->withPty(false)->withTty(false)->withAllowFailure();
 
     // The validation URLs of propose_plant, propose_space and propose_planting open the stack of this checkout
     $defaultUri = 'DEFAULT_URI=' . get_project_url(variable('root_domain'));
 
-    return (int) docker_compose(['run', '--rm', '-T', '--no-deps', '-e', $defaultUri, 'builder', 'php', 'bin/console', 'mcp:server', 'default', '--no-debug'], $c, profiles: ['*'])->getExitCode();
+    $command = ['php', 'bin/console', 'app:mcp:stdio', '--user=' . $user, '--no-debug'];
+    if (null !== $garden) {
+        $command[] = '--garden=' . $garden;
+    }
+
+    return (int) docker_compose(['run', '--rm', '-T', '--no-deps', '-e', $defaultUri, 'builder', ...$command], $c, profiles: ['*'])->getExitCode();
 }
