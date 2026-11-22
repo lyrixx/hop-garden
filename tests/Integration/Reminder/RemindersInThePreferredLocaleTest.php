@@ -6,11 +6,12 @@ use App\Factory\CareSheetFactory;
 use App\Factory\PlantFactory;
 use App\Factory\PlantingFactory;
 use App\Locale\Model\SupportedLocale;
-use App\Locale\PreferredLocale;
 use App\Reminder\Message\CheckRemindersMessage;
 use App\Reminder\Model\ReminderType;
 use App\Reminder\NotificationRepository;
 use App\Reminder\Notifier\NotificationToastPublisher;
+use App\Settings\Entity\Settings;
+use App\Settings\SettingsRepository;
 use App\Tests\Utils\Mercure\RecordingHub;
 use App\Tests\Utils\Mercure\TurboStream;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,8 +23,8 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * The reminder check has no recipient: it notifies in the preferred locale, and pushes its toasts in it. The recorded
- * forecast of the demo mode starts on the day of the clock: -3.2 °C, -8.5 °C, -12.4 °C.
+ * The reminder check has no recipient: it notifies in the language of the application, and pushes its toasts in it.
+ * The recorded forecast of the demo mode starts on the day of the clock: -3.2 °C, -8.5 °C, -12.4 °C.
  */
 final class RemindersInThePreferredLocaleTest extends KernelTestCase
 {
@@ -42,7 +43,10 @@ final class RemindersInThePreferredLocaleTest extends KernelTestCase
             ->create(['commonName' => 'Citronnier', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -3, 'frostSensitive' => true, 'pruningMonths' => [12]])])
         ;
         PlantingFactory::new()->of($lemonTree)->create();
-        self::getContainer()->get(PreferredLocale::class)->set(SupportedLocale::French);
+        // The language of the application: no member is logged in to the scheduler
+        $settings = new Settings();
+        $settings->choosePreferredLocale(SupportedLocale::French);
+        self::getContainer()->get(SettingsRepository::class)->add($settings);
         self::getContainer()->get(EntityManagerInterface::class)->flush();
     }
 

@@ -5,8 +5,8 @@ namespace App\Locale;
 use App\Locale\Model\SupportedLocale;
 
 /**
- * The language the interface speaks, and the one the agent answers in: the only way to read or change it. One for the
- * whole application today (App\Locale\SettingsPreferredLocale); a field of the user once Hop Garden has accounts.
+ * The language the interface speaks, and the one the agent answers in: the only way to read or change it. Of the member
+ * logged in, of a visitor, or of the application (App\Locale\UserPreferredLocale).
  */
 interface PreferredLocale
 {
