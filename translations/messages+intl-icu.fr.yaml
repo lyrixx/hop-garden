@@ -1,5 +1,37 @@
 # Keep the same keys in every language: tests/Unit/Translation/CatalogsTest.php checks them.
 # ICU MessageFormat: {name} for a parameter, {count, plural, ...} and {value, select, ...}; ’ for an apostrophe, never '.
+access_status:
+    approved: "Approuvé"
+    pending: "En attente"
+    refused: "Refusé"
+account:
+    deletion:
+        submit: "Supprimer mon compte"
+        title: "Supprimer mon compte"
+        warning: "Votre compte est supprimé tout de suite, pour de bon. Vous pourrez vous réinscrire plus tard."
+    email:
+        current: "Votre adresse : {email}"
+        help: "Nous envoyons un lien à la nouvelle adresse : elle remplace l’ancienne dès que vous l’ouvrez."
+        submit: "Changer d’adresse"
+        title: "Adresse email"
+    form:
+        current_password: "Mot de passe actuel"
+        display_name: "Nom"
+        display_name_help: "Le nom que Hop Garden vous donne."
+        email: "Adresse email"
+        language: "Langue"
+        new_email: "Nouvelle adresse"
+        new_password: "Nouveau mot de passe"
+        password: "Mot de passe"
+        password_help: "{min} caractères au moins."
+    password:
+        help: "Vos autres sessions se ferment : reconnectez-vous-y avec le nouveau."
+        submit: "Changer de mot de passe"
+        title: "Mot de passe"
+    profile:
+        title: "Profil"
+    subtitle: "Votre nom, votre adresse, votre mot de passe et votre langue. Membre depuis le {date}."
+    title: "Mon compte"
 action:
     add_to_my_garden: "Ajouter à mon jardin"
     cancel: "Annuler"
@@ -12,6 +44,34 @@ action:
     see_my_plant: "Voir ma plante"
     see_the_space: "Voir l’espace"
     validate: "Valider"
+admin:
+    action:
+        approve: "Approuver"
+        refuse: "Refuser"
+        refuse_confirmation: "Refuser ce compte ? Son titulaire reçoit un email."
+    flash:
+        already_decided: "{name} a déjà une réponse."
+        approved: "{name} est approuvé, et reçoit l’email."
+        refused: "{name} est refusé, et reçoit l’email."
+    menu:
+        back: "Retour à Hop Garden"
+        users: "Comptes"
+        waiting_list: "Liste d’attente"
+    user:
+        access_status: "Accès"
+        admin: "Administrateur"
+        approved_at: "Approuvé le"
+        display_name: "Nom"
+        email: "Adresse email"
+        email_verified_at: "Adresse vérifiée le"
+        plural: "Comptes"
+        registered_at: "Inscrit le"
+        singular: "Compte"
+    waiting_list:
+        help: "Les comptes qui ont vérifié leur adresse, du plus ancien au plus récent. Approuvez ou refusez : le membre reçoit un email dans sa langue."
+        plural: "Comptes en attente"
+        singular: "Compte en attente"
+        title: "Liste d’attente"
 answer:
     no: "Non"
     yes: "Oui"
@@ -79,17 +139,67 @@ confidence:
     low: "faible"
     medium: "moyenne"
     title: "Confiance de l’assistant : {confidence}"
+email:
+    access_approved:
+        button: "Se connecter"
+        intro: "Votre compte est approuvé : bienvenue dans Hop Garden. Connectez-vous avec votre adresse et votre mot de passe."
+        next: "Puis nommez une plante dans le chat : l’assistant l’identifie et rédige sa fiche de culture, et vous la validez."
+        subject: "Vous pouvez entrer"
+    access_refused:
+        intro: "Nous ne pouvons pas ouvrir Hop Garden à votre compte, pour le moment."
+        subject: "Votre demande pour rejoindre Hop Garden"
+        thanks: "Merci de l’intérêt que vous portez à Hop Garden."
+    address_in_use:
+        ignore: "Ce n’est pas vous ? Ignorez cet email : rien ne change."
+        intro: "Quelqu’un, sans doute vous, a voulu utiliser cette adresse pour un compte Hop Garden. Elle en a déjà un : connectez-vous avec."
+        login: "Se connecter"
+        reset: "Vous avez oublié votre mot de passe, ou jamais vérifié cette adresse ? Choisissez un nouveau mot de passe : son lien vérifie l’adresse aussi."
+        reset_button: "Choisir un nouveau mot de passe"
+        subject: "Vous avez déjà un compte Hop Garden"
+    confirm_new_email:
+        button: "Confirmer cette adresse"
+        expiry: "Ce lien marche pendant une heure. Ce n’est pas vous ? Ignorez cet email : rien ne change."
+        intro: "Confirmez que c’est la nouvelle adresse de votre compte Hop Garden :"
+        subject: "Confirmez votre nouvelle adresse"
+    layout:
+        copy_link: "Ou copiez ce lien dans votre navigateur :"
+        footer: "Hop Garden : les plantes de votre jardin, avec un agent IA."
+        hello: "Bonjour {name},"
+    reset_password:
+        button: "Choisir un nouveau mot de passe"
+        expiry: "Ce lien marche pendant une heure, une fois. Ce n’est pas vous ? Ignorez cet email : votre mot de passe reste le même."
+        intro: "Choisissez un nouveau mot de passe pour votre compte Hop Garden avec ce lien :"
+        subject: "Votre nouveau mot de passe Hop Garden"
+    verify_email:
+        button: "Vérifier mon adresse"
+        expiry: "Ce lien marche pendant 48 heures. Ce n’est pas vous ? Ignorez cet email : aucun compte n’est créé sans lui."
+        intro: "Merci de rejoindre Hop Garden. Vérifiez votre adresse : votre compte rejoint alors la liste d’attente."
+        subject: "Vérifiez votre adresse pour Hop Garden"
 exposure:
     part_shade: "Mi-ombre"
     shade: "Ombre"
     sun: "Plein soleil"
 flash:
+    account:
+        deleted: "Votre compte est supprimé."
+        email_changed: "Votre adresse est maintenant {email}."
+        email_link_expired: "Ce lien a expiré : changez d’adresse à nouveau."
+        email_link_used: "Ce lien ne marche plus pour ce compte."
+        email_sent: "Nous avons envoyé un lien à {email} : ouvrez-le pour confirmer le changement."
+        email_taken: "Un autre compte a maintenant cette adresse."
+        password_changed: "Votre mot de passe est changé."
+        saved: "Votre compte est enregistré."
     planting:
         added_drafting: "{name} est dans votre jardin. L’assistant rédige sa fiche de culture."
         added_with_care_sheet: "{name} est dans votre jardin, avec la fiche de culture de {species}."
         linked: "{name} suit maintenant la fiche de culture de {species}."
         not_same_species: "Cette fiche de culture n’est pas une fiche validée de la même espèce."
         saved: "Les infos de jardin de {name} sont enregistrées."
+    registration:
+        link_expired: "Ce lien a expiré. Choisissez un nouveau mot de passe : son lien vérifie aussi votre adresse."
+    reset_password:
+        done: "Votre mot de passe est changé : connectez-vous avec."
+        invalid_link: "Ce lien ne marche pas, ou a expiré : demandez-en un nouveau."
     space:
         added: "{name} fait partie de vos espaces. Placez-y vos plantes depuis leurs infos de jardin."
         saved: "L’espace {name} est enregistré."
@@ -135,10 +245,22 @@ locale:
         switch: "Passer en français"
     switch:
         label: "Langue de l’interface"
+login:
+    forgot: "Mot de passe oublié ?"
+    no_account: "Pas encore de compte ? {link}Inscrivez-vous sur la liste d’attente{link_end}."
+    remember_me: "Se souvenir de moi pendant 30 jours"
+    submit: "Se connecter"
+    subtitle: "Votre jardin vous attend."
+    title: "Connexion"
 nav:
+    account: "Mon compte"
+    admin: "Back-office"
     assistant: "Assistant"
     garden: "Mon jardin"
+    log_in: "Connexion"
+    log_out: "Se déconnecter"
     notifications: "Notifications"
+    register: "Inscription"
     spaces: "Mes espaces"
     species: "Espèces"
 notification:
@@ -268,6 +390,21 @@ recommendation_subject:
     frost: "Gel"
     pruning: "Taille"
     watering: "Arrosage"
+registration:
+    check_email:
+        body: "Nous avons envoyé un lien à l’adresse indiquée : ouvrez-le pour vérifier votre adresse. Il marche pendant 48 heures."
+        spam: "Rien après quelques minutes ? Regardez dans vos spams."
+        title: "Vérifiez votre boîte mail"
+    have_account: "Déjà membre ? {link}Connectez-vous{link_end}."
+    submit: "M’inscrire sur la liste d’attente"
+    subtitle: "Hop Garden ouvre à quelques jardiniers à la fois : inscrivez-vous, vérifiez votre adresse, et nous vous laissons entrer."
+    terms: "J’accepte les {link}conditions générales de vente{link_end}."
+    title: "Rejoindre Hop Garden"
+    waiting_list:
+        body: "Hop Garden ouvre à quelques jardiniers à la fois : nous vous écrivons dès que votre compte est approuvé."
+        tab: "Liste d’attente"
+        title: "Vous êtes sur la liste d’attente"
+        verified: "Votre adresse est vérifiée."
 reminder:
     disable: "Désactiver le rappel : {type}"
     enable: "Activer le rappel : {type}"
@@ -289,6 +426,19 @@ reminder_type:
     deadheading: "Fleurs fanées"
     frost: "Alerte gel"
     pruning: "Taille"
+reset_password:
+    back_to_login: "Retour à la connexion"
+    check_email:
+        body: "Si un compte a cette adresse, nous venons de lui envoyer un lien pour choisir un nouveau mot de passe. Il marche pendant une heure."
+        title: "Vérifiez votre boîte mail"
+    request:
+        submit: "M’envoyer un lien"
+        subtitle: "Indiquez l’adresse de votre compte : nous lui envoyons un lien pour choisir un nouveau mot de passe."
+        title: "Mot de passe oublié ?"
+    reset:
+        submit: "Enregistrer mon mot de passe"
+        subtitle: "Puis connectez-vous avec."
+        title: "Choisissez un nouveau mot de passe"
 soil:
     chalky: "Calcaire"
     clay: "Argileux"

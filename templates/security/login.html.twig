@@ -1,0 +1,41 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'login.title'|trans }} · Hop Garden{% endblock %}
+
+{% block body %}
+<div class="with-specimen auth">
+<div>
+    <header class="plate-head">
+        <h1>{{ 'login.title'|trans }}</h1>
+        <p>{{ 'login.subtitle'|trans }}</p>
+    </header>
+
+    {# Checked by form_login (config/packages/security.yaml) #}
+    <form method="post" action="{{ path('login') }}" class="card crowned care-sheet-form auth-form">
+        {% if error %}
+            <p class="warning" role="alert">{{ error.messageKey|trans(error.messageData, 'security') }}</p>
+        {% endif %}
+        <div>
+            <label for="login-email">{{ 'account.form.email'|trans }}</label>
+            <input type="email" id="login-email" name="_username" value="{{ last_email }}" autocomplete="email" required autofocus>
+        </div>
+        <div>
+            <label for="login-password">{{ 'account.form.password'|trans }}</label>
+            <input type="password" id="login-password" name="_password" autocomplete="current-password" required>
+            <p class="help-text"><a href="{{ path('reset_password_request') }}">{{ 'login.forgot'|trans }}</a></p>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" id="login-remember-me" name="_remember_me">
+            <label for="login-remember-me">{{ 'login.remember_me'|trans }}</label>
+        </div>
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+        <div class="actions">
+            <twig:Button class="button-next">{{ 'login.submit'|trans }}</twig:Button>
+        </div>
+    </form>
+
+    <p class="callout auth-aside">{{ 'login.no_account'|trans({link: '<a href="' ~ path('register') ~ '">', link_end: '</a>'})|raw }}</p>
+</div>
+<twig:Specimen plate="tecoma-ceramensis"/>
+</div>
+{% endblock %}

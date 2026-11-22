@@ -4,19 +4,20 @@ namespace App\Tests\Functional\Chat;
 
 use App\Factory\PlantFactory;
 use App\Factory\SpaceFactory;
+use App\Factory\UserFactory;
 use App\Garden\Entity\Planting;
 use App\Garden\Entity\Space;
 use App\Garden\Model\Soil;
 use App\Garden\PlantingRepository;
 use App\Garden\SpaceRepository;
 use App\Locale\Model\SupportedLocale;
-use App\Locale\PreferredLocale;
 use App\Plant\Entity\Plant;
 use App\Plant\Model\Exposure;
 use App\Plant\PlantRepository;
 use App\Tests\Utils\Chat\ScriptedGardener;
 use App\Tests\Utils\Chat\WorkerTrait;
 use App\Tests\Utils\Env\EnvVarsTrait;
+use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\TestWith;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -31,6 +32,7 @@ use Symfony\Component\DomCrawler\Crawler;
 final class AddAPlantWithTheAgentTest extends WebTestCase
 {
     use EnvVarsTrait;
+    use LogInTrait;
     use WorkerTrait;
 
     private KernelBrowser $client;
@@ -38,6 +40,7 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
     protected function setUp(): void
     {
         $this->client = self::createClient();
+        $this->logIn($this->client);
     }
 
     /**
@@ -50,6 +53,7 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
         $this->setEnvVar('APP_DEMO', $demo);
         self::ensureKernelShutdown();
         $this->client = self::createClient();
+        $this->logIn($this->client);
         $hydrangea = PlantFactory::new()->validated()->create();
         $terrace = SpaceFactory::createOne(['name' => 'Terrace', 'exposure' => Exposure::PartShade, 'soil' => Soil::Loamy]);
 
@@ -88,6 +92,7 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
         $this->setEnvVar('APP_DEMO', $demo);
         self::ensureKernelShutdown();
         $this->client = self::createClient();
+        $this->logIn($this->client);
         $hydrangea = PlantFactory::new()->validated()->create();
         SpaceFactory::createOne(['name' => 'Balcony']);
         $terrace = SpaceFactory::createOne(['name' => 'Terrace', 'exposure' => Exposure::PartShade, 'soil' => Soil::Loamy]);
@@ -174,8 +179,7 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
      */
     public function testTheCardsTellTheAgentInTheLanguageOfTheInterface(): void
     {
-        self::getContainer()->get(PreferredLocale::class)->set(SupportedLocale::French);
-        self::getContainer()->get(EntityManagerInterface::class)->flush();
+        $this->logIn($this->client, UserFactory::new()->approved()->create(['preferredLocale' => SupportedLocale::French]));
 
         $page = $this->say(ScriptedGardener::PLANTED . ' sur le balcon');
         $page = $this->say((string) $page->filter('.chat-choices button.chat-choice:not([disabled])')->first()->attr('data-chat-text-param'));

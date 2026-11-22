@@ -19,7 +19,7 @@ final class CatalogsTest extends TestCase
             $keys[$domain][$locale] = self::keys(Yaml::parseFile($file));
         }
 
-        self::assertSame(['messages+intl-icu', 'validators'], array_keys($keys));
+        self::assertSame(['messages+intl-icu', 'security', 'validators'], array_keys($keys));
         foreach ($keys as $domain => $byLocale) {
             self::assertSame(SupportedLocale::values(), array_keys($byLocale), $domain);
             foreach ($byLocale as $locale => $localeKeys) {

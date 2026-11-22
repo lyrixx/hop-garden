@@ -1,10 +1,18 @@
 # Keep the same keys in every language: tests/Unit/Translation/CatalogsTest.php checks them.
 # The messages of the constraints, with the {{ parameters }} of the Validator.
+account:
+    email:
+        unchanged: "C’est déjà votre adresse."
+    password:
+        wrong: "Ce n’est pas votre mot de passe actuel."
 care_record:
     in_the_future: "Cette date est dans le futur."
 planting:
     photo:
         mime_types: "Envoyez une photo JPEG, PNG ou WebP."
+registration:
+    terms:
+        required: "Acceptez les conditions générales de vente pour vous inscrire."
 space:
     name:
         taken: "Le jardin a déjà un espace nommé « {{ name }} »."

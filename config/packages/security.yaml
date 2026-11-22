@@ -3,29 +3,53 @@ security:
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
 
-    # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
-        users_in_memory: { memory: null }
+        # By email, whatever its case: App\Account\UserRepository::loadUserByIdentifier()
+        users:
+            entity:
+                class: App\Account\Entity\User
 
     firewalls:
         dev:
             # Ensure dev tools and static assets are always allowed
-            pattern: ^/(_profiler|_wdt|assets|build)/
+            pattern: ^/(_profiler|_wdt|assets|build|bundles)/
             security: false
         main:
             lazy: true
-            provider: users_in_memory
+            provider: users
+            # Only an approved member gets in, the others are told why
+            user_checker: App\Account\Security\UserChecker
+            form_login:
+                login_path: login
+                check_path: login
+                default_target_path: chat
+                enable_csrf: true
+            # 5 failed attempts per address and IP, 25 per IP, in 15 minutes (symfony/rate-limiter)
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
+            # Signed with the password hash too: a new password ends the remembered sessions
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 2592000 # 30 days
+            logout:
+                path: /logout
+                target: /
+                enable_csrf: true
 
-            # Activate different ways to authenticate:
-            # https://symfony.com/doc/current/security.html#the-firewall
-
-            # https://symfony.com/doc/current/security/impersonating_user.html
-            # switch_user: true
-
-    # Note: Only the *first* matching rule is applied
+    # Denied by default: only the first matching rule applies. ROLE_USER comes with the approval (App\Account\Entity\User::getRoles())
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        # The MCP server of the external clients keeps its access until OAuth (phase 3)
+        - { path: ^/_mcp/agent, roles: PUBLIC_ACCESS } # TODO The worker calls it: a short token signed for each run of the agent (next step)
+        - { path: ^/_mcp, roles: PUBLIC_ACCESS }
+        # The public page and the legal pages, of the saas-public branch: the legal ones by the name of their routes,
+        # legal_*, whatever their paths. The chat still answers on / here: ChatController requires ROLE_USER itself
+        - { path: ^/$, roles: PUBLIC_ACCESS }
+        - { route: ^legal_, roles: PUBLIC_ACCESS }
+        - { path: ^/(login|register|reset-password|locale)(/|$), roles: PUBLIC_ACCESS }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        # The chat, the garden, the species, the spaces, the notifications, the account, /_components...
+        - { path: ^/, roles: ROLE_USER }
 
 when@test:
     security:

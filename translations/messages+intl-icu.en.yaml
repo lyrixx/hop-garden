@@ -1,5 +1,37 @@
 # Keep the same keys in every language: tests/Unit/Translation/CatalogsTest.php checks them.
 # ICU MessageFormat: {name} for a parameter, {count, plural, ...} and {value, select, ...}; ’ for an apostrophe, never '.
+access_status:
+    approved: "Approved"
+    pending: "Waiting"
+    refused: "Refused"
+account:
+    deletion:
+        submit: "Delete my account"
+        title: "Delete my account"
+        warning: "Your account is deleted at once, for good. You can register again later."
+    email:
+        current: "Your email: {email}"
+        help: "We send a link to the new address: your email changes once you open it."
+        submit: "Change my email"
+        title: "Email"
+    form:
+        current_password: "Current password"
+        display_name: "Name"
+        display_name_help: "The name Hop Garden calls you by."
+        email: "Email"
+        language: "Language"
+        new_email: "New email"
+        new_password: "New password"
+        password: "Password"
+        password_help: "{min} characters at least."
+    password:
+        help: "Your other sessions end: log in again there with the new one."
+        submit: "Change my password"
+        title: "Password"
+    profile:
+        title: "Profile"
+    subtitle: "Your name, your email, your password and your language. A member since {date}."
+    title: "My account"
 action:
     add_to_my_garden: "Add to my garden"
     cancel: "Cancel"
@@ -12,6 +44,34 @@ action:
     see_my_plant: "See my plant"
     see_the_space: "See the space"
     validate: "Validate"
+admin:
+    action:
+        approve: "Approve"
+        refuse: "Refuse"
+        refuse_confirmation: "Refuse this account? Its owner gets an email."
+    flash:
+        already_decided: "{name} has a decision already."
+        approved: "{name} is approved, and gets the email."
+        refused: "{name} is refused, and gets the email."
+    menu:
+        back: "Back to Hop Garden"
+        users: "Accounts"
+        waiting_list: "Waiting list"
+    user:
+        access_status: "Access"
+        admin: "Administrator"
+        approved_at: "Approved on"
+        display_name: "Name"
+        email: "Email"
+        email_verified_at: "Email verified on"
+        plural: "Accounts"
+        registered_at: "Registered on"
+        singular: "Account"
+    waiting_list:
+        help: "The accounts that verified their email, the oldest first. Approve or refuse: the member gets an email in their language."
+        plural: "Accounts waiting"
+        singular: "Account waiting"
+        title: "Waiting list"
 answer:
     no: "No"
     yes: "Yes"
@@ -79,17 +139,67 @@ confidence:
     low: "low"
     medium: "medium"
     title: "Confidence of the assistant: {confidence}"
+email:
+    access_approved:
+        button: "Log in"
+        intro: "Your account is approved: welcome to Hop Garden. Log in with your email and your password."
+        next: "Then name a plant in the chat: the assistant identifies it and drafts its care sheet, and you validate it."
+        subject: "You can come in"
+    access_refused:
+        intro: "We cannot open Hop Garden to your account, for now."
+        subject: "Your request to join Hop Garden"
+        thanks: "Thank you for your interest in Hop Garden."
+    address_in_use:
+        ignore: "Not you? Ignore this email: nothing changes."
+        intro: "Somebody, you probably, wanted to use this address for a Hop Garden account. It has one already: log in with it."
+        login: "Log in"
+        reset: "You forgot your password, or never verified this address? Choose a new password: its link verifies the address too."
+        reset_button: "Choose a new password"
+        subject: "You have a Hop Garden account already"
+    confirm_new_email:
+        button: "Confirm this address"
+        expiry: "This link works for one hour. Not you? Ignore this email: nothing changes."
+        intro: "Confirm that this is the new address of your Hop Garden account:"
+        subject: "Confirm your new email"
+    layout:
+        copy_link: "Or copy this link into your browser:"
+        footer: "Hop Garden: the plants of your garden, with an AI agent."
+        hello: "Hello {name},"
+    reset_password:
+        button: "Choose a new password"
+        expiry: "This link works for one hour, once. Not you? Ignore this email: your password stays the same."
+        intro: "Choose a new password for your Hop Garden account with this link:"
+        subject: "Your new Hop Garden password"
+    verify_email:
+        button: "Verify my email"
+        expiry: "This link works for 48 hours. Not you? Ignore this email: no account is created without it."
+        intro: "Thank you for joining Hop Garden. Verify your email: your account then joins the waiting list."
+        subject: "Verify your email for Hop Garden"
 exposure:
     part_shade: "Part shade"
     shade: "Shade"
     sun: "Full sun"
 flash:
+    account:
+        deleted: "Your account is deleted."
+        email_changed: "Your email is now {email}."
+        email_link_expired: "This link has expired: change your email again."
+        email_link_used: "This link no longer works for this account."
+        email_sent: "We sent a link to {email}: open it to confirm the change."
+        email_taken: "Another account has this address now."
+        password_changed: "Your password is changed."
+        saved: "Your account is saved."
     planting:
         added_drafting: "{name} is in your garden. The assistant drafts its care sheet."
         added_with_care_sheet: "{name} is in your garden, with the care sheet of {species}."
         linked: "{name} now follows the care sheet of {species}."
         not_same_species: "This care sheet is not a validated one of the same species."
         saved: "The garden info of {name} is saved."
+    registration:
+        link_expired: "This link has expired. Choose a new password: its link verifies your email too."
+    reset_password:
+        done: "Your password is changed: log in with it."
+        invalid_link: "This link does not work, or has expired: ask for a new one."
     space:
         added: "{name} is one of your spaces. Place your plants there from their garden info."
         saved: "{name} is saved."
@@ -135,10 +245,22 @@ locale:
         switch: "Switch to English"
     switch:
         label: "Language of the interface"
+login:
+    forgot: "Forgot your password?"
+    no_account: "No account yet? {link}Join the waiting list{link_end}."
+    remember_me: "Remember me for 30 days"
+    submit: "Log in"
+    subtitle: "Your garden is waiting for you."
+    title: "Log in"
 nav:
+    account: "My account"
+    admin: "Back-office"
     assistant: "Assistant"
     garden: "My garden"
+    log_in: "Log in"
+    log_out: "Log out"
     notifications: "Notifications"
+    register: "Sign up"
     spaces: "My spaces"
     species: "Species"
 notification:
@@ -268,6 +390,21 @@ recommendation_subject:
     frost: "Frost"
     pruning: "Pruning"
     watering: "Watering"
+registration:
+    check_email:
+        body: "We sent a link to the address you gave: open it to verify your email. It works for 48 hours."
+        spam: "Nothing after a few minutes? Look in your spam folder."
+        title: "Check your inbox"
+    have_account: "A member already? {link}Log in{link_end}."
+    submit: "Join the waiting list"
+    subtitle: "Hop Garden opens to a few gardeners at a time: register, verify your email, and we let you in."
+    terms: "I accept the {link}terms of sale{link_end}."
+    title: "Join Hop Garden"
+    waiting_list:
+        body: "Hop Garden opens to a few gardeners at a time: we write to you as soon as your account is approved."
+        tab: "Waiting list"
+        title: "You are on the waiting list"
+        verified: "Your email is verified."
 reminder:
     disable: "Disable {type}"
     enable: "Enable {type}"
@@ -289,6 +426,19 @@ reminder_type:
     deadheading: "Deadheading"
     frost: "Frost alert"
     pruning: "Pruning"
+reset_password:
+    back_to_login: "Back to the login"
+    check_email:
+        body: "If an account has this address, we just sent it a link to choose a new password. It works for one hour."
+        title: "Check your inbox"
+    request:
+        submit: "Send me a link"
+        subtitle: "Give the email of your account: we send it a link to choose a new password."
+        title: "Forgot your password?"
+    reset:
+        submit: "Save my password"
+        subtitle: "Then log in with it."
+        title: "Choose a new password"
 soil:
     chalky: "Chalky"
     clay: "Clay"

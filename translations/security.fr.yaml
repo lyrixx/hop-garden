@@ -1,0 +1,6 @@
+# Keep the same keys in every language: tests/Unit/Translation/CatalogsTest.php checks them.
+# The messages of App\Account\Security\UserChecker, besides the ones of Symfony in this domain ("Invalid credentials."...).
+login:
+    pending: "Votre compte est sur la liste d’attente : nous vous écrivons dès qu’il est approuvé."
+    refused: "Votre demande pour rejoindre Hop Garden a été refusée."
+    unverified: "Vérifiez d’abord votre adresse, avec le lien que nous vous avons envoyé. Perdu ? Choisissez un nouveau mot de passe : son lien vérifie aussi votre adresse."

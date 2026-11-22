@@ -82,11 +82,12 @@ jobs:
                   set -e
                   set -o pipefail
 
-                  curl --fail --insecure --silent -H "Host: hop-garden.test" https://127.0.0.1 | grep "Hop Garden"
+                  # A public page: the others need an account
+                  curl --fail --insecure --silent -H "Host: hop-garden.test" https://127.0.0.1/login | grep "Hop Garden"
 
             - name: "Show the response and the logs"
               if: failure()
               run: |
-                  curl --insecure --silent --include -H "Host: hop-garden.test" https://127.0.0.1 | head -n 60 || true
+                  curl --insecure --silent --include -H "Host: hop-garden.test" https://127.0.0.1/login | head -n 60 || true
                   docker ps --all --format "{{.Names}}: {{.Status}}"
                   docker logs --tail 80 hop-garden-frontend-1 2>&1 || true

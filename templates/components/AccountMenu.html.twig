@@ -1,0 +1,14 @@
+{#
+    The member logged in, at the end of the top bar: their account, the back-office for the administrator, the logout.
+    No prop.
+#}
+<div class="account-menu">
+    {% if is_granted('ROLE_ADMIN') %}
+        <a href="{{ path('admin') }}" class="account-menu-item" title="{{ 'nav.admin'|trans }}"><twig:Icon name="shield" :size="18"/><span class="account-menu-label">{{ 'nav.admin'|trans }}</span></a>
+    {% endif %}
+    <a href="{{ path('account') }}" class="account-menu-item{{ app.current_route starts with 'account' ? ' active' }}" title="{{ 'nav.account'|trans }}"><twig:Icon name="user" :size="18"/><span class="account-menu-label">{{ app.user.displayName }}</span></a>
+    <form method="post" action="{{ path('_logout_main') }}">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+        <button type="submit" class="account-menu-item" title="{{ 'nav.log_out'|trans }}"><twig:Icon name="logout" :size="18"/><span class="visually-hidden">{{ 'nav.log_out'|trans }}</span></button>
+    </form>
+</div>

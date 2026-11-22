@@ -18,8 +18,11 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\UX\Turbo\TurboBundle;
 
+// Members only: the chat answers on /, which access_control leaves public for the public page to come
+#[IsGranted('ROLE_USER')]
 final class ChatController extends AbstractController
 {
     public function __construct(

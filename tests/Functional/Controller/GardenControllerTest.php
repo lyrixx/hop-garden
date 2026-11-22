@@ -18,6 +18,7 @@ use App\Reminder\Model\ReminderType;
 use App\Tests\Utils\Chat\ScriptedGardener;
 use App\Tests\Utils\Env\EnvVarsTrait;
 use App\Tests\Utils\Http\UnavailableDataSources;
+use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -30,6 +31,7 @@ final class GardenControllerTest extends WebTestCase
 {
     use ClockSensitiveTrait;
     use EnvVarsTrait;
+    use LogInTrait;
 
     private const string PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
     private const string GIF = 'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
@@ -43,6 +45,7 @@ final class GardenControllerTest extends WebTestCase
     protected function setUp(): void
     {
         $this->client = self::createClient();
+        $this->logIn($this->client);
         $this->tmpDir = sys_get_temp_dir() . '/hop-garden-' . bin2hex(random_bytes(4));
         mkdir($this->tmpDir);
     }
@@ -161,6 +164,7 @@ final class GardenControllerTest extends WebTestCase
         $this->setEnvVar('APP_DEMO', '0');
         self::ensureKernelShutdown();
         $this->client = self::createClient();
+        $this->logIn($this->client);
         $planting = $this->draftWithoutResult();
 
         $crawler = $this->client->request('GET', '/garden/' . $planting->getId());
@@ -198,7 +202,7 @@ final class GardenControllerTest extends WebTestCase
         $this->client->submit($form);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertSelectorTextContains('form', 'Send a JPEG, PNG or WebP photo.');
+        self::assertSelectorTextContains('main form', 'Send a JPEG, PNG or WebP photo.');
         self::assertSame(0, self::getContainer()->get(PlantingRepository::class)->count());
     }
 
@@ -247,7 +251,7 @@ final class GardenControllerTest extends WebTestCase
 
         $this->client->submit($form, ['planting[name]' => 'Rose', 'planting[careRecords][watering]' => '2027-06-02']);
         self::assertResponseStatusCodeSame(422);
-        self::assertSelectorTextContains('form', 'This date is in the future.');
+        self::assertSelectorTextContains('main form', 'This date is in the future.');
 
         $this->client->submit($form, ['planting[name]' => 'Rose', 'planting[careRecords][watering]' => '2027-05-20']);
         self::assertResponseRedirects();
@@ -629,10 +633,10 @@ final class GardenControllerTest extends WebTestCase
         $plant = PlantFactory::new()->validated()->create();
 
         $this->client->request('POST', '/garden/' . $planting->getId() . '/draft', ['_token' => 'forged']);
-        self::assertResponseStatusCodeSame(401);
+        self::assertResponseRedirects('/login');
 
         $this->client->request('POST', '/garden/' . $planting->getId() . '/plant', ['_token' => 'forged', 'plant' => (string) $plant->getId()]);
-        self::assertResponseStatusCodeSame(401);
+        self::assertResponseRedirects('/login');
 
         self::assertSame([], $this->draftMessages());
         $planting = $this->reload($planting);

@@ -20,8 +20,9 @@
                 <span class="pict"><twig:Icon name="hop" :size="32"/></span>
                 <span>Hop Garden</span>
             </a>
+            {% set route = app.current_route %}
+            {% if is_granted('ROLE_USER') %}
             <nav class="nav">
-                {% set route = app.current_route %}
                 <a href="{{ path('chat') }}" class="{{ route == 'chat' ? 'active' }}"><twig:Icon name="chat" :size="18"/> {{ 'nav.assistant'|trans }}</a>
                 <a href="{{ path('garden') }}" class="{{ route starts with 'garden' ? 'active' }}"><twig:Icon name="sprout" :size="18"/> {{ 'nav.garden'|trans }}</a>
                 <a href="{{ path('plant_index') }}" class="{{ route starts with 'plant_' ? 'active' }}"><twig:Icon name="flower" :size="18"/> {{ 'nav.species'|trans }}</a>
@@ -31,12 +32,22 @@
                     <twig:Notification:Badge :unread="unread_notification_count()"/>
                 </a>
             </nav>
+            <twig:AccountMenu/>
+            {% else %}
+            {# Visitors: the pages of the account only #}
+            <nav class="nav nav-visitor">
+                <a href="{{ path('login') }}" class="{{ route == 'login' ? 'active' }}">{{ 'nav.log_in'|trans }}</a>
+                <a href="{{ path('register') }}" class="{{ route starts with 'register' ? 'active' }}">{{ 'nav.register'|trans }}</a>
+            </nav>
+            {% endif %}
         </header>
 
         {# Reminders pushed by the worker show up as toasts, on every page. Both survive a Turbo Drive visit: the toasts
            on screen stay, and the stream is not closed and opened again #}
+        {% if is_granted('ROLE_USER') %}
         <div class="toasts" id="toasts" data-turbo-permanent aria-live="polite"></div>
         <div id="notifications-stream" data-turbo-permanent hidden>{{ turbo_stream_from('notifications') }}</div>
+        {% endif %}
 
         <main class="main">
             {% for type, messages in app.flashes %}

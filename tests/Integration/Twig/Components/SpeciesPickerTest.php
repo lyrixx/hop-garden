@@ -2,6 +2,7 @@
 
 namespace App\Tests\Integration\Twig\Components;
 
+use App\Factory\UserFactory;
 use App\Garden\Form\Model\PlantingFormData;
 use App\Garden\Form\PlantingType;
 use App\Plant\Form\Model\NewPlantFormData;
@@ -112,7 +113,7 @@ final class SpeciesPickerTest extends KernelTestCase
     {
         $data = new NewPlantFormData();
         $data->name = 'unknown shrub';
-        $picker = $this->createLiveComponent('SpeciesPicker', ['form' => self::getContainer()->get(FormFactoryInterface::class)->create(NewPlantType::class, $data)->createView(), 'required' => true]);
+        $picker = $this->createLiveComponent('SpeciesPicker', ['form' => self::getContainer()->get(FormFactoryInterface::class)->create(NewPlantType::class, $data)->createView(), 'required' => true])->actingAs(UserFactory::new()->approved()->create());
 
         $crawler = $picker->render()->crawler();
         self::assertSame('Trefle does not know this name: try its Latin name.', $crawler->filter('.garden-species-candidates .hint')->text());
@@ -128,7 +129,8 @@ final class SpeciesPickerTest extends KernelTestCase
         $data = new PlantingFormData();
         $data->name = $name;
 
-        return $this->createLiveComponent('SpeciesPicker', ['form' => $this->formView($data)]);
+        // Its requests go through the firewall: /_components needs a member
+        return $this->createLiveComponent('SpeciesPicker', ['form' => $this->formView($data)])->actingAs(UserFactory::new()->approved()->create());
     }
 
     private function formView(PlantingFormData $data): FormView

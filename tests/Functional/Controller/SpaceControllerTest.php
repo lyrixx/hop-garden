@@ -8,6 +8,7 @@ use App\Garden\Entity\Space;
 use App\Garden\Model\Soil;
 use App\Garden\SpaceRepository;
 use App\Plant\Model\Exposure;
+use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -16,12 +17,14 @@ use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 final class SpaceControllerTest extends WebTestCase
 {
     use ClockSensitiveTrait;
+    use LogInTrait;
 
     private KernelBrowser $client;
 
     protected function setUp(): void
     {
         $this->client = self::createClient();
+        $this->logIn($this->client);
     }
 
     public function testTheSpacesWithTheirConditionsAndTheirPlants(): void
@@ -103,7 +106,7 @@ final class SpaceControllerTest extends WebTestCase
         $this->client->submit($crawler->selectButton('Add the space')->form(), ['space[name]' => '  ']);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertSelectorTextContains('form', 'This value should not be blank.');
+        self::assertSelectorTextContains('main form', 'This value should not be blank.');
         self::assertSame([], self::getContainer()->get(SpaceRepository::class)->findAll());
     }
 
