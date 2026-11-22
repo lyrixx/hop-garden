@@ -6,8 +6,10 @@ use App\Factory\CareSheetFactory;
 use App\Factory\PlantFactory;
 use App\Factory\PlantingFactory;
 use App\Factory\SpaceFactory;
+use App\Factory\UserFactory;
 use App\Garden\Model\CareTask;
 use App\Garden\Model\Soil;
+use App\Locale\Model\SupportedLocale;
 use App\Plant\Form\Model\CareSheetFormData;
 use App\Plant\Model\Confidence;
 use App\Plant\Model\Exposure;
@@ -20,8 +22,8 @@ use Zenstruck\Foundry\Attribute\AsFixture;
 use Zenstruck\Foundry\Story;
 
 /**
- * "castor demo:reset": two validated plants with their reminders, their plantings in three spaces of the garden, no
- * conversation, no notification.
+ * "castor demo:reset": the administrator, two members and an account on the waiting list; two validated plants with
+ * their reminders, their plantings in three spaces of the garden, no conversation, no notification.
  */
 #[AsFixture(name: 'demo')]
 final class DemoStory extends Story
@@ -35,6 +37,13 @@ final class DemoStory extends Story
     public function build(): void
     {
         $now = $this->clock->now();
+
+        // Their password is UserFactory::PASSWORD. Keep in sync with demo_reset() in castor.php, which prints them, and
+        // with the login of video/capture.mjs
+        UserFactory::new()->admin()->create(['email' => 'admin@hop-garden.test', 'displayName' => 'Admin', 'registeredAt' => $now->modify('-60 days')]);
+        UserFactory::new()->approved()->create(['email' => 'alice@hop-garden.test', 'displayName' => 'Alice', 'preferredLocale' => SupportedLocale::English, 'registeredAt' => $now->modify('-30 days')]);
+        UserFactory::new()->approved()->create(['email' => 'bob@hop-garden.test', 'displayName' => 'Bob', 'preferredLocale' => SupportedLocale::French, 'registeredAt' => $now->modify('-20 days')]);
+        UserFactory::new()->verified()->create(['email' => 'dave@hop-garden.test', 'displayName' => 'Dave', 'preferredLocale' => SupportedLocale::French, 'registeredAt' => $now->modify('-2 days')]);
 
         $rose = PlantFactory::new()
             ->validated($now->modify('-30 days'))

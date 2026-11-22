@@ -2,6 +2,8 @@
 
 namespace App\Tests\Integration\Story;
 
+use App\Account\Entity\User;
+use App\Account\UserRepository;
 use App\Chat\ChatHistory;
 use App\Garden\Entity\Planting;
 use App\Garden\Entity\Space;
@@ -36,6 +38,18 @@ final class DemoStoryTest extends KernelTestCase
 
         DemoStory::load();
         $entityManager->clear();
+
+        self::assertSame(
+            [
+                'admin@hop-garden.test' => ['ROLE_USER', 'ROLE_ADMIN'],
+                'alice@hop-garden.test' => ['ROLE_USER'],
+                'bob@hop-garden.test' => ['ROLE_USER'],
+                'dave@hop-garden.test' => [],
+            ],
+            array_merge(...array_map(static fn (User $user): array => [$user->getEmail() => $user->getRoles()], self::getContainer()->get(UserRepository::class)->findBy([], ['email' => 'ASC']))),
+            'The administrator, two members and one on the waiting list, as castor demo:reset prints them.',
+        );
+        self::assertTrue(self::getContainer()->get(UserRepository::class)->findOneByEmail('dave@hop-garden.test')?->isWaiting());
 
         $plants = self::getContainer()->get(PlantRepository::class)->findValidated();
         self::assertSame(

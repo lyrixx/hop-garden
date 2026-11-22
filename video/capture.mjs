@@ -3,14 +3,16 @@
 // Writes public/capture/demo.mp4 and public/capture/markers.json (when each step happened, in seconds),
 // which src/HopGarden.tsx reads to time its captions.
 //
-// The scenario needs the data of "castor demo:reset": no care sheet of a hydrangea yet, and a space "Terrace". It
-// follows the real LLM: each step waits for what the agent shows, and the capture fails, with a screenshot and the
-// text of the chat, when the agent goes another way (run it again).
+// The scenario needs the data of "castor demo:reset": a member, no care sheet of a hydrangea yet, and a space
+// "Terrace". It follows the real LLM: each step waits for what the agent shows, and the capture fails, with a screenshot
+// and the text of the chat, when the agent goes another way (run it again).
 //
 // Environment:
 //   BASE_URL        https://hop-garden.test
 //   RESET_COMMAND   castor demo:reset
 //   FROST_COMMAND   castor demo:frost
+//   LOGIN_EMAIL     alice@hop-garden.test, a member of the demo
+//   LOGIN_PASSWORD  hop-garden-demo
 //   CHROMIUM_PATH   a Chromium binary, when Playwright's own is not installed
 import { exec, execSync } from 'node:child_process';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -22,6 +24,9 @@ import { chromium } from 'playwright';
 const BASE_URL = process.env.BASE_URL ?? 'https://hop-garden.test';
 const RESET_COMMAND = process.env.RESET_COMMAND ?? 'castor demo:reset';
 const FROST_COMMAND = process.env.FROST_COMMAND ?? 'castor demo:frost';
+// Keep in sync with src/Story/DemoStory.php and App\Factory\UserFactory::PASSWORD
+const LOGIN_EMAIL = process.env.LOGIN_EMAIL ?? 'alice@hop-garden.test';
+const LOGIN_PASSWORD = process.env.LOGIN_PASSWORD ?? 'hop-garden-demo';
 const ROOT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = join(ROOT_DIR, 'video', 'public', 'capture');
 const FRAMES_DIR = join(OUT_DIR, 'frames');
@@ -87,7 +92,11 @@ const context = await browser.newContext({ viewport: VIEWPORT, ignoreHTTPSErrors
 await context.addInitScript(CURSOR_SCRIPT);
 const page = await context.newPage();
 
-// Start from an empty conversation, before filming
+// Logged in, then an empty conversation, before filming
+await page.goto(`${BASE_URL}/login`);
+await page.fill('input[name="_username"]', LOGIN_EMAIL);
+await page.fill('input[name="_password"]', LOGIN_PASSWORD);
+await Promise.all([page.waitForURL((url) => !url.pathname.startsWith('/login')), page.click('form[action$="/login"] button[type="submit"]')]);
 await page.goto(BASE_URL);
 await page.click('button:has-text("New conversation")');
 await page.waitForSelector('.chat-empty');
