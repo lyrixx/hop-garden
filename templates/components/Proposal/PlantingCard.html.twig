@@ -10,8 +10,8 @@
 {% set plate = plant ? plate(plant.scientificName) : null %}
 <turbo-frame id="planting-proposal-{{ proposal.proposalId }}">
 <article class="card proposal-card {{ planting ? 'is-done' }}"
-    {#- In English whatever the language: the agent reads it (config/agent/gardener.md) #}
-    {%- if planting %} data-chat-notice="I added {{ planting.name }} to my garden{{ planting.space ? ', in ' ~ planting.space.name }}."{% endif %}>
+    {#- In the language of the interface, as the bubble of the user shows it (config/agent/gardener.md) #}
+    {%- if planting %} data-chat-notice="{{ planting.space ? 'chat.notice.planting_added_in_space'|trans({name: planting.name, space: planting.space.name}) : 'chat.notice.planting_added'|trans({name: planting.name}) }}"{% endif %}>
     <header class="proposal-card-head">
         <span class="proposal-card-figure">
             {%- if plate -%}

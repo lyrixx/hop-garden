@@ -29,9 +29,9 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  * language of the interface (App\Chat\InterfaceLanguagePrompt).
  *
  * PLANTED plays "add a plant the user grows" as config/agent/gardener.md asks it, from the results of the tools and
- * the messages the cards send once tapped: the care sheet of the species if validated, else a search, the choice of
- * the species and a draft (scenario C); then the space of PLACES the user named if it exists (A), else a space card
- * (B), or the choice of a space when they did not say where; then the "Add to my garden" card.
+ * the messages the cards send once tapped, in any language: the care sheet of the species if validated, else a search,
+ * the choice of the species and a draft (scenario C); then the space of PLACES the user named if it exists (A), else a
+ * space card (B), or the choice of a space when they did not say where; then the "Add to my garden" card.
  */
 final class ScriptedGardener
 {
@@ -146,11 +146,13 @@ final class ScriptedGardener
                 }
             }
 
-            // The messages of the cards, once tapped
-            if (str_starts_with($text, 'I validated the care sheet of ') || str_starts_with($text, 'I created the space ')) {
+            // The message a card sends once tapped, in the language of the interface: read by the step it follows,
+            // never by its words
+            $card = self::lastStep($messages);
+            if (\in_array($card, ['flow-propose', 'flow-space'], true)) {
                 return self::call('flow-spaces', 'hopgarden_list_spaces', []);
             }
-            if (str_starts_with($text, 'I added ')) {
+            if ('flow-planting' === $card) {
                 return new TextResult(self::ADDED);
             }
 

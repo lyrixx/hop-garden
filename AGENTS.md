@@ -171,8 +171,9 @@ After any PHP/Twig code change: `castor qa:cs --dry-run`,
 13. `/garden/new?plant={id}` fixes the species of a new planting to a validated care sheet (no agent).
 14. Every text of the interface goes through the translator, under a stable key, in every language of `translations/`
     (`tests/Unit/Translation/CatalogsTest.php` checks they have the same keys). What comes from the user, the agent or
-    Trefle is not translated. The MCP tools and resources stay in English, and so do the messages the cards send to the
-    agent (`data-chat-notice`): both speak to a model.
+    Trefle is not translated. The MCP tools and resources stay in English: they speak to a model. The messages the cards
+    send to the agent once tapped (`data-chat-notice`, `chat.notice.*`) are in the language of the interface, as the
+    bubble of the user shows them; nothing parses them, the agent reads them in any language.
 15. Test and demo data come from Foundry, a dev dependency: the factories in `src/Factory/` (one per entity, and
     `CareSheetFactory` for the embeddable), the demo data in `src/Story/DemoStory.php` (`#[AsFixture(name: 'demo')]`,
     loaded by `foundry:load-fixtures demo` in a database recreated from the migrations). `config/services.yaml` and

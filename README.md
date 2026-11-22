@@ -83,9 +83,10 @@ Hop Garden speaks English and French. The language is a setting of the applicati
 French, the pages stay in English until you choose, under a band in French, *Passer en français* or *Rester en
 anglais*. The band does not come back, and the footer switches the language later. `castor demo:reset` forgets it.
 
-- The assistant answers in the language you write in, and in the one of the interface when a tap on a card or a choice
-  does not tell. The care sheets it drafts (common name, pruning and cutting advice, notes) are in the language of the
-  interface. The Latin name stays the pivot.
+- The assistant answers in the language you write in, and in the one of the interface when a tap on a choice does not
+  tell. A tapped card tells it in the language of the interface (*J’ai créé l’espace Balcon.*). The care sheets it
+  drafts (common name, pruning and cutting advice, notes) are in the language of the interface. The Latin name stays
+  the pivot.
 - The species search of the forms (*Add a plant*, *New species*) finds a French name Trefle does not know: when Trefle
   finds nothing, one short call to the LLM gives its Latin names, cached per name, and Trefle is searched with them.
   In demo mode, these names come from [`fixtures/llm/latin-names.json`](fixtures/llm/latin-names.json): try `rosier`.

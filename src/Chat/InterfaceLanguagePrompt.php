@@ -12,8 +12,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Ends the prompt of the gardener (config/agent/gardener.md) with the language of the interface: the one the handler
- * switched to, from its message. The agent answers in it when a message does not tell (a tap on a choice or a card),
- * and writes in it what shows in the interface. At each call, never stored: the conversation keeps no system message.
+ * switched to, from its message, the one of the messages of the cards. The agent answers in it when a message does not
+ * tell (a tap on a choice), and writes in it what shows in the interface. At each call, never stored: the conversation
+ * keeps no system message.
  * After the system prompt (-30).
  */
 #[AsInputProcessor(agent: 'ai.agent.gardener', priority: -35)]
@@ -51,9 +52,10 @@ final readonly class InterfaceLanguagePrompt implements InputProcessorInterface
         return <<<PROMPT
             ## The language of the interface
 
-            The interface of Hop Garden is in {$language} ({$locale}). Reply in {$language} by default: to a message that
-            does not tell its language (a tap on a choice or a card, a Latin name), and to the messages a tap on a card
-            sends in English. Reply in another language only when the user writes in it.
+            The interface of Hop Garden is in {$language} ({$locale}). Reply in {$language} by default, to a message that
+            does not tell its language too (a tap on a choice, a Latin name). Reply in another language only when the
+            user writes in it, and keep it after a tap on a card: the messages of the cards are in {$language} whatever
+            the conversation.
 
             Whatever the language of the conversation, write in {$language} what shows in the interface: the common name,
             the pruning and cutting advice and the notes of a care sheet you propose. The Latin name stays the pivot.

@@ -8,8 +8,8 @@
 {%- props proposal, space = null, form = null -%}
 <turbo-frame id="space-proposal-{{ proposal.proposalId }}">
 <article class="card proposal-card {{ space ? 'is-done' }}"
-    {#- In English whatever the language: the agent reads it (config/agent/gardener.md) #}
-    {%- if space %} data-chat-notice="I created the space {{ space.name }}."{% endif %}>
+    {#- In the language of the interface, as the bubble of the user shows it (config/agent/gardener.md) #}
+    {%- if space %} data-chat-notice="{{ 'chat.notice.space_created'|trans({name: space.name}) }}"{% endif %}>
     <header class="proposal-card-head">
         <span class="proposal-card-figure"><twig:Icon name="grid" :size="28"/></span>
         <div>

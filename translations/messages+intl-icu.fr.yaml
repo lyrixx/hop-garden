@@ -57,6 +57,12 @@ chat:
         draft_new_species: "Rédige la fiche de culture d’une nouvelle espèce"
         draft_species: "Rédige la fiche de culture de {species}"
     new_conversation: "Nouvelle conversation"
+    # What a card says to the agent once tapped, in the bubble of the user
+    notice:
+        care_sheet_validated: "J’ai validé la fiche de culture de l’espèce {name}."
+        planting_added: "J’ai ajouté {name} à mon jardin."
+        planting_added_in_space: "J’ai ajouté {name} à mon jardin, dans l’espace {space}."
+        space_created: "J’ai créé l’espace {name}."
     placeholder: "Le nom d’une plante, ou une question sur votre jardin…"
     send: "Envoyer"
     send_error: "Le message n’a pas pu être envoyé. Rechargez la page et réessayez."

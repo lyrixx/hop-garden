@@ -57,6 +57,12 @@ chat:
         draft_new_species: "Draft the care sheet of a new species"
         draft_species: "Draft the care sheet of {species}"
     new_conversation: "New conversation"
+    # What a card says to the agent once tapped, in the bubble of the user
+    notice:
+        care_sheet_validated: "I validated the care sheet of {name}."
+        planting_added: "I added {name} to my garden."
+        planting_added_in_space: "I added {name} to my garden, in {space}."
+        space_created: "I created the space {name}."
     placeholder: "A plant name, or a question about your garden…"
     send: "Send"
     send_error: "The message could not be sent. Reload the page and try again."

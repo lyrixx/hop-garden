@@ -8,8 +8,8 @@
 {% set in_garden = plant.validated and my_plant_path(plant) is not null %}
 <turbo-frame id="plant-card-{{ plant.id }}-frame">
 <article class="card crowned plant-card {{ plant.validated ? 'is-validated' : 'is-draft' }}" id="plant-card-{{ plant.id }}"
-    {#- In English whatever the language: the agent reads it (config/agent/gardener.md) #}
-    {%- if plant.validated %} data-chat-notice="I validated the care sheet of {{ plant.commonName }}."{% endif %}>
+    {#- In the language of the interface, as the bubble of the user shows it (config/agent/gardener.md) #}
+    {%- if plant.validated %} data-chat-notice="{{ 'chat.notice.care_sheet_validated'|trans({name: plant.commonName}) }}"{% endif %}>
     <header class="card-head">
         <div>
             <p class="kicker">Tab. {{ plant.id }}<span>{{ plant.family }}</span></p>
