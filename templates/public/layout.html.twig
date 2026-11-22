@@ -12,10 +12,13 @@
         </a>
         <nav class="public-nav" aria-label="{{ 'public.nav'|trans }}">
             <twig:LocaleSwitch :short="true"/>
-            {% if not is_granted('ROLE_USER') %}
+            {% if is_granted('ROLE_USER') %}
+                {# Their garden, on a phone too: a legal page has no hero #}
+                <twig:Public:JoinButton class="button-light"/>
+            {% else %}
                 <a class="public-nav-link" href="{{ path('login') }}">{{ 'public.log_in'|trans }}</a>
+                <twig:Public:JoinButton class="button-light public-nav-join"/>
             {% endif %}
-            <twig:Public:JoinButton class="button-light public-nav-join"/>
         </nav>
     </header>
 {% endblock %}
