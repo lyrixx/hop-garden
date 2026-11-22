@@ -7,6 +7,7 @@ use App\Garden\Entity\Garden;
 use App\Garden\Entity\Membership;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * @extends ServiceEntityRepository<Garden>
@@ -55,7 +56,7 @@ class GardenRepository extends ServiceEntityRepository
     /**
      * Null when the garden is gone, or when they are no member of it (any more).
      */
-    public function findOneOfMember(int $gardenId, User $user): ?Garden
+    public function findOneOfMember(Uuid $gardenId, User $user): ?Garden
     {
         /** @var ?Garden $garden */
         $garden = $this->createQueryBuilder('garden')

@@ -12,7 +12,7 @@
     {%- if plant.validated %} data-chat-notice="{{ 'chat.notice.care_sheet_validated'|trans({name: plant.commonName}) }}"{% endif %}>
     <header class="card-head">
         <div>
-            <p class="kicker">Tab. {{ plant.id }}<span>{{ plant.family }}</span></p>
+            <p class="kicker">Tab. {{ plant.id|specimen_number }}<span>{{ plant.family }}</span></p>
             <h3><a href="{{ path('plant_show', {id: plant.id}) }}" data-turbo-frame="_top">{{ plant.commonName }}</a></h3>
             <p class="latin"><em>{{ plant.scientificName }}</em></p>
         </div>

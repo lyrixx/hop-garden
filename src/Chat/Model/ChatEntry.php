@@ -4,6 +4,7 @@ namespace App\Chat\Model;
 
 use App\Garden\Model\PlantingProposal;
 use App\Garden\Model\SpaceProposal;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * A line of the chat history, as the template shows it.
@@ -24,7 +25,7 @@ final readonly class ChatEntry
     private function __construct(
         public string $kind,
         public string $text = '',
-        public ?int $plantId = null,
+        public ?Uuid $plantId = null,
         public ?Choices $choices = null,
         public ?PlantingProposal $plantingProposal = null,
         public ?SpaceProposal $spaceProposal = null,
@@ -47,7 +48,7 @@ final readonly class ChatEntry
         return new self(self::TOOL_CALL, $summary);
     }
 
-    public static function draftCard(int $plantId): self
+    public static function draftCard(Uuid $plantId): self
     {
         return new self(self::DRAFT_CARD, plantId: $plantId);
     }

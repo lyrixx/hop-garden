@@ -7,6 +7,7 @@ use App\Garden\Entity\Space;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * The queries take the garden: a space of another garden is never found. A space found by id is checked by
@@ -67,7 +68,7 @@ class SpaceRepository extends ServiceEntityRepository
     /**
      * Null when this garden has no space of this id, whether another one has it or not.
      */
-    public function findOneInGarden(Garden $garden, int $id): ?Space
+    public function findOneInGarden(Garden $garden, Uuid $id): ?Space
     {
         return $this->findOneBy(['garden' => $garden, 'id' => $id]);
     }
@@ -75,7 +76,7 @@ class SpaceRepository extends ServiceEntityRepository
     /**
      * Whatever its garden: a proposal id is unique. The caller checks the space is of the current one.
      */
-    public function findOneByProposalId(string $proposalId): ?Space
+    public function findOneByProposalId(Uuid $proposalId): ?Space
     {
         return $this->findOneBy(['proposalId' => $proposalId]);
     }

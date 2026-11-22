@@ -18,9 +18,9 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * The data of before the gardens, once: a garden is created for a member, at the place of a city, and every row without
- * garden joins it, its notifications sent to that member, and the conversations of the chat become theirs. Between the
- * migration that adds the gardens (Version20261122212315) and the one that makes them required (Version20261122212316),
- * which refuses to run while a row has none: "castor app:garden:adopt-orphans" runs the three in order.
+ * garden joins it, its notifications sent to that member, and the conversations of the chat become theirs. Before the
+ * migration that makes them required (Version20261123120000), which refuses to run while a row has none: "castor
+ * app:garden:adopt-orphans" runs the migrations up to it, this command, then that migration.
  */
 #[AsCommand(name: 'app:garden:adopt-orphans', description: 'Gives the rows of before the gardens to a new garden of a member')]
 final readonly class AdoptOrphansCommand
@@ -80,7 +80,7 @@ final readonly class AdoptOrphansCommand
             $this->gardenRepository->add($garden);
             $this->entityManager->flush();
 
-            $parameters = ['garden' => $garden->getId(), 'user' => $user->getId()];
+            $parameters = ['garden' => $garden->getId()->toRfc4122(), 'user' => $user->getId()->toRfc4122()];
             $adopted = [];
             foreach (self::GARDEN_TABLES as $table) {
                 $set = 'notification' === $table ? 'garden_id = :garden, recipient_id = :user' : 'garden_id = :garden';
@@ -88,7 +88,7 @@ final readonly class AdoptOrphansCommand
             }
             // The messages of the store, whose conversation was nobody's
             $adopted['chat_conversation'] = (int) $this->connection->executeStatement(
-                'INSERT INTO conversation (id, user_id, garden_id, started_at) SELECT message.id, :user, :garden, TO_TIMESTAMP(message.updated_at) FROM chat_conversation message WHERE NOT EXISTS (SELECT 1 FROM conversation WHERE conversation.id = message.id)',
+                'INSERT INTO conversation (id, user_id, garden_id, started_at) SELECT message.id::uuid, :user, :garden, TO_TIMESTAMP(message.updated_at) FROM chat_conversation message WHERE NOT EXISTS (SELECT 1 FROM conversation WHERE conversation.id = message.id::uuid)',
                 $parameters,
             );
 
@@ -96,7 +96,7 @@ final readonly class AdoptOrphansCommand
         });
 
         $io->table(['Table', 'Rows adopted'], array_map(static fn (string $table, int $count): array => [$table, $count], array_keys($adopted['rows']), $adopted['rows']));
-        $io->success(\sprintf('The garden "%s" (%d) of %s, at %s (%s), has every row of before. The next migration makes it required: "bin/console doctrine:migrations:migrate" ("castor app:garden:adopt-orphans" runs it).', $adopted['garden']->getName(), $adopted['garden']->getId(), $user->getEmail(), $place->label(), $place->timezone));
+        $io->success(\sprintf('The garden "%s" (%s) of %s, at %s (%s), has every row of before. The next migration makes it required: "bin/console doctrine:migrations:migrate" ("castor app:garden:adopt-orphans" runs it).', $adopted['garden']->getName(), $adopted['garden']->getId(), $user->getEmail(), $place->label(), $place->timezone));
 
         return Command::SUCCESS;
     }
@@ -107,7 +107,7 @@ final readonly class AdoptOrphansCommand
     private function countOrphans(): int
     {
         $queries = array_map(static fn (string $table): string => \sprintf('SELECT COUNT(*) FROM %s WHERE garden_id IS NULL', $table), self::GARDEN_TABLES);
-        $queries[] = 'SELECT COUNT(*) FROM chat_conversation message WHERE NOT EXISTS (SELECT 1 FROM conversation WHERE conversation.id = message.id)';
+        $queries[] = 'SELECT COUNT(*) FROM chat_conversation message WHERE NOT EXISTS (SELECT 1 FROM conversation WHERE conversation.id = message.id::uuid)';
 
         $orphans = 0;
         foreach ($queries as $query) {

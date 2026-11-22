@@ -9,6 +9,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * The tenant: a garden and its members, who share its care sheets, its spaces, its plants and its reminders. Nobody
@@ -24,9 +26,8 @@ class Garden
     public const int REMINDER_CHECK_HOUR = 7;
 
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: UuidType::NAME)]
+    private Uuid $id;
 
     /**
      * The oldest first.
@@ -51,6 +52,7 @@ class Garden
         #[ORM\Column]
         private \DateTimeImmutable $createdAt,
     ) {
+        $this->id = Uuid::v7();
         $this->memberships = new ArrayCollection();
     }
 
@@ -68,7 +70,7 @@ class Garden
     public function join(User $user, \DateTimeImmutable $joinedAt): void
     {
         if ($this->isMember($user)) {
-            throw new \LogicException(\sprintf('User %d is a member of garden %d already.', $user->getId(), $this->getId()));
+            throw new \LogicException(\sprintf('User %s is a member of garden %s already.', $user->getId(), $this->getId()));
         }
 
         $this->memberships->add(new Membership($this, $user, MembershipRole::Member, $joinedAt));
@@ -80,9 +82,9 @@ class Garden
      */
     public function leave(User $user): void
     {
-        $membership = $this->membershipOf($user) ?? throw new \LogicException(\sprintf('User %d is no member of garden %d.', $user->getId(), $this->getId()));
+        $membership = $this->membershipOf($user) ?? throw new \LogicException(\sprintf('User %s is no member of garden %s.', $user->getId(), $this->getId()));
         if (1 === $this->memberships->count()) {
-            throw new \LogicException(\sprintf('User %d is the last member of garden %d: it is deleted, not left.', $user->getId(), $this->getId()));
+            throw new \LogicException(\sprintf('User %s is the last member of garden %s: it is deleted, not left.', $user->getId(), $this->getId()));
         }
 
         $this->memberships->removeElement($membership);
@@ -144,9 +146,9 @@ class Garden
         return null;
     }
 
-    public function getId(): int
+    public function getId(): Uuid
     {
-        return $this->id ?? throw new \LogicException('The garden has not been persisted yet.');
+        return $this->id;
     }
 
     public function getName(): string
@@ -193,6 +195,6 @@ class Garden
             }
         }
 
-        throw new \LogicException(\sprintf('Garden %d has no owner.', $this->getId()));
+        throw new \LogicException(\sprintf('Garden %s has no owner.', $this->getId()));
     }
 }

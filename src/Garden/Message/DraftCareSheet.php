@@ -12,9 +12,12 @@ use Symfony\Component\Messenger\Attribute\AsMessage;
 final readonly class DraftCareSheet
 {
     public function __construct(
-        public int $plantingId,
-        public int $userId,
-        public int $gardenId,
+        /**
+         * The ids, as UUIDs in RFC 4122.
+         */
+        public string $plantingId,
+        public string $userId,
+        public string $gardenId,
         public string $conversationId,
         /**
          * Of the user who added the plant, for the care sheet the agent drafts: see App\Locale\PreferredLocale.

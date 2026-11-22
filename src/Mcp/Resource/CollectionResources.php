@@ -10,6 +10,7 @@ use Mcp\Capability\Attribute\McpResource;
 use Mcp\Capability\Attribute\McpResourceTemplate;
 use Mcp\Exception\ResourceReadException;
 use Symfony\Component\Translation\LocaleSwitcher;
+use Symfony\Component\Uid\Uuid;
 use Twig\Environment;
 
 /**
@@ -51,7 +52,7 @@ final readonly class CollectionResources
     public function plant(string $id): string
     {
         // The same answer for a plant of another garden: it is not said to exist
-        $plant = ctype_digit($id) ? $this->plantRepository->findOneInGarden($this->currentGarden->get(), (int) $id) : null;
+        $plant = Uuid::isValid($id) ? $this->plantRepository->findOneInGarden($this->currentGarden->get(), Uuid::fromString($id)) : null;
         if (null === $plant) {
             throw new ResourceReadException(\sprintf('No plant with id "%s".', $id));
         }

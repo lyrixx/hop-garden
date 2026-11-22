@@ -19,7 +19,7 @@ final readonly class SignedLinks
 
     public function emailVerification(User $user): string
     {
-        return $this->sign('register_verify', ['id' => $user->getId()], new \DateInterval('P2D'));
+        return $this->sign('register_verify', ['id' => $user->getId()->toRfc4122()], new \DateInterval('P2D'));
     }
 
     /**

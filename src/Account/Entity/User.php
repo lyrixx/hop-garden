@@ -6,8 +6,11 @@ use App\Account\Model\AccessStatus;
 use App\Account\UserRepository;
 use App\Locale\Model\SupportedLocale;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Uid\NilUuid;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * Someone with an account: they register, verify their email, then wait until the administrator approves them. Only an
@@ -21,9 +24,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public const string ROLE_ADMIN = 'ROLE_ADMIN';
 
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: UuidType::NAME)]
+    private Uuid $id;
 
     /**
      * Lower case: an address is found whatever the case it is typed in.
@@ -62,6 +64,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         #[ORM\Column]
         private \DateTimeImmutable $createdAt,
     ) {
+        $this->id = Uuid::v7();
         $this->email = self::normalizeEmail($email);
     }
 
@@ -76,6 +79,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $data["\0" . self::class . "\0password"] = hash('crc32c', $this->password);
 
         return $data;
+    }
+
+    /**
+     * A session of before the UUIDs holds an int id: the refresh of its member finds nobody, and logs them out, as an
+     * account deleted since, instead of failing on the type of the id.
+     *
+     * @param array<string, mixed> $data
+     */
+    public function __unserialize(array $data): void
+    {
+        $id = "\0" . self::class . "\0id";
+        if (!($data[$id] ?? null) instanceof Uuid) {
+            $data[$id] = new NilUuid();
+        }
+
+        foreach ($data as $property => $value) {
+            // "\0App\Account\Entity\User\0email": its properties are private
+            $this->{substr($property, (int) strrpos($property, "\0") + 1)} = $value;
+        }
     }
 
     /**
@@ -157,9 +179,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->emailVerifiedAt = $verifiedAt;
     }
 
-    public function getId(): int
+    public function getId(): Uuid
     {
-        return $this->id ?? throw new \LogicException('The user has not been persisted yet.');
+        return $this->id;
     }
 
     public function getEmail(): string

@@ -49,7 +49,7 @@ final readonly class UpcomingRemindersTool
         $today = $this->clock->now();
 
         $calendar = array_map(static fn (UpcomingReminder $upcoming): array => [
-            'plant_id' => $upcoming->reminder->getPlant()->getId(),
+            'plant_id' => $upcoming->reminder->getPlant()->getId()->toRfc4122(),
             'plant' => $upcoming->reminder->getPlant()->getCommonName(),
             'type' => $upcoming->reminder->getType()->value,
             'starts_on' => $upcoming->startsOn->format('Y-m-d'),
@@ -81,7 +81,7 @@ final readonly class UpcomingRemindersTool
         }
 
         $atRisk = array_map(static fn (UpcomingFrost $upcoming): array => [
-            'plant_id' => $upcoming->reminder->getPlant()->getId(),
+            'plant_id' => $upcoming->reminder->getPlant()->getId()->toRfc4122(),
             'plant' => $upcoming->reminder->getPlant()->getCommonName(),
             'threshold_c' => $upcoming->risk->thresholdC,
             'frost_days' => array_map(static fn (DailyMinimum $day): array => [

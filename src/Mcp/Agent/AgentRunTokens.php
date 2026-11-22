@@ -8,6 +8,7 @@ use App\Mcp\Agent\Exception\InvalidAgentRunTokenException;
 use App\Mcp\Agent\Model\AgentRunClaims;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Uid\UuidV7;
 
 /**
@@ -35,8 +36,8 @@ final readonly class AgentRunTokens
     public function issue(User $user, Garden $garden, UuidV7 $conversationId): string
     {
         $payload = self::base64UrlEncode(json_encode([
-            'user' => $user->getId(),
-            'garden' => $garden->getId(),
+            'user' => $user->getId()->toRfc4122(),
+            'garden' => $garden->getId()->toRfc4122(),
             'conversation' => $conversationId->toRfc4122(),
             'exp' => $this->clock->now()->getTimestamp() + self::TTL_IN_SECONDS,
         ], JSON_THROW_ON_ERROR));
@@ -60,7 +61,7 @@ final readonly class AgentRunTokens
         }
 
         $claims = json_decode(self::base64UrlDecode($payload), true);
-        if (!\is_array($claims) || !\is_int($claims['user'] ?? null) || !\is_int($claims['garden'] ?? null) || !\is_string($claims['conversation'] ?? null) || !\is_int($claims['exp'] ?? null) || !UuidV7::isValid($claims['conversation'])) {
+        if (!\is_array($claims) || !self::isUuid($claims['user'] ?? null) || !self::isUuid($claims['garden'] ?? null) || !self::isUuid($claims['conversation'] ?? null) || !\is_int($claims['exp'] ?? null)) {
             throw InvalidAgentRunTokenException::malformed();
         }
 
@@ -70,6 +71,14 @@ final readonly class AgentRunTokens
         }
 
         return $claims;
+    }
+
+    /**
+     * @phpstan-assert-if-true string $value
+     */
+    private static function isUuid(mixed $value): bool
+    {
+        return \is_string($value) && Uuid::isValid($value);
     }
 
     private function sign(string $payload): string

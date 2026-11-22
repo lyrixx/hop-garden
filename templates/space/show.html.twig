@@ -9,7 +9,7 @@
         <header class="card-head">
             <span class="plant-card-image"><twig:Icon name="grid" :size="34"/></span>
             <div>
-                <p class="kicker">{{ 'specimen.number'|trans({number: space.id}) }}</p>
+                <p class="kicker">{{ 'specimen.number'|trans({number: space.id|specimen_number}) }}</p>
                 <h3>{{ space.name }}</h3>
             </div>
         </header>

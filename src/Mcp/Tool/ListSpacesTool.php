@@ -24,7 +24,7 @@ use Mcp\Schema\ToolAnnotations;
                 'items' => [
                     'type' => 'object',
                     'properties' => [
-                        'id' => ['type' => 'integer'],
+                        'id' => ['type' => 'string', 'format' => 'uuid'],
                         'name' => ['type' => 'string'],
                         'exposure' => ['type' => ['string', 'null']],
                         'soil' => ['type' => ['string', 'null']],

@@ -13,6 +13,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * The care sheet of a species, in a garden: drafted by the agent or by hand, validated by a member.
@@ -22,9 +24,8 @@ use Doctrine\ORM\Mapping as ORM;
 class Plant
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: UuidType::NAME)]
+    private Uuid $id;
 
     #[ORM\Column]
     private PlantStatus $status = PlantStatus::Draft;
@@ -57,6 +58,7 @@ class Plant
         #[ORM\Column(type: Types::TEXT, nullable: true)]
         private ?string $notes,
     ) {
+        $this->id = Uuid::v7();
         $this->reminders = new ArrayCollection();
     }
 
@@ -139,9 +141,9 @@ class Plant
         ));
     }
 
-    public function getId(): int
+    public function getId(): Uuid
     {
-        return $this->id ?? throw new \LogicException('The plant has not been persisted yet.');
+        return $this->id;
     }
 
     public function getGarden(): Garden

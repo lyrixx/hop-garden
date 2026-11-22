@@ -29,6 +29,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 use Symfony\Component\Translation\TranslatableMessage;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Uid\UuidV7;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\UX\Turbo\TurboBundle;
@@ -54,10 +55,10 @@ final class ChatController extends AbstractController
         $entries = null !== $this->conversationRepository->findOneById($conversationId) ? $chatHistory->entries($conversationId) : [];
 
         // A proposed plant may have been deleted since (demo reset...)
-        $plantIds = array_values(array_filter(array_map(static fn (ChatEntry $entry): ?int => $entry->plantId, $entries)));
+        $plantIds = array_values(array_filter(array_map(static fn (ChatEntry $entry): ?Uuid => $entry->plantId, $entries)));
         $plants = [];
         foreach ([] !== $plantIds ? $plantRepository->findBy(['garden' => $garden, 'id' => $plantIds]) : [] as $plant) {
-            $plants[$plant->getId()] = $plant;
+            $plants[$plant->getId()->toRfc4122()] = $plant;
         }
 
         return $this->render('chat/index.html.twig', [
@@ -110,8 +111,8 @@ final class ChatController extends AbstractController
         }
 
         $bus->dispatch(new RunAgent(
-            $user->getId(),
-            $garden->getId(),
+            $user->getId()->toRfc4122(),
+            $garden->getId()->toRfc4122(),
             $conversationId->toRfc4122(),
             trim($input->text),
             $preferredLocale->get()->value,

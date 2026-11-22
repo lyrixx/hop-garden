@@ -6,6 +6,7 @@ use App\Account\Entity\User;
 use App\Chat\ConversationRepository;
 use App\Garden\Entity\Garden;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\UuidV7;
 
 /**
@@ -19,8 +20,8 @@ class Conversation
      * The id of its messages in the message store.
      */
     #[ORM\Id]
-    #[ORM\Column(length: 36)]
-    private string $id;
+    #[ORM\Column(type: UuidType::NAME)]
+    private UuidV7 $id;
 
     private function __construct(
         UuidV7 $id,
@@ -33,7 +34,7 @@ class Conversation
         #[ORM\Column]
         private \DateTimeImmutable $startedAt,
     ) {
-        $this->id = $id->toRfc4122();
+        $this->id = $id;
     }
 
     /**
@@ -42,7 +43,7 @@ class Conversation
     public static function start(UuidV7 $id, User $user, Garden $garden, \DateTimeImmutable $startedAt): self
     {
         if (!$garden->isMember($user)) {
-            throw new \LogicException(\sprintf('User %d is no member of garden %d.', $user->getId(), $garden->getId()));
+            throw new \LogicException(\sprintf('User %s is no member of garden %s.', $user->getId(), $garden->getId()));
         }
 
         return new self($id, $user, $garden, $startedAt);
@@ -55,7 +56,7 @@ class Conversation
 
     public function getId(): UuidV7
     {
-        return UuidV7::fromString($this->id);
+        return $this->id;
     }
 
     public function getUser(): User

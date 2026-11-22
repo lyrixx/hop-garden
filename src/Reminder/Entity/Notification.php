@@ -7,6 +7,8 @@ use App\Garden\Entity\Garden;
 use App\Reminder\NotificationRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * A reminder sent to a member of its garden, in their language: one per member.
@@ -16,9 +18,8 @@ use Doctrine\ORM\Mapping as ORM;
 class Notification
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: UuidType::NAME)]
+    private Uuid $id;
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $readAt = null;
@@ -42,9 +43,10 @@ class Notification
         #[ORM\Column]
         private \DateTimeImmutable $createdAt,
     ) {
+        $this->id = Uuid::v7();
         $this->garden = $reminder->getPlant()->getGarden();
         if (!$this->garden->isMember($recipient)) {
-            throw new \LogicException(\sprintf('User %d is no member of the garden of reminder %d.', $recipient->getId(), $reminder->getId()));
+            throw new \LogicException(\sprintf('User %s is no member of the garden of reminder %s.', $recipient->getId(), $reminder->getId()));
         }
     }
 
@@ -53,9 +55,9 @@ class Notification
         $this->readAt ??= $at;
     }
 
-    public function getId(): int
+    public function getId(): Uuid
     {
-        return $this->id ?? throw new \LogicException('The notification has not been persisted yet.');
+        return $this->id;
     }
 
     public function getRecipient(): User

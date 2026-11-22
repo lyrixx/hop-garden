@@ -7,6 +7,7 @@ use App\Chat\Model\ChatEvent;
 use App\Chat\Model\Choices;
 use App\Garden\Model\PlantingProposal;
 use App\Garden\Model\SpaceProposal;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * What a successful tool call shows in the chat, whatever APP_DEMO (ToolCallDisplay governs the MCP lines only): the
@@ -25,7 +26,7 @@ final class ToolCards
         }
 
         return match (ToolName::toMcp($agentToolName)) {
-            'propose_plant' => \is_int($result['plant_id'] ?? null) ? ChatEntry::draftCard($result['plant_id']) : null,
+            'propose_plant' => \is_string($plantId = $result['plant_id'] ?? null) && Uuid::isValid($plantId) ? ChatEntry::draftCard(Uuid::fromString($plantId)) : null,
             'offer_choices' => null !== ($choices = Choices::fromArray($result)) ? ChatEntry::choices($choices) : null,
             'propose_planting' => null !== ($planting = PlantingProposal::fromArray($result)) ? ChatEntry::plantingCard($planting) : null,
             'propose_space' => null !== ($space = SpaceProposal::fromArray($result)) ? ChatEntry::spaceCard($space) : null,

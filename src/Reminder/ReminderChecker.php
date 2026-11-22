@@ -67,7 +67,7 @@ final readonly class ReminderChecker
         try {
             $forecast = $this->openMeteoClient->getFrostForecast($garden->getLocation(), self::FROST_FORECAST_DAYS);
         } catch (DataSourceUnavailableException $e) {
-            $this->logger->warning('Frost reminders skipped: no forecast.', ['exception' => $e, 'garden_id' => $garden->getId()]);
+            $this->logger->warning('Frost reminders skipped: no forecast.', ['exception' => $e, 'garden_id' => $garden->getId()->toRfc4122()]);
 
             return $due;
         }

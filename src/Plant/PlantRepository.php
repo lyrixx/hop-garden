@@ -12,6 +12,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * The care sheets of the species of a garden: the queries take the garden, a care sheet of another one is never found.
@@ -32,14 +33,17 @@ class PlantRepository extends ServiceEntityRepository
     }
 
     /**
-     * The same answer whether another garden has it or not: it is not said to exist.
+     * An id as a model gives it: malformed, of another garden or unknown, the same answer. A care sheet of another garden
+     * is not said to exist.
      */
-    public function get(Garden $garden, int $id): Plant
+    public function get(Garden $garden, string $id): Plant
     {
-        return $this->findOneInGarden($garden, $id) ?? throw PlantNotFoundException::withId($id);
+        $plant = Uuid::isValid($id) ? $this->findOneInGarden($garden, Uuid::fromString($id)) : null;
+
+        return $plant ?? throw PlantNotFoundException::withId($id);
     }
 
-    public function findOneInGarden(Garden $garden, int $id): ?Plant
+    public function findOneInGarden(Garden $garden, Uuid $id): ?Plant
     {
         return $this->findOneBy(['garden' => $garden, 'id' => $id]);
     }
@@ -104,15 +108,15 @@ class PlantRepository extends ServiceEntityRepository
         $plantingsByPlant = [];
         foreach ($entities as $entity) {
             if ($entity instanceof Plant) {
-                $plants[$entity->getId()] = $entity;
+                $plants[$entity->getId()->toRfc4122()] = $entity;
             } elseif ($entity instanceof Planting) {
                 $plant = $entity->getPlant() ?? throw new \LogicException('A planting joined on its plant has one.');
-                $plantingsByPlant[$plant->getId()][] = $entity;
+                $plantingsByPlant[$plant->getId()->toRfc4122()][] = $entity;
             }
         }
 
         return array_values(array_map(
-            static fn (Plant $plant): PlantWithPlantings => new PlantWithPlantings($plant, $plantingsByPlant[$plant->getId()] ?? []),
+            static fn (Plant $plant): PlantWithPlantings => new PlantWithPlantings($plant, $plantingsByPlant[$plant->getId()->toRfc4122()] ?? []),
             $plants,
         ));
     }

@@ -4,8 +4,11 @@ namespace App\Plant\Exception;
 
 final class PlantNotFoundException extends \RuntimeException
 {
-    public static function withId(int $id): self
+    /**
+     * The id as given: a model may send anything.
+     */
+    public static function withId(string $id): self
     {
-        return new self(\sprintf('No plant with id %d.', $id));
+        return new self(\sprintf('No plant with id %s.', $id));
     }
 }

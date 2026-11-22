@@ -136,13 +136,13 @@ function garden_adopt_orphans(#[AsRawTokens] array $rawTokens = []): int
 {
     io()->title('Adopting the data of before the gardens');
 
-    // The migration that adds the gardens, not the next one, which refuses a row without garden. Never down: a database
-    // past it has no orphan
-    $gardens = 'DoctrineMigrations\Version20261122212315';
+    // The last migration before the one that refuses a row without garden (Version20261123120000). Never down: a
+    // database past it has no orphan
+    $lastWithOrphans = 'DoctrineMigrations\Version20261123100000';
     docker_compose_run(['bin/console', 'doctrine:database:create', '--if-not-exists']);
     $current = explode(' ', trim(docker_compose_run(['bin/console', 'doctrine:migrations:current', '--no-ansi'], c: context()->withQuiet())->getOutput()))[0];
-    if (strcmp($current, $gardens) < 0) {
-        docker_compose_run(['bin/console', 'doctrine:migration:migrate', $gardens, '-n', '--all-or-nothing']);
+    if (strcmp($current, $lastWithOrphans) < 0) {
+        docker_compose_run(['bin/console', 'doctrine:migration:migrate', $lastWithOrphans, '-n', '--all-or-nothing']);
     }
 
     $exitCode = docker_exit_code(['bin/console', 'app:garden:adopt-orphans', ...$rawTokens]);
@@ -224,8 +224,8 @@ function demo_frost(
 function mcp_stdio(
     #[AsOption(description: 'The email of the member the tools act for')]
     string $user = '',
-    #[AsOption(description: 'The id of their garden, the one they joined first by default')]
-    ?int $garden = null,
+    #[AsOption(description: 'The id of their garden, a UUID, the one they joined first by default')]
+    ?string $garden = null,
 ): int {
     // Nothing but the JSON-RPC messages may reach STDOUT
     $c = context()->withInput(\STDIN)->withPty(false)->withTty(false)->withAllowFailure();

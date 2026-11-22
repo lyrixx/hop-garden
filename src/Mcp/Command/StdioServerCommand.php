@@ -15,6 +15,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * The MCP server of the external clients over STDIO, for a developer on their machine (castor mcp:stdio --user=...):
@@ -40,8 +41,8 @@ final readonly class StdioServerCommand
         SymfonyStyle $io,
         #[Option(description: 'The email of the member the tools act for')]
         string $user = '',
-        #[Option(description: 'The id of their garden, the one they joined first by default')]
-        ?int $garden = null,
+        #[Option(description: 'The id of their garden, a UUID, the one they joined first by default')]
+        ?string $garden = null,
     ): int {
         $errors = $io->getErrorStyle();
 
@@ -53,18 +54,18 @@ final readonly class StdioServerCommand
         }
 
         $gardens = $this->gardenRepository->findOfMember($member);
-        $bound = null !== $garden ? $this->gardenRepository->findOneOfMember($garden, $member) : $gardens[0] ?? null;
+        $bound = null !== $garden ? (Uuid::isValid($garden) ? $this->gardenRepository->findOneOfMember(Uuid::fromString($garden), $member) : null) : $gardens[0] ?? null;
         if (null === $bound) {
-            $errors->error(null !== $garden ? \sprintf('%s is no member of garden %d.', $member->getEmail(), $garden) : \sprintf('%s has no garden yet: they create one on the website first.', $member->getEmail()));
+            $errors->error(null !== $garden ? \sprintf('%s is no member of garden %s.', $member->getEmail(), $garden) : \sprintf('%s has no garden yet: they create one on the website first.', $member->getEmail()));
 
             return Command::INVALID;
         }
 
         $token = new PostAuthenticationToken($member, 'mcp_stdio', $member->getRoles());
-        $token->setAttribute(CurrentGarden::TOKEN_ATTRIBUTE, $bound->getId());
+        $token->setAttribute(CurrentGarden::TOKEN_ATTRIBUTE, $bound->getId()->toRfc4122());
         $this->tokenStorage->setToken($token);
 
-        $errors->writeln(\sprintf('<comment>MCP over STDIO as %s, in the garden "%s" (%d).</comment>', $member->getEmail(), $bound->getName(), $bound->getId()));
+        $errors->writeln(\sprintf('<comment>MCP over STDIO as %s, in the garden "%s" (%s).</comment>', $member->getEmail(), $bound->getName(), $bound->getId()));
 
         $this->server->run(new StdioTransport(logger: $this->logger));
 

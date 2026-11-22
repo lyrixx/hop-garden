@@ -31,7 +31,7 @@
                     <span class="plant-card-image"><twig:PlantingPhoto :planting="planting" :size="45"/></span>
                 {% endif %}
                 <div>
-                    <p class="kicker">{{ 'specimen.number'|trans({number: planting.id}) }}</p>
+                    <p class="kicker">{{ 'specimen.number'|trans({number: planting.id|specimen_number}) }}</p>
                     <h3>{{ planting.name }}</h3>
                     {# The Latin name is the species: in its summary once it has a care sheet #}
                     {% if not plant and planting.scientificName %}<p class="latin" id="planting-{{ planting.id }}-chosen-species"><span class="page-label page-label-species">{{ 'species.label'|trans }}</span> <em>{{ planting.scientificName }}</em></p>{% endif %}

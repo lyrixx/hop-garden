@@ -117,7 +117,7 @@ final class NotificationController extends AbstractController
     {
         $distinct = [];
         foreach ($plants as $plant) {
-            $distinct[$plant->getId()] = $plant;
+            $distinct[$plant->getId()->toRfc4122()] = $plant;
         }
 
         return array_values($distinct);

@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Uid\UuidV7;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpException;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -50,8 +51,8 @@ final readonly class AgentRunner
     }
 
     /**
-     * @param ?\Closure(int): void $onDraftProposed called with the plant of each successful propose_plant, before its
-     *                                              card is pushed
+     * @param ?\Closure(Uuid): void $onDraftProposed called with the plant of each successful propose_plant, before its
+     *                                               card is pushed
      */
     public function run(string $topic, string $conversationId, string $agentRunToken, string $text, ?\Closure $onDraftProposed = null): AgentRun
     {
@@ -59,7 +60,7 @@ final readonly class AgentRunner
     }
 
     /**
-     * @param ?\Closure(int): void $onDraftProposed
+     * @param ?\Closure(Uuid): void $onDraftProposed
      */
     private function runWithToken(string $topic, string $conversationId, string $text, ?\Closure $onDraftProposed): AgentRun
     {

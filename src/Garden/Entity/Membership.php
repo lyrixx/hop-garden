@@ -5,6 +5,8 @@ namespace App\Garden\Entity;
 use App\Account\Entity\User;
 use App\Garden\Model\MembershipRole;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * A member of a garden: created and changed by its garden only (Garden::create(), join(), leave()).
@@ -15,9 +17,8 @@ class Membership
 {
     // Only Doctrine reads it
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null; // @phpstan-ignore property.onlyWritten
+    #[ORM\Column(type: UuidType::NAME)]
+    private Uuid $id; // @phpstan-ignore property.onlyWritten
 
     /**
      * @internal only for Garden
@@ -34,6 +35,7 @@ class Membership
         #[ORM\Column]
         private \DateTimeImmutable $joinedAt,
     ) {
+        $this->id = Uuid::v7();
     }
 
     /**

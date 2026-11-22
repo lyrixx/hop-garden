@@ -14,7 +14,8 @@ use App\Garden\Exception\NoCurrentGardenException;
 interface CurrentGarden
 {
     /**
-     * The id of the garden a security token is bound to: set by the authenticator that creates it, never another.
+     * The id of the garden a security token is bound to, a UUID in RFC 4122: set by the authenticator that creates it,
+     * never another.
      */
     public const string TOKEN_ATTRIBUTE = 'garden_id';
 

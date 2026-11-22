@@ -12,8 +12,11 @@ use Symfony\Component\Messenger\Attribute\AsMessage;
 final readonly class RunAgent
 {
     public function __construct(
-        public int $userId,
-        public int $gardenId,
+        /**
+         * The ids, as UUIDs in RFC 4122.
+         */
+        public string $userId,
+        public string $gardenId,
         public string $conversationId,
         public string $text,
         /**

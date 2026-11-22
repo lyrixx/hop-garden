@@ -9,6 +9,8 @@ use App\Garden\PlantingRepository;
 use App\Plant\Entity\Plant;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Uid\UuidV7;
 
 /**
@@ -19,9 +21,8 @@ use Symfony\Component\Uid\UuidV7;
 class Planting
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: UuidType::NAME)]
+    private Uuid $id;
 
     /** @var list<array{task: string, done_on: string}> */
     #[ORM\Column(type: Types::JSON)]
@@ -37,8 +38,8 @@ class Planting
     /**
      * The conversation of the agent drafting its care sheet: a new one on each attempt.
      */
-    #[ORM\Column(nullable: true)]
-    private ?string $conversationId = null;
+    #[ORM\Column(type: UuidType::NAME, nullable: true)]
+    private ?UuidV7 $conversationId = null;
 
     /**
      * The last attempt ended without a draft: the user may retry.
@@ -49,8 +50,8 @@ class Planting
     /**
      * The "Add to my garden" card it was added from: a second tap finds it, and adds nothing.
      */
-    #[ORM\Column(nullable: true, unique: true)]
-    private ?string $proposalId = null;
+    #[ORM\Column(type: UuidType::NAME, nullable: true, unique: true)]
+    private ?Uuid $proposalId = null;
 
     public function __construct(
         #[ORM\ManyToOne]
@@ -75,6 +76,7 @@ class Planting
         #[ORM\Column(nullable: true)]
         private ?string $photoFilename = null,
     ) {
+        $this->id = Uuid::v7();
         $space?->welcome($this);
     }
 
@@ -82,10 +84,10 @@ class Planting
      * Added from the "Add to my garden" card the agent proposed: a plant of a validated species, in the space of the
      * card, if any. Where and how it grows is left to the user.
      */
-    public static function proposed(string $proposalId, string $name, Plant $plant, ?Space $space, \DateTimeImmutable $createdAt): self
+    public static function proposed(Uuid $proposalId, string $name, Plant $plant, ?Space $space, \DateTimeImmutable $createdAt): self
     {
         if (!$plant->isValidated()) {
-            throw new \LogicException(\sprintf('Plant %d is not validated.', $plant->getId()));
+            throw new \LogicException(\sprintf('Plant %s is not validated.', $plant->getId()));
         }
 
         $planting = new self($plant->getGarden(), $name, $space, null, $createdAt, $plant->getTrefleId(), $plant->getScientificName());
@@ -149,7 +151,7 @@ class Planting
             throw CareSheetAlreadyLinkedException::forPlanting($this->getId());
         }
 
-        $this->conversationId = $conversationId->toRfc4122();
+        $this->conversationId = $conversationId;
         $this->draftingFailed = false;
     }
 
@@ -166,9 +168,9 @@ class Planting
     /**
      * Whether this conversation is the attempt in progress: a retry, or a link meanwhile, makes an older one stale.
      */
-    public function isDraftedIn(string $conversationId): bool
+    public function isDraftedIn(UuidV7 $conversationId): bool
     {
-        return $this->isDrafting() && $this->conversationId === $conversationId;
+        return $this->isDrafting() && true === $this->conversationId?->equals($conversationId);
     }
 
     public function hasDraftingFailed(): bool
@@ -188,9 +190,9 @@ class Planting
         return $last;
     }
 
-    public function getId(): int
+    public function getId(): Uuid
     {
-        return $this->id ?? throw new \LogicException('The planting has not been persisted yet.');
+        return $this->id;
     }
 
     public function getGarden(): Garden
@@ -238,12 +240,12 @@ class Planting
         return $this->plant;
     }
 
-    public function getConversationId(): ?string
+    public function getConversationId(): ?UuidV7
     {
         return $this->conversationId;
     }
 
-    public function getProposalId(): ?string
+    public function getProposalId(): ?Uuid
     {
         return $this->proposalId;
     }

@@ -20,14 +20,14 @@ final readonly class GardenExtension
      * My plant of this species, in the garden. When several plants follow its care sheet, the reminder is about all of
      * them: the page of the species lists them.
      *
-     * @param array<int, list<int>>|null $plantingIdsByPlant preloaded for a list, see PlantingRepository::findIdsForPlants()
+     * @param array<string, list<string>>|null $plantingIdsByPlant preloaded for a list, see PlantingRepository::findIdsForPlants()
      *
      * @return ?string null for a care sheet no plant of the garden follows yet
      */
     #[AsTwigFunction('my_plant_path')]
     public function myPlantPath(Plant $plant, ?array $plantingIdsByPlant = null): ?string
     {
-        $plantingIds = ($plantingIdsByPlant ?? $this->plantingRepository->findIdsForPlants($plant->getGarden(), [$plant]))[$plant->getId()] ?? [];
+        $plantingIds = ($plantingIdsByPlant ?? $this->plantingRepository->findIdsForPlants($plant->getGarden(), [$plant]))[$plant->getId()->toRfc4122()] ?? [];
 
         return match (\count($plantingIds)) {
             0 => null,

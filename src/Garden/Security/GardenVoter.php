@@ -33,7 +33,7 @@ final class GardenVoter extends Voter
             return false;
         }
 
-        if ($token->hasAttribute(CurrentGarden::TOKEN_ATTRIBUTE) && $token->getAttribute(CurrentGarden::TOKEN_ATTRIBUTE) !== $subject->getId()) {
+        if ($token->hasAttribute(CurrentGarden::TOKEN_ATTRIBUTE) && $token->getAttribute(CurrentGarden::TOKEN_ATTRIBUTE) !== $subject->getId()->toRfc4122()) {
             return false;
         }
 

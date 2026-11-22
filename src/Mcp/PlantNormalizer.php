@@ -28,7 +28,7 @@ final readonly class PlantNormalizer
     public function summary(Plant $plant): array
     {
         return [
-            'id' => $plant->getId(),
+            'id' => $plant->getId()->toRfc4122(),
             'common_name' => $plant->getCommonName(),
             'scientific_name' => $plant->getScientificName(),
             'family' => $plant->getFamily(),

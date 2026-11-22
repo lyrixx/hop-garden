@@ -39,6 +39,6 @@ final readonly class ChatSession
 
     private static function key(Garden $garden): string
     {
-        return self::KEY . '.' . $garden->getId();
+        return self::KEY . '.' . $garden->getId()->toRfc4122();
     }
 }

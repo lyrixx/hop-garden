@@ -8,6 +8,7 @@ use App\Plant\Entity\Plant;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * The queries of a list take the garden: a planting of another garden is never listed. A planting found by id is checked
@@ -49,7 +50,7 @@ class PlantingRepository extends ServiceEntityRepository
     /**
      * Whatever its garden: a proposal id is unique. The caller checks the planting is of the current one.
      */
-    public function findOneByProposalId(string $proposalId): ?Planting
+    public function findOneByProposalId(Uuid $proposalId): ?Planting
     {
         return $this->findOneBy(['proposalId' => $proposalId]);
     }
@@ -57,7 +58,7 @@ class PlantingRepository extends ServiceEntityRepository
     /**
      * @param list<Plant> $plants of this garden
      *
-     * @return array<int, list<int>> the ids of the plantings of each plant that has some, oldest first, by plant id
+     * @return array<string, list<string>> the ids of the plantings of each plant that has some, oldest first, by plant id
      */
     public function findIdsForPlants(Garden $garden, array $plants): array
     {
@@ -65,13 +66,14 @@ class PlantingRepository extends ServiceEntityRepository
             return [];
         }
 
-        /** @var list<array{plantId: int|string, plantingId: int|string}> $rows */
+        /** @var list<array{plantId: string|Uuid, plantingId: string|Uuid}> $rows */
         $rows = $this->createQueryBuilder('planting')
             ->select('IDENTITY(planting.plant) AS plantId', 'planting.id AS plantingId')
             ->andWhere('planting.garden = :garden')
             ->andWhere('planting.plant IN (:plants)')
             ->setParameter('garden', $garden)
             ->setParameter('plants', $plants)
+            // UUID v7: the oldest first
             ->orderBy('planting.id', \SortDirection::Ascending)
             ->getQuery()
             ->getArrayResult()
@@ -79,7 +81,7 @@ class PlantingRepository extends ServiceEntityRepository
 
         $ids = [];
         foreach ($rows as $row) {
-            $ids[(int) $row['plantId']][] = (int) $row['plantingId'];
+            $ids[(string) $row['plantId']][] = (string) $row['plantingId'];
         }
 
         return $ids;

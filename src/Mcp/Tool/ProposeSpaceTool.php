@@ -60,7 +60,7 @@ final readonly class ProposeSpaceTool
     ): array {
         $existing = $this->spaceRepository->findOneByName($this->currentGarden->get(), trim($name));
         if (null !== $existing) {
-            throw new ToolCallException(\sprintf('The space "%s" exists already (id %d): propose the plant in it with propose_planting.', $existing->getName(), $existing->getId()));
+            throw new ToolCallException(\sprintf('The space "%s" exists already (id %s): propose the plant in it with propose_planting.', $existing->getName(), $existing->getId()));
         }
 
         return $this->gardenNormalizer->spaceProposal(SpaceProposal::create(trim($name), $exposure, $soil)) + [

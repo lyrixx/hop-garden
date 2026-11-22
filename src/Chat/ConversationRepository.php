@@ -26,7 +26,7 @@ class ConversationRepository extends ServiceEntityRepository
 
     public function findOneById(UuidV7 $id): ?Conversation
     {
-        return $this->find($id->toRfc4122());
+        return $this->find($id);
     }
 
     /**
@@ -57,7 +57,7 @@ class ConversationRepository extends ServiceEntityRepository
             $queryBuilder->andWhere("conversation.{$field} = :{$field}")->setParameter($field, $value);
         }
 
-        /** @var list<string> $ids */
+        /** @var list<string> $ids the values of the column, as PostgreSQL gives them */
         $ids = $queryBuilder->getQuery()->getSingleColumnResult();
 
         return array_map(UuidV7::fromString(...), $ids);

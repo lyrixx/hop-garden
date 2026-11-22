@@ -8,8 +8,11 @@ namespace App\Mcp\Agent\Model;
 final readonly class AgentRunClaims
 {
     public function __construct(
-        public int $userId,
-        public int $gardenId,
+        /**
+         * The ids, as UUIDs in RFC 4122.
+         */
+        public string $userId,
+        public string $gardenId,
         public string $conversationId,
         public \DateTimeImmutable $expiresAt,
     ) {

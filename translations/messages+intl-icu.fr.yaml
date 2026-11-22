@@ -785,7 +785,7 @@ species_picker:
     which_optional: "De quelle espèce s’agit-il ? (facultatif)"
 specimen:
     alt: "{species}, planche coloriée à la main (Biodiversity Heritage Library)"
-    number: "N° {number, number, ::group-off}"
+    number: "N° {number}"
 status:
     added: "Ajoutée"
     care_sheet: "Fiche de culture"

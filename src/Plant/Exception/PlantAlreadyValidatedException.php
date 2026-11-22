@@ -2,10 +2,12 @@
 
 namespace App\Plant\Exception;
 
+use Symfony\Component\Uid\Uuid;
+
 final class PlantAlreadyValidatedException extends \RuntimeException
 {
-    public static function withId(int $id): self
+    public static function withId(Uuid $id): self
     {
-        return new self(\sprintf('Plant %d is already validated.', $id));
+        return new self(\sprintf('Plant %s is already validated.', $id));
     }
 }

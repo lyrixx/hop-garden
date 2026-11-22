@@ -15,12 +15,6 @@ parameters:
     symfony:
         containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
 
-    ignoreErrors:
-        # Doctrine assigns the id
-        -
-            identifier: property.unusedType
-            message: '#^Property App\\(Account|Garden|Plant|Reminder)\\Entity\\\w+::\$id \(int\|null\) is never assigned int#'
-
     typeAliases:
         ContextData: '''
             array{

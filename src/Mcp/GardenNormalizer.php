@@ -23,12 +23,12 @@ final readonly class GardenNormalizer
     }
 
     /**
-     * @return array{id: int, name: string, exposure: ?string, soil: ?string, plantings: list<string>}
+     * @return array{id: string, name: string, exposure: ?string, soil: ?string, plantings: list<string>}
      */
     public function space(Space $space): array
     {
         return [
-            'id' => $space->getId(),
+            'id' => $space->getId()->toRfc4122(),
             'name' => $space->getName(),
             'exposure' => $space->getExposure()?->value,
             'soil' => $space->getSoil()?->value,

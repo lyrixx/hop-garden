@@ -38,6 +38,6 @@ final readonly class GardenQuotas
 
     private static function key(Garden $garden): string
     {
-        return 'garden-' . $garden->getId();
+        return 'garden-' . $garden->getId()->toRfc4122();
     }
 }

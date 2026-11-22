@@ -8,6 +8,8 @@ use App\Plant\Model\Exposure;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -18,9 +20,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class Space
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: UuidType::NAME)]
+    private Uuid $id;
 
     /**
      * Kept in sync by Planting::revise(), the owning side.
@@ -33,8 +34,8 @@ class Space
     /**
      * The space card it was created from: a second tap finds it, and creates nothing.
      */
-    #[ORM\Column(nullable: true, unique: true)]
-    private ?string $proposalId = null;
+    #[ORM\Column(type: UuidType::NAME, nullable: true, unique: true)]
+    private ?Uuid $proposalId = null;
 
     public function __construct(
         #[ORM\ManyToOne]
@@ -52,13 +53,14 @@ class Space
         #[ORM\Column]
         private \DateTimeImmutable $createdAt,
     ) {
+        $this->id = Uuid::v7();
         $this->plantings = new ArrayCollection();
     }
 
     /**
      * Created from the space card the agent proposed, as the user completed it.
      */
-    public static function proposed(Garden $garden, string $proposalId, string $name, ?Exposure $exposure, ?Soil $soil, \DateTimeImmutable $createdAt): self
+    public static function proposed(Garden $garden, Uuid $proposalId, string $name, ?Exposure $exposure, ?Soil $soil, \DateTimeImmutable $createdAt): self
     {
         $space = new self($garden, $name, $exposure, $soil, $createdAt);
         $space->proposalId = $proposalId;
@@ -113,9 +115,9 @@ class Space
         $this->plantings->removeElement($planting);
     }
 
-    public function getId(): int
+    public function getId(): Uuid
     {
-        return $this->id ?? throw new \LogicException('The space has not been persisted yet.');
+        return $this->id;
     }
 
     public function getGarden(): Garden
@@ -143,7 +145,7 @@ class Space
         return $this->createdAt;
     }
 
-    public function getProposalId(): ?string
+    public function getProposalId(): ?Uuid
     {
         return $this->proposalId;
     }

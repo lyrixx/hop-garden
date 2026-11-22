@@ -8,6 +8,7 @@ use App\Garden\Model\Soil;
 use App\Garden\Model\SpaceProposal;
 use App\Garden\Validator\NewSpaceName;
 use App\Plant\Model\Exposure;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -55,7 +56,7 @@ final class SpaceFormData
         return new Space($garden, trim($this->name), $this->exposure, $this->soil, $createdAt);
     }
 
-    public function toProposedSpace(Garden $garden, string $proposalId, \DateTimeImmutable $createdAt): Space
+    public function toProposedSpace(Garden $garden, Uuid $proposalId, \DateTimeImmutable $createdAt): Space
     {
         return Space::proposed($garden, $proposalId, trim($this->name), $this->exposure, $this->soil, $createdAt);
     }

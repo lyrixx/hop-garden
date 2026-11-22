@@ -29,6 +29,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Translation\TranslatableMessage;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * The cards the agent proposes to add to the garden: nothing is written until the user taps one. Each card is loaded
@@ -61,7 +62,7 @@ final class ProposalController extends AbstractController
         PlantingRepository $plantingRepository,
         SpaceRepository $spaceRepository,
     ): Response {
-        $proposal = self::plantingProposal($proposal_id, $request->query);
+        $proposal = $this->plantingProposal($proposal_id, $request->query);
         $cardUrl = $this->generateUrl('planting_proposal', $proposal->toArray());
 
         $planting = $plantingRepository->findOneByProposalId($proposal->proposalId);
@@ -182,20 +183,28 @@ final class ProposalController extends AbstractController
     /**
      * Several cards may show in the chat: each its own form, with its own field ids.
      */
-    private static function formName(string $kind, string $proposalId): string
+    private static function formName(string $kind, Uuid $proposalId): string
     {
-        return $kind . '_' . str_replace('-', '', $proposalId);
+        return $kind . '_' . str_replace('-', '', $proposalId->toRfc4122());
     }
 
     /**
+     * A URL made by hand, its ids malformed: no card.
+     *
      * @param InputBag<string> $query
      */
-    private static function plantingProposal(string $proposalId, InputBag $query): PlantingProposal
+    private function plantingProposal(string $proposalId, InputBag $query): PlantingProposal
     {
+        $plantId = $query->getString('plant_id');
+        $spaceId = $query->has('space_id') ? $query->getString('space_id') : null;
+        if (!Uuid::isValid($plantId) || (null !== $spaceId && !Uuid::isValid($spaceId))) {
+            throw $this->createNotFoundException(\sprintf('No card of proposal %s with these ids.', $proposalId));
+        }
+
         return new PlantingProposal(
-            $proposalId,
-            $query->getInt('plant_id'),
-            $query->has('space_id') ? $query->getInt('space_id') : null,
+            Uuid::fromString($proposalId),
+            Uuid::fromString($plantId),
+            null !== $spaceId ? Uuid::fromString($spaceId) : null,
             $query->getString('name'),
         );
     }
@@ -206,7 +215,7 @@ final class ProposalController extends AbstractController
     private static function spaceProposal(string $proposalId, InputBag $query): SpaceProposal
     {
         return new SpaceProposal(
-            $proposalId,
+            Uuid::fromString($proposalId),
             $query->getString('name'),
             Exposure::tryFrom($query->getString('exposure')),
             Soil::tryFrom($query->getString('soil')),

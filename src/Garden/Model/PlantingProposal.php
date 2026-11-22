@@ -3,7 +3,6 @@
 namespace App\Garden\Model;
 
 use Symfony\Component\Uid\Uuid;
-use Symfony\Component\Uid\UuidV7;
 
 /**
  * A plant the agent proposes to add to the garden, on an "Add to my garden" card: nothing is written until the user
@@ -14,16 +13,16 @@ use Symfony\Component\Uid\UuidV7;
 final readonly class PlantingProposal
 {
     public function __construct(
-        public string $proposalId,
-        public int $plantId,
-        public ?int $spaceId,
+        public Uuid $proposalId,
+        public Uuid $plantId,
+        public ?Uuid $spaceId,
         public string $name,
     ) {
     }
 
-    public static function create(int $plantId, ?int $spaceId, string $name): self
+    public static function create(Uuid $plantId, ?Uuid $spaceId, string $name): self
     {
-        return new self((new UuidV7())->toRfc4122(), $plantId, $spaceId, $name);
+        return new self(Uuid::v7(), $plantId, $spaceId, $name);
     }
 
     /**
@@ -38,23 +37,31 @@ final readonly class PlantingProposal
         $spaceId = $data['space_id'] ?? null;
         $name = $data['name'] ?? null;
 
-        if (!\is_string($proposalId) || !Uuid::isValid($proposalId) || !\is_int($plantId) || (null !== $spaceId && !\is_int($spaceId)) || !\is_string($name)) {
+        if (!self::isUuid($proposalId) || !self::isUuid($plantId) || (null !== $spaceId && !self::isUuid($spaceId)) || !\is_string($name)) {
             return null;
         }
 
-        return new self($proposalId, $plantId, $spaceId, $name);
+        return new self(Uuid::fromString($proposalId), Uuid::fromString($plantId), null !== $spaceId ? Uuid::fromString($spaceId) : null, $name);
     }
 
     /**
-     * @return array{proposal_id: string, plant_id: int, space_id: ?int, name: string}
+     * @return array{proposal_id: string, plant_id: string, space_id: ?string, name: string}
      */
     public function toArray(): array
     {
         return [
-            'proposal_id' => $this->proposalId,
-            'plant_id' => $this->plantId,
-            'space_id' => $this->spaceId,
+            'proposal_id' => $this->proposalId->toRfc4122(),
+            'plant_id' => $this->plantId->toRfc4122(),
+            'space_id' => $this->spaceId?->toRfc4122(),
             'name' => $this->name,
         ];
+    }
+
+    /**
+     * @phpstan-assert-if-true string $value
+     */
+    private static function isUuid(mixed $value): bool
+    {
+        return \is_string($value) && Uuid::isValid($value);
     }
 }

@@ -27,7 +27,7 @@ use Psr\Clock\ClockInterface;
     outputSchema: [
         'type' => 'object',
         'properties' => [
-            'plant_id' => ['type' => 'integer'],
+            'plant_id' => ['type' => 'string', 'format' => 'uuid'],
             'status' => ['type' => 'string', 'enum' => ['draft']],
             'validation_url' => ['type' => 'string'],
             'next_step' => ['type' => 'string'],
@@ -78,7 +78,7 @@ final readonly class ProposePlantTool
         $this->entityManager->flush();
 
         return [
-            'plant_id' => $plant->getId(),
+            'plant_id' => $plant->getId()->toRfc4122(),
             'status' => $plant->getStatus()->value,
             'validation_url' => $this->plantNormalizer->urlOf($plant),
             'next_step' => 'The draft card is shown to the user. Ask them to review the highlighted fields and to validate it: until then, the plant is not validated.',

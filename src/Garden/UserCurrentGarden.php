@@ -8,6 +8,7 @@ use App\Garden\Exception\NoCurrentGardenException;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
@@ -55,7 +56,7 @@ final class UserCurrentGarden implements CurrentGarden, ResetInterface
 
     public function switchTo(Garden $garden): void
     {
-        $this->requestStack->getSession()->set(self::SESSION_KEY, $garden->getId());
+        $this->requestStack->getSession()->set(self::SESSION_KEY, $garden->getId()->toRfc4122());
         $this->found = new \WeakMap();
     }
 
@@ -72,7 +73,7 @@ final class UserCurrentGarden implements CurrentGarden, ResetInterface
         if ($token->hasAttribute(self::TOKEN_ATTRIBUTE)) {
             $gardenId = $token->getAttribute(self::TOKEN_ATTRIBUTE);
 
-            return \is_int($gardenId) ? $this->gardenRepository->findOneOfMember($gardenId, $user) : null;
+            return \is_string($gardenId) && Uuid::isValid($gardenId) ? $this->gardenRepository->findOneOfMember(Uuid::fromString($gardenId), $user) : null;
         }
 
         // The website only: a stateless firewall gets its garden from its token, or none
@@ -82,7 +83,8 @@ final class UserCurrentGarden implements CurrentGarden, ResetInterface
         }
 
         $gardenId = $request->getSession()->get(self::SESSION_KEY);
-        $garden = \is_int($gardenId) ? $this->gardenRepository->findOneOfMember($gardenId, $user) : null;
+        // An int in a session of before the UUIDs: none
+        $garden = \is_string($gardenId) && Uuid::isValid($gardenId) ? $this->gardenRepository->findOneOfMember(Uuid::fromString($gardenId), $user) : null;
 
         // Left since, or never chosen
         return $garden ?? $this->gardenRepository->findOfMember($user)[0] ?? null;

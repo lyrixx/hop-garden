@@ -17,6 +17,7 @@ use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * The firewall of /_mcp/agent, stateless: each request of the worker carries the token of its run (AgentRunTokens). It
@@ -51,8 +52,8 @@ final class AgentRunAuthenticator extends AbstractAuthenticator
         }
 
         // Deleted, or removed from the garden, since the message was sent
-        $user = $this->userRepository->find($claims->userId);
-        if (null === $user || null === $this->gardenRepository->findOneOfMember($claims->gardenId, $user)) {
+        $user = $this->userRepository->find(Uuid::fromString($claims->userId));
+        if (null === $user || null === $this->gardenRepository->findOneOfMember(Uuid::fromString($claims->gardenId), $user)) {
             throw new CustomUserMessageAuthenticationException('The sender of the message is no member of its garden any more.');
         }
 

@@ -785,7 +785,7 @@ species_picker:
     which_optional: "Which species is it? (optional)"
 specimen:
     alt: "{species}, hand-coloured plate (Biodiversity Heritage Library)"
-    number: "No. {number, number, ::group-off}"
+    number: "No. {number}"
 status:
     added: "Added"
     care_sheet: "Care sheet"

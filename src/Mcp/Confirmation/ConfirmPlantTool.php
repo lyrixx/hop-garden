@@ -46,8 +46,8 @@ final readonly class ConfirmPlantTool
      * @return array<string, mixed>
      */
     public function __invoke(
-        #[Schema(description: 'Id of the draft plant, from propose_plant.', minimum: 1)]
-        int $id,
+        #[Schema(description: 'Id of the draft plant, a UUID, from propose_plant.', format: 'uuid')]
+        string $id,
     ): array {
         try {
             $plant = $this->plantRepository->get($this->currentGarden->get(), $id);

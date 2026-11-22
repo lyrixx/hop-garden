@@ -18,6 +18,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Translation\LocaleSwitcher;
+use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Uid\UuidV7;
 
 /**
  * The agent drafts the care sheet through MCP, as in the chat, and the planting is linked to the draft as soon as
@@ -74,10 +76,11 @@ final readonly class DraftCareSheetHandler
         $run = null;
 
         try {
-            $run = $this->agentRunner->run($topic, $message->conversationId, $message->agentRunToken, CareSheetDraftPrompt::for($planting), function (int $plantId) use ($message, $garden, $topic): void {
+            $run = $this->agentRunner->run($topic, $message->conversationId, $message->agentRunToken, CareSheetDraftPrompt::for($planting), function (Uuid $plantId) use ($message, $garden, $topic): void {
                 $planting = $this->currentAttempt($message);
-                if (null !== $planting) {
-                    $planting->linkTo($this->plantRepository->get($garden, $plantId));
+                $plant = $this->plantRepository->findOneInGarden($garden, $plantId);
+                if (null !== $planting && null !== $plant) {
+                    $planting->linkTo($plant);
                     $this->entityManager->flush();
                     // Rendered again by the browser of each member on the page, in their language
                     $this->publisher->publish($topic, ChatEvent::Refresh);
@@ -105,7 +108,7 @@ final readonly class DraftCareSheetHandler
      */
     private function mayRun(DraftCareSheet $message, Garden $garden): bool
     {
-        $user = $this->userRepository->find($message->userId);
+        $user = $this->userRepository->find(Uuid::fromString($message->userId));
         if (null === $user || !$garden->isMember($user)) {
             $this->logger->warning('Care sheet draft skipped: whoever added the plant is no member of its garden any more.', ['planting_id' => $message->plantingId, 'user_id' => $message->userId]);
 
@@ -129,13 +132,13 @@ final readonly class DraftCareSheetHandler
      */
     private function currentAttempt(DraftCareSheet $message): ?Planting
     {
-        $planting = $this->plantingRepository->find($message->plantingId);
-        if (null === $planting || $planting->getGarden()->getId() !== $message->gardenId) {
+        $planting = $this->plantingRepository->find(Uuid::fromString($message->plantingId));
+        if (null === $planting || $planting->getGarden()->getId()->toRfc4122() !== $message->gardenId) {
             return null;
         }
 
         $this->entityManager->refresh($planting);
 
-        return $planting->isDraftedIn($message->conversationId) ? $planting : null;
+        return $planting->isDraftedIn(UuidV7::fromString($message->conversationId)) ? $planting : null;
     }
 }

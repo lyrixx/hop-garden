@@ -23,6 +23,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Translation\TranslatableMessage;
@@ -87,7 +88,7 @@ final class PlantController extends AbstractController
     /**
      * The species: its card, and my plants that follow it in the garden.
      */
-    #[Route('/plants/{id}', name: 'plant_show', requirements: ['id' => '\d+'], methods: ['GET'])]
+    #[Route('/plants/{id}', name: 'plant_show', requirements: ['id' => Requirement::UUID], methods: ['GET'])]
     #[IsGranted(GardenResourceVoter::PLANT_VIEW, 'plant', statusCode: Response::HTTP_NOT_FOUND)]
     public function show(Plant $plant, PlantingRepository $plantingRepository): Response
     {
@@ -101,14 +102,14 @@ final class PlantController extends AbstractController
      * The card in its Turbo Frame: loaded by the browser when the agent proposed a plant, and where its forms (edit,
      * validate, reminders) come back, wherever it shows.
      */
-    #[Route('/plants/{id}/card', name: 'plant_card', requirements: ['id' => '\d+'], methods: ['GET'])]
+    #[Route('/plants/{id}/card', name: 'plant_card', requirements: ['id' => Requirement::UUID], methods: ['GET'])]
     #[IsGranted(GardenResourceVoter::PLANT_VIEW, 'plant', statusCode: Response::HTTP_NOT_FOUND)]
     public function card(Plant $plant, ComponentRendererInterface $componentRenderer): Response
     {
         return new Response($componentRenderer->createAndRender('PlantCard', ['plant' => $plant]));
     }
 
-    #[Route('/plants/{id}/validate', name: 'plant_validate', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/plants/{id}/validate', name: 'plant_validate', requirements: ['id' => Requirement::UUID], methods: ['POST'])]
     #[IsGranted(PlantValidationVoter::VALIDATE, 'plant', statusCode: Response::HTTP_NOT_FOUND)]
     #[IsCsrfTokenValid('plant', tokenKey: '_token')]
     public function validate(Request $request, Plant $plant, PlantValidation $plantValidation): Response
@@ -136,7 +137,7 @@ final class PlantController extends AbstractController
      * In the frame of the card, wherever it shows (the chat, the page of the species): the form takes the place of the
      * card, and the card comes back once saved. Without a frame, a page of its own.
      */
-    #[Route('/plants/{id}/edit', name: 'plant_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    #[Route('/plants/{id}/edit', name: 'plant_edit', requirements: ['id' => Requirement::UUID], methods: ['GET', 'POST'])]
     #[IsGranted(GardenResourceVoter::PLANT_EDIT, 'plant', statusCode: Response::HTTP_NOT_FOUND)]
     public function edit(Request $request, Plant $plant): Response
     {
@@ -163,7 +164,7 @@ final class PlantController extends AbstractController
         return $this->render($inFrame ? 'plant/edit_frame.html.twig' : 'plant/edit.html.twig', ['plant' => $plant, 'form' => $form]);
     }
 
-    #[Route('/plants/{id}/reminders/{type}', name: 'plant_reminder', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/plants/{id}/reminders/{type}', name: 'plant_reminder', requirements: ['id' => Requirement::UUID], methods: ['POST'])]
     #[IsGranted(GardenResourceVoter::PLANT_EDIT, 'plant', statusCode: Response::HTTP_NOT_FOUND)]
     #[IsCsrfTokenValid('plant', tokenKey: '_token')]
     public function reminder(Request $request, Plant $plant, ReminderType $type): Response

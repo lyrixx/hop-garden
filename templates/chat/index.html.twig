@@ -28,7 +28,7 @@
                 {% elseif entry.kind == 'tool_call' %}
                     <twig:Chat:ToolCall :summary="entry.text"/>
                 {% elseif entry.kind == 'draft_card' %}
-                    <twig:Chat:DraftCard :plant="plants[entry.plantId] ?? null"/>
+                    <twig:Chat:DraftCard :plant="plants[entry.plantId.toRfc4122] ?? null"/>
                 {% elseif entry.kind == 'choices' %}
                     <twig:Chat:Choices :choices="entry.choices" :answered="entry.answered"/>
                 {% elseif entry.kind == 'planting_card' %}

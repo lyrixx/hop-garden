@@ -25,7 +25,7 @@ final readonly class ReminderTools
     }
 
     /**
-     * @return array{plant_id: int, enabled_reminders: list<string>}
+     * @return array{plant_id: string, enabled_reminders: list<string>}
      */
     #[McpTool(
         name: 'enable_reminder',
@@ -34,8 +34,8 @@ final readonly class ReminderTools
         annotations: new ToolAnnotations(readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false),
     )]
     public function enable(
-        #[Schema(description: 'Id of a validated plant.', minimum: 1)]
-        int $plant_id,
+        #[Schema(description: 'Id of a validated plant, a UUID, from list_collection.', format: 'uuid')]
+        string $plant_id,
         #[Schema(description: self::TYPE_DESCRIPTION)]
         ReminderType $type,
     ): array {
@@ -43,7 +43,7 @@ final readonly class ReminderTools
     }
 
     /**
-     * @return array{plant_id: int, enabled_reminders: list<string>}
+     * @return array{plant_id: string, enabled_reminders: list<string>}
      */
     #[McpTool(
         name: 'disable_reminder',
@@ -52,8 +52,8 @@ final readonly class ReminderTools
         annotations: new ToolAnnotations(readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false),
     )]
     public function disable(
-        #[Schema(description: 'Id of a validated plant.', minimum: 1)]
-        int $plant_id,
+        #[Schema(description: 'Id of a validated plant, a UUID, from list_collection.', format: 'uuid')]
+        string $plant_id,
         #[Schema(description: self::TYPE_DESCRIPTION)]
         ReminderType $type,
     ): array {
@@ -63,9 +63,9 @@ final readonly class ReminderTools
     /**
      * @param callable(\App\Plant\Entity\Plant): mixed $change
      *
-     * @return array{plant_id: int, enabled_reminders: list<string>}
+     * @return array{plant_id: string, enabled_reminders: list<string>}
      */
-    private function change(int $plantId, callable $change): array
+    private function change(string $plantId, callable $change): array
     {
         try {
             $plant = $this->plantRepository->get($this->currentGarden->get(), $plantId);
@@ -77,7 +77,7 @@ final readonly class ReminderTools
         $this->entityManager->flush();
 
         return [
-            'plant_id' => $plant->getId(),
+            'plant_id' => $plant->getId()->toRfc4122(),
             'enabled_reminders' => array_map(static fn (ReminderType $type): string => $type->value, $plant->getEnabledReminderTypes()),
         ];
     }

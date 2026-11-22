@@ -22,6 +22,7 @@ use Symfony\Component\HttpFoundation\UriSigner;
 use Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Translation\TranslatableMessage;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * The waiting list: register, verify the email, then wait for the administrator (App\Controller\Admin\).
@@ -94,7 +95,15 @@ final class RegistrationController extends AbstractController
             throw $this->createNotFoundException('This link was not signed by Hop Garden.', $e);
         }
 
-        $user = $this->userRepository->find($request->query->getInt('id')) ?? throw $this->createNotFoundException('This account was deleted.');
+        // A link sent before the ids were UUIDs: as an expired one
+        $id = $request->query->getString('id');
+        if (!Uuid::isValid($id)) {
+            $this->addFlash('warning', new TranslatableMessage('flash.registration.link_expired'));
+
+            return $this->redirectToRoute('reset_password_request', status: Response::HTTP_SEE_OTHER);
+        }
+
+        $user = $this->userRepository->find(Uuid::fromString($id)) ?? throw $this->createNotFoundException('This account was deleted.');
         $user->verifyEmail($this->clock->now());
         $this->entityManager->flush();
 

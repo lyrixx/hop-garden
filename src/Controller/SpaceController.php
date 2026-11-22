@@ -14,6 +14,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Translation\TranslatableMessage;
 
@@ -57,14 +58,14 @@ final class SpaceController extends AbstractController
         return $this->render('space/new.html.twig', ['form' => $form]);
     }
 
-    #[Route('/spaces/{id}', name: 'space_show', requirements: ['id' => '\d+'], methods: ['GET'])]
+    #[Route('/spaces/{id}', name: 'space_show', requirements: ['id' => Requirement::UUID], methods: ['GET'])]
     #[IsGranted(GardenResourceVoter::SPACE_VIEW, 'space', statusCode: Response::HTTP_NOT_FOUND)]
     public function show(Space $space): Response
     {
         return $this->render('space/show.html.twig', ['space' => $space]);
     }
 
-    #[Route('/spaces/{id}/edit', name: 'space_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    #[Route('/spaces/{id}/edit', name: 'space_edit', requirements: ['id' => Requirement::UUID], methods: ['GET', 'POST'])]
     #[IsGranted(GardenResourceVoter::SPACE_EDIT, 'space', statusCode: Response::HTTP_NOT_FOUND)]
     public function edit(Request $request, Space $space): Response
     {

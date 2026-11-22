@@ -30,8 +30,8 @@ final readonly class GetPlantTool
      * @return array<string, mixed>
      */
     public function __invoke(
-        #[Schema(description: 'Id of the plant, from list_collection or propose_plant.', minimum: 1)]
-        int $id,
+        #[Schema(description: 'Id of the plant, a UUID, from list_collection or propose_plant.', format: 'uuid')]
+        string $id,
     ): array {
         try {
             return $this->plantNormalizer->detail($this->plantRepository->get($this->currentGarden->get(), $id));

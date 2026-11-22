@@ -32,8 +32,8 @@ final readonly class RunRemindersCommand
         SymfonyStyle $io,
         #[Option(description: 'Day to simulate (YYYY-MM-DD), checked as if it were 7:00 that day in the timezone of each garden')]
         ?string $date = null,
-        #[Option(description: 'The id of the only garden to check')]
-        ?int $garden = null,
+        #[Option(description: 'The id of the only garden to check, a UUID')]
+        ?string $garden = null,
     ): int {
         if (null !== $date && false === \DateTimeImmutable::createFromFormat('!Y-m-d', $date)) {
             $io->error(\sprintf('Invalid date "%s", expected YYYY-MM-DD.', $date));
@@ -41,9 +41,9 @@ final readonly class RunRemindersCommand
             return 2;
         }
 
-        $gardens = array_values(array_filter($this->gardenRepository->findAllWithMembers(), static fn (Garden $candidate): bool => null === $garden || $candidate->getId() === $garden));
+        $gardens = array_values(array_filter($this->gardenRepository->findAllWithMembers(), static fn (Garden $candidate): bool => null === $garden || $candidate->getId()->toRfc4122() === $garden));
         if (null !== $garden && [] === $gardens) {
-            $io->error(\sprintf('No garden with id %d.', $garden));
+            $io->error(\sprintf('No garden with id %s.', $garden));
 
             return 2;
         }

@@ -12,6 +12,7 @@ use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
 use Mcp\Schema\ToolAnnotations;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * Writes nothing: the plant is added when the user taps its card, see App\Controller\ProposalController.
@@ -29,8 +30,8 @@ use Mcp\Schema\ToolAnnotations;
         'type' => 'object',
         'properties' => [
             'proposal_id' => ['type' => 'string'],
-            'plant_id' => ['type' => 'integer'],
-            'space_id' => ['type' => ['integer', 'null']],
+            'plant_id' => ['type' => 'string', 'format' => 'uuid'],
+            'space_id' => ['type' => ['string', 'null'], 'format' => 'uuid'],
             'name' => ['type' => 'string'],
             'validation_url' => ['type' => 'string'],
             'next_step' => ['type' => 'string'],
@@ -52,12 +53,12 @@ final readonly class ProposePlantingTool
      * @return array<string, mixed>
      */
     public function __invoke(
-        #[Schema(description: 'Id of the validated care sheet of its species: from list_collection, or the plant_id of propose_plant once the user validated it.', minimum: 1)]
-        int $plant_id,
+        #[Schema(description: 'Id of the validated care sheet of its species, a UUID: from list_collection, or the plant_id of propose_plant once the user validated it.', format: 'uuid')]
+        string $plant_id,
         #[Schema(description: 'What the user calls this plant, in their language. Example: "Hortensia".', minLength: 1, maxLength: 100)]
         string $name,
-        #[Schema(description: 'Id of the space where it grows, from list_spaces. Omit it only when the user does not know yet.', minimum: 1)]
-        ?int $space_id = null,
+        #[Schema(description: 'Id of the space where it grows, a UUID, from list_spaces. Omit it only when the user does not know yet.', format: 'uuid')]
+        ?string $space_id = null,
     ): array {
         $garden = $this->currentGarden->get();
 
@@ -68,14 +69,16 @@ final readonly class ProposePlantingTool
         }
 
         if (!$plant->isValidated()) {
-            throw new ToolCallException(\sprintf('The care sheet of %s (id %d) is a draft: the user validates its card first.', $plant->getCommonName(), $plant->getId()));
+            throw new ToolCallException(\sprintf('The care sheet of %s (id %s) is a draft: the user validates its card first.', $plant->getCommonName(), $plant->getId()));
         }
 
-        if (null !== $space_id && null === $this->spaceRepository->findOneInGarden($garden, $space_id)) {
-            throw new ToolCallException(\sprintf('No space with id %d: call list_spaces.', $space_id));
+        // Malformed, of another garden or unknown: the same answer
+        $space = null !== $space_id && Uuid::isValid($space_id) ? $this->spaceRepository->findOneInGarden($garden, Uuid::fromString($space_id)) : null;
+        if (null !== $space_id && null === $space) {
+            throw new ToolCallException(\sprintf('No space with id %s: call list_spaces.', $space_id));
         }
 
-        return $this->gardenNormalizer->plantingProposal(PlantingProposal::create($plant->getId(), $space_id, trim($name))) + [
+        return $this->gardenNormalizer->plantingProposal(PlantingProposal::create($plant->getId(), $space?->getId(), trim($name))) + [
             'next_step' => 'The "Add to my garden" card is shown to the user. Until they tap it, the plant is not in the garden.',
         ];
     }

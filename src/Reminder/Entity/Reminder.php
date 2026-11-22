@@ -7,15 +7,16 @@ use App\Reminder\Model\ReminderType;
 use App\Reminder\ReminderRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: ReminderRepository::class)]
 #[ORM\UniqueConstraint(fields: ['plant', 'type'])]
 class Reminder
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: UuidType::NAME)]
+    private Uuid $id;
 
     #[ORM\Column]
     private bool $enabled = false;
@@ -36,6 +37,7 @@ class Reminder
         #[ORM\Column]
         private ReminderType $type,
     ) {
+        $this->id = Uuid::v7();
     }
 
     public function enable(): void
@@ -85,9 +87,9 @@ class Reminder
         return true;
     }
 
-    public function getId(): int
+    public function getId(): Uuid
     {
-        return $this->id ?? throw new \LogicException('The reminder has not been persisted yet.');
+        return $this->id;
     }
 
     public function getPlant(): Plant

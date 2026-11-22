@@ -3,7 +3,7 @@
     {% embed 'plant/_form.html.twig' with {cancel_url: path('plant_card', {id: plant.id})} %}
         {% block heading %}
             <header class="care-sheet-form-head">
-                <p class="kicker">Tab. {{ plant.id }}<span>{{ plant.family }}</span></p>
+                <p class="kicker">Tab. {{ plant.id|specimen_number }}<span>{{ plant.family }}</span></p>
                 <h3>{{ (plant.validated ? 'care_sheet.edit.heading' : 'care_sheet.review.heading')|trans({species: '<em>' ~ plant.scientificName|e ~ '</em>'})|raw }}</h3>
                 <p class="hint">{{ 'care_sheet.edit.verified'|trans }}{% if not plant.validated %} {{ 'care_sheet.review.reminders_wait'|trans }}{% endif %}</p>
             </header>

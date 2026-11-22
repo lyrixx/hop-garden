@@ -17,6 +17,7 @@ use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -64,7 +65,7 @@ final class GardensController extends AbstractController
     /**
      * From the menu: the pages show this garden from now on.
      */
-    #[Route('/gardens/{id}/switch', name: 'garden_switch', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/gardens/{id}/switch', name: 'garden_switch', requirements: ['id' => Requirement::UUID], methods: ['POST'])]
     #[IsGranted(GardenVoter::VIEW, 'garden', statusCode: Response::HTTP_NOT_FOUND)]
     #[IsCsrfTokenValid('garden_switch', tokenKey: '_token')]
     public function switch(Garden $garden): Response
@@ -77,7 +78,7 @@ final class GardensController extends AbstractController
     /**
      * Its name and its place, by its owner. Its members come with the invitations (phase 2).
      */
-    #[Route('/gardens/{id}/settings', name: 'garden_settings', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    #[Route('/gardens/{id}/settings', name: 'garden_settings', requirements: ['id' => Requirement::UUID], methods: ['GET', 'POST'])]
     #[IsGranted(GardenVoter::MANAGE, 'garden', statusCode: Response::HTTP_NOT_FOUND)]
     public function settings(Request $request, Garden $garden): Response
     {

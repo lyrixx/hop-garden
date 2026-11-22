@@ -4,7 +4,6 @@ namespace App\Garden\Model;
 
 use App\Plant\Model\Exposure;
 use Symfony\Component\Uid\Uuid;
-use Symfony\Component\Uid\UuidV7;
 
 /**
  * A space the agent proposes to create, on a card the user completes and taps: nothing is written until then. Its id
@@ -15,7 +14,7 @@ use Symfony\Component\Uid\UuidV7;
 final readonly class SpaceProposal
 {
     public function __construct(
-        public string $proposalId,
+        public Uuid $proposalId,
         public string $name,
         public ?Exposure $exposure,
         public ?Soil $soil,
@@ -24,7 +23,7 @@ final readonly class SpaceProposal
 
     public static function create(string $name, ?Exposure $exposure, ?Soil $soil): self
     {
-        return new self((new UuidV7())->toRfc4122(), $name, $exposure, $soil);
+        return new self(Uuid::v7(), $name, $exposure, $soil);
     }
 
     /**
@@ -43,7 +42,7 @@ final readonly class SpaceProposal
             return null;
         }
 
-        return new self($proposalId, $name, null !== $exposure ? Exposure::tryFrom($exposure) : null, null !== $soil ? Soil::tryFrom($soil) : null);
+        return new self(Uuid::fromString($proposalId), $name, null !== $exposure ? Exposure::tryFrom($exposure) : null, null !== $soil ? Soil::tryFrom($soil) : null);
     }
 
     /**
@@ -52,7 +51,7 @@ final readonly class SpaceProposal
     public function toArray(): array
     {
         return [
-            'proposal_id' => $this->proposalId,
+            'proposal_id' => $this->proposalId->toRfc4122(),
             'name' => $this->name,
             'exposure' => $this->exposure?->value,
             'soil' => $this->soil?->value,

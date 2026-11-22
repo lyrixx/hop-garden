@@ -12,6 +12,7 @@ use App\Mercure\Topics;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Translation\LocaleSwitcher;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[AsMessageHandler]
@@ -37,7 +38,7 @@ final readonly class RunAgentHandler
      */
     public function __invoke(RunAgent $message): void
     {
-        $user = $this->userRepository->find($message->userId);
+        $user = $this->userRepository->find(Uuid::fromString($message->userId));
         if (null === $user) {
             $this->logger->info('Chat message skipped: its sender is gone.', ['user_id' => $message->userId]);
 
@@ -47,7 +48,7 @@ final readonly class RunAgentHandler
         $this->localeSwitcher->runWithLocale($message->locale, function () use ($message, $user): void {
             $topic = $this->topics->conversation($user, $message->conversationId);
 
-            $garden = $this->gardenRepository->findOneOfMember($message->gardenId, $user);
+            $garden = $this->gardenRepository->findOneOfMember(Uuid::fromString($message->gardenId), $user);
             if (null === $garden) {
                 $this->logger->warning('Chat message skipped: its sender is no member of its garden any more.', ['user_id' => $message->userId, 'garden_id' => $message->gardenId]);
                 $this->publisher->publish($topic, ChatEvent::Error, ['message' => $this->translator->trans('chat.error.not_a_member')]);

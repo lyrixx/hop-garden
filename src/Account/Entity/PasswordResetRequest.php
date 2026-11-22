@@ -4,6 +4,8 @@ namespace App\Account\Entity;
 
 use App\Account\PasswordResetRequestRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * "I forgot my password": the link of the email carries the token, the database only its hash.
@@ -15,9 +17,8 @@ class PasswordResetRequest
 
     // Only Doctrine reads it
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null; // @phpstan-ignore property.onlyWritten
+    #[ORM\Column(type: UuidType::NAME)]
+    private Uuid $id; // @phpstan-ignore property.onlyWritten
 
     // Only the queries read it: PasswordResetRequestRepository::findOneByToken()
     #[ORM\Column(unique: true)]
@@ -35,6 +36,7 @@ class PasswordResetRequest
         #[ORM\Column]
         private \DateTimeImmutable $requestedAt,
     ) {
+        $this->id = Uuid::v7();
         $this->tokenHash = self::hash($token);
         $this->expiresAt = $requestedAt->modify(self::LIFETIME);
     }
