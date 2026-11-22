@@ -1,0 +1,14 @@
+framework:
+    cache:
+        pools:
+            # Answers of Trefle and Open-Meteo (see App\DataSource\DataSourceCache)
+            data_source.cache:
+                adapter: cache.app
+
+when@test:
+    framework:
+        cache:
+            pools:
+                # On disk, a cached answer would outlive the test that put it there
+                data_source.cache:
+                    adapter: cache.adapter.array

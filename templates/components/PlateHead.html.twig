@@ -1,0 +1,10 @@
+{#
+    The title of a page, set like the head of a natural history plate.
+    tab: string, the number of the plate, in Roman numerals · title: string · subtitle: ?string
+#}
+{% props tab, title, subtitle = null %}
+<header class="plate-head">
+    <span class="plate-tab">Tab. {{ tab }}</span>
+    <h1>{{ title }}</h1>
+    {% if subtitle is not null %}<p>{{ subtitle }}</p>{% endif %}
+</header>

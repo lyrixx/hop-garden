@@ -1,0 +1,52 @@
+{#
+    The foot of a plant card: the review note, the sources and the credit of the figure, then the actions.
+    plant: App\Plant\Entity\Plant · plate: App\Plate\Model\Plate, its figure
+#}
+{% props plant, plate %}
+{% set sheet = plant.careSheet %}
+<div class="plate-colophon">
+    {% if not plant.validated %}
+        {% if sheet.llmOnly %}
+            <p class="warning">Trefle does not know this plant: every value comes from the assistant. Please verify.</p>
+        {% elseif sheet.hasLlmKnowledge %}
+            <p class="review-note">Review the highlighted values: the assistant is not sure of them.</p>
+        {% else %}
+            {# Created by hand: its values are placeholders, until the user changes them #}
+            <p class="review-note">Fill in the highlighted values, then validate. A value left as is stays highlighted, even when it is right.</p>
+        {% endif %}
+    {% endif %}
+    {% if plant.notes %}<p class="notes">{{ plant.notes }}</p>{% endif %}
+
+    <p>
+        Sources:
+        {% for source in sheet.sources %}
+            {%- if source.url %}<a href="{{ source.url }}" rel="noopener">{{ source.name }}</a>{% else %}{{ source.name }}{% endif %}{{ not loop.last ? ', ' }}
+        {%- endfor %}
+        · Check on <a href="https://www.rhs.org.uk/search?query={{ plant.scientificName|url_encode }}" rel="noopener">RHS</a>
+        or <a href="https://www.snhf.org/?s={{ plant.scientificName|url_encode }}" rel="noopener">SNHF</a>
+    </p>
+    <p class="plate-credit">
+        {% if plate.schematic %}
+            Schematic figure: the Biodiversity Heritage Library has no plate of this species yet.
+        {% else %}
+            Figure after <em>{{ plate.depicts }}</em>, {{ plate.work }} ({{ plate.published }}).
+            <a href="{{ plate.url }}" rel="noopener">Biodiversity Heritage Library</a>, public domain.
+        {% endif %}
+    </p>
+</div>
+
+<div class="actions">
+    <twig:Button href="{{ path('plant_edit', {id: plant.id}) }}" icon="pencil" class="button-secondary">Edit</twig:Button>
+    {% if plant.validated %}
+        {% set my_plant_path = my_plant_path(plant) %}
+        {% if my_plant_path %}
+            <twig:Button href="{{ my_plant_path }}" icon="sprout" class="button-next" data-turbo-frame="_top">See my plant</twig:Button>
+        {% endif %}
+    {% else %}
+        <span class="hint">Validate the card to set reminders.</span>
+        <form method="post" action="{{ path('plant_validate', {id: plant.id}) }}" data-chat-follow-up>
+            <input type="hidden" name="_token" value="{{ csrf_token('plant') }}">
+            <twig:Button icon="check">Validate</twig:Button>
+        </form>
+    {% endif %}
+</div>

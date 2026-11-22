@@ -1,0 +1,11 @@
+{
+  "data": [],
+  "links": {
+    "self": "/api/v1/plants/search",
+    "first": "/api/v1/plants/search?page=1",
+    "last": "/api/v1/plants/search?page=1"
+  },
+  "meta": {
+    "total": 0
+  }
+}

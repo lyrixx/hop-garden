@@ -1,0 +1,8 @@
+{#
+    Where a care sheet stands, as a pastille.
+    validated: bool, validated, or still a draft · The content replaces the label ("In your garden" or "Draft")
+#}
+{%- props validated = false -%}
+<span class="status status-{{ validated ? 'validated' : 'draft' }}">
+    {%- if validated %}<twig:Icon name="check" :size="14"/> {% endif %}{% block content %}{{ validated ? 'In your garden' : 'Draft' }}{% endblock -%}
+</span>

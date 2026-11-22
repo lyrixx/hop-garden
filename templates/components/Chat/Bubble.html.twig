@@ -1,0 +1,8 @@
+{#
+    A bubble of the chat.
+    kind: string, "user" (a message, as typed), "assistant" (an answer of the agent, in Markdown) or "error" (the agent
+    could not answer, or the page could not reach it) · text: string · id: ?string, of the answer being streamed ·
+    arriving: bool, shown as it comes, live (always, for an error)
+#}
+{%- props kind, text, id = null, arriving = false -%}
+<div class="bubble bubble-{{ kind }}{{ arriving or kind == 'error' ? ' is-arriving' }}"{% if id %} id="{{ id }}"{% endif %}>{% if kind == 'assistant' %}{{ text|chat_markdown }}{% else %}{{ text }}{% endif %}</div>

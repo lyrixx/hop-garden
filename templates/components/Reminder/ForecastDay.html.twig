@@ -1,0 +1,19 @@
+{#
+    A day of the frost forecast: its minimum, and the plants colder than their frost threshold that day.
+    day: App\Reminder\Model\ForecastDay · plantingIds: see Reminder:PlantLink
+#}
+{% props day, plantingIds %}
+<li class="forecast-day {{ day.plantsAtRisk is empty ? '' : 'is-at-risk' }}">
+    {# A forecast day is in the timezone of the garden #}
+    <time class="forecast-date" datetime="{{ day.minimum.date|date('Y-m-d', false) }}">{{ day.minimum.date|date('l j F', false) }}</time>
+    <span class="forecast-min">{{ day.minimum.minTemperatureC|number_format(1) }} °C</span>
+    {% if day.plantsAtRisk is empty %}
+        <p class="forecast-plants">No plant at risk</p>
+    {% else %}
+        <p class="forecast-plants"><span class="visually-hidden">At risk:</span>
+            {% for plant in day.plantsAtRisk %}
+                <span class="tag tag-frost"><twig:Icon name="snowflake" :size="12"/><twig:Reminder:PlantLink :plant="plant" :plantingIds="plantingIds"/></span>
+            {% endfor %}
+        </p>
+    {% endif %}
+</li>

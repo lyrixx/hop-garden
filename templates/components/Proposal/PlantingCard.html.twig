@@ -1,0 +1,61 @@
+{#
+    An "Add to my garden" card (App\Controller\ProposalController), in its Turbo Frame: its species, its space and its
+    name, then "Added" once tapped. In the chat, the added card tells the agent (data-chat-notice, see
+    chat_controller.js).
+    proposal: App\Garden\Model\PlantingProposal · planting: ?App\Garden\Entity\Planting, once added · plant:
+    ?App\Plant\Entity\Plant, its species · space: ?App\Garden\Entity\Space · form: ?FormView, until added · unavailable:
+    ?string, why it can no longer be added
+#}
+{%- props proposal, planting = null, plant = null, space = null, form = null, unavailable = null -%}
+{% set plate = plant ? plate(plant.scientificName) : null %}
+<turbo-frame id="planting-proposal-{{ proposal.proposalId }}">
+<article class="card proposal-card {{ planting ? 'is-done' }}"
+    {%- if planting %} data-chat-notice="I added {{ planting.name }} to my garden{{ planting.space ? ', in ' ~ planting.space.name }}."{% endif %}>
+    <header class="proposal-card-head">
+        <span class="proposal-card-figure">
+            {%- if plate -%}
+                <img src="{{ asset(plate.image) }}" alt="" width="{{ plate.width }}" height="{{ plate.height }}" loading="lazy">
+            {%- else -%}
+                <twig:Icon name="hop" :size="37"/>
+            {%- endif -%}
+        </span>
+        <div>
+            <p class="kicker">{{ planting ? 'My plant' : 'Add to my garden' }}</p>
+            <h3>{{ planting ? planting.name : proposal.name }}</h3>
+        </div>
+        {% if planting %}<twig:Status :validated="true">Added</twig:Status>{% endif %}
+    </header>
+
+    <dl class="proposal-facts">
+        <div>
+            <dt><span class="pict"><twig:Icon name="note" :size="15"/></span> Species</dt>
+            <dd>{% if plant %}<a href="{{ path('plant_show', {id: plant.id}) }}" data-turbo-frame="_top"><em>{{ plant.scientificName }}</em></a> · {{ plant.commonName }}{% else %}Unknown{% endif %}</dd>
+        </div>
+        <div>
+            <dt><span class="pict"><twig:Icon name="grid" :size="15"/></span> Space</dt>
+            <dd>
+                {%- if space -%}
+                    <a href="{{ path('space_show', {id: space.id}) }}" data-turbo-frame="_top">{{ space.name }}</a> <twig:Space:Conditions :space="space"/>
+                {%- else -%}
+                    Not in a space yet
+                {%- endif -%}
+            </dd>
+        </div>
+    </dl>
+
+    {% if planting %}
+        <div class="actions">
+            <twig:Button href="{{ path('garden_show', {id: planting.id}) }}" icon="sprout" class="button-next" data-turbo-frame="_top">See my plant</twig:Button>
+        </div>
+    {% elseif unavailable %}
+        <p class="warning">{{ unavailable }}</p>
+    {% elseif form %}
+        {{ form_start(form, {attr: {class: 'proposal-form', 'data-chat-follow-up': ''}}) }}
+            {{ form_row(form.name) }}
+            <div class="actions">
+                <twig:Button icon="sprout" :iconSize="18">Add to my garden</twig:Button>
+            </div>
+        {{ form_end(form) }}
+    {% endif %}
+</article>
+</turbo-frame>

@@ -1,0 +1,38 @@
+# Context of the production image (see the "Production stages" of
+# infrastructure/docker/services/php/Dockerfile): the repository root. Only what the application
+# needs at runtime goes in.
+.castor
+.claude
+.git
+.github
+.home
+infrastructure
+media
+tests
+tools
+var
+vendor
+video
+.castor.stub.php
+.env.dev
+.env.test
+# Only at the root: config/agent/gardener.md is the prompt of the agent
+*.md
+castor.php
+phpstan.neon
+phpunit.xml.dist
+.php-cs-fixer.php
+.php-cs-fixer.cache
+.phpunit.result.cache
+.twig-cs-fixer.cache
+
+# Local or generated files, never in the image (.env.local holds the API keys)
+.env.local
+.env.local.php
+.env.*.local
+phpunit.xml
+config/reference.php
+assets/vendor
+public/assets
+public/bundles
+public/uploads

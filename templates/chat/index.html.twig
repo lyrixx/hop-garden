@@ -1,0 +1,57 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Assistant · Hop Garden{% endblock %}
+
+{# A live conversation: never shown from the cache of Turbo Drive, which would replay an old state #}
+{% block head %}{{ turbo_exempts_page_from_cache() }}{% endblock %}
+
+{% block body %}
+    {# The answer of the worker comes as Turbo Streams, through Mercure: see App\Chat\AgentRunner #}
+    {# A card that tells the agent once tapped (data-chat-follow-up): see chat_controller.js #}
+    <section class="chat" data-controller="chat" data-action="turbo:before-stream-render@document->chat#rendering turbo:submit-start->chat#follow turbo:frame-render->chat#tell">
+        {{ turbo_stream_from(topic) }}
+
+        <div class="chat-header">
+            <twig:PlateHead tab="I" title="Your gardening assistant" subtitle="Name a plant: the assistant identifies it, drafts its care sheet with Trefle and its own knowledge, and you validate it."/>
+            <form method="post" action="{{ path('chat_new') }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('chat') }}">
+                <twig:Button class="button-light">New conversation</twig:Button>
+            </form>
+        </div>
+
+        <div class="chat-log" id="chat-log" data-chat-target="log">
+            {% for entry in entries %}
+                {% if entry.kind == 'user' %}
+                    <twig:Chat:Bubble kind="user" :text="entry.text"/>
+                {% elseif entry.kind == 'assistant' %}
+                    <twig:Chat:Bubble kind="assistant" :text="entry.text"/>
+                {% elseif entry.kind == 'tool_call' %}
+                    <twig:Chat:ToolCall :summary="entry.text"/>
+                {% elseif entry.kind == 'draft_card' %}
+                    <twig:Chat:DraftCard :plant="plants[entry.plantId] ?? null"/>
+                {% elseif entry.kind == 'choices' %}
+                    <twig:Chat:Choices :choices="entry.choices" :answered="entry.answered"/>
+                {% elseif entry.kind == 'planting_card' %}
+                    <twig:Chat:PlantingCard :proposal="entry.plantingProposal"/>
+                {% elseif entry.kind == 'space_card' %}
+                    <twig:Chat:SpaceCard :proposal="entry.spaceProposal"/>
+                {% endif %}
+            {% else %}
+                <div class="chat-empty" id="chat-empty" data-chat-target="empty"><twig:BlankPlate/></div>
+            {% endfor %}
+        </div>
+        <twig:Chat:Run :busy="false"/>
+
+        {# Shown by the page itself: the message as soon as it is sent, and what goes wrong before the worker answers #}
+        <template data-chat-target="sentMessage"><twig:Chat:Bubble kind="user" text="" :arriving="true"/></template>
+        <template data-chat-target="sendError"><twig:Chat:Bubble kind="error" text="The message could not be sent. Reload the page and try again."/></template>
+        <template data-chat-target="silence"><twig:Chat:Bubble kind="error" text="No answer yet: is the worker running? (castor start-workers)"/></template>
+
+        <form class="chat-form" method="post" action="{{ path('chat_send') }}" data-chat-target="form"
+              data-action="chat#send turbo:submit-start->chat#sending turbo:before-fetch-response->chat#received turbo:submit-end->chat#sent">
+            <input type="hidden" name="_token" value="{{ csrf_token('chat') }}">
+            <input type="text" name="text" value="{{ app.request.query.get('message') }}" maxlength="500" required autocomplete="off" placeholder="A plant name, or a question about your garden…" data-chat-target="input" autofocus>
+            <twig:Button data-chat-target="submit">Send</twig:Button>
+        </form>
+    </section>
+{% endblock %}

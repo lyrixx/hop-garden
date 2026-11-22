@@ -1,0 +1,16 @@
+{#
+    A question of the agent with its options as buttons (offer_choices): a tap sends the option as a message of the user,
+    as if typed. Only the last question has its buttons on, until it is answered, and not while the agent runs: see
+    chat_controller.js.
+    choices: App\Chat\Model\Choices · answered: bool, a message of the user, or another question, came after it ·
+    arriving: bool, shown as it comes, live
+#}
+{%- props choices, answered = false, arriving = false -%}
+<div class="chat-choices{{ answered ? ' is-answered' }}{{ arriving ? ' is-arriving' }}" data-chat-target="choices" data-answered="{{ answered ? 'true' : 'false' }}">
+    <p class="chat-choices-question">{{ choices.question }}</p>
+    <div class="chat-choices-options">
+        {%- for option in choices.options %}
+            <button type="button" class="chat-choice" data-action="chat#suggest" data-chat-text-param="{{ option }}"{{ answered ? ' disabled' }}>{{ option }}</button>
+        {%- endfor %}
+    </div>
+</div>

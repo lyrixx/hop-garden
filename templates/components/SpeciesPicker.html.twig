@@ -1,0 +1,38 @@
+{#
+    A name and its species (App\Twig\Components\SpeciesPicker). The fields come from the form, at mount only: the morph
+    leaves them alone (data-live-ignore) and the live controller sets their values from the props (data-model). The
+    chips update the trefleId prop; the component finds the scientific name. Required, for a new species: the assistant
+    is offered instead, with the name as typed.
+#}
+<div{{ attributes.defaults({class: 'garden-species'}) }}>
+    <div data-live-ignore>
+        {%- if form -%}
+            {{ form_row(form.name, {attr: {'data-model': 'debounce(300)|name'}}) }}
+            {{ form_widget(form.trefleId, {type: 'hidden', attr: {'data-model': 'trefleId'}}) }}
+            {{ form_widget(form.scientificName, {attr: {'data-model': 'scientificName'}}) }}
+        {%- endif -%}
+    </div>
+    <p class="garden-species-chosen" {{ scientificName is null ? 'hidden' }}>
+        <span class="kicker">Species</span> <em>{{ scientificName }}</em>
+        <button type="button" class="chip" data-action="live#update" data-model="trefleId" data-value="">Change</button>
+    </p>
+    {% set result = this.searchResult %}
+    <div class="garden-species-candidates" aria-live="polite">
+        {%- if result is not null -%}
+            {%- if result.trefleUnavailable -%}
+                <p class="hint">{{ required ? 'Trefle does not answer: try again in a moment.' : 'Trefle does not answer: your name is kept as is.' }}</p>
+            {%- elseif result.candidates is empty -%}
+                <p class="hint">{{ required ? 'Trefle does not know this name: try its Latin name.' : 'Trefle does not know this name: it is kept as is.' }}</p>
+            {%- else -%}
+                <p class="kicker garden-species-label">Which species is it?{{ not required ? ' (optional)' }}</p>
+                {%- for candidate in result.candidates -%}
+                    <button type="button" class="chip" data-action="live#update" data-model="trefleId" data-value="{{ candidate.trefleId }}"><em>{{ candidate.scientificName }}</em>{{ candidate.commonName ? ' · ' ~ candidate.commonName }}</button>
+                {%- endfor -%}
+            {%- endif -%}
+        {%- endif -%}
+    </div>
+    {%- if required -%}
+        {% set subject = scientificName ?? (name|trim is not empty ? name|trim : 'a new species') %}
+        <p class="hint garden-species-assistant">Rather not fill in its care sheet yourself? <a href="{{ path('chat', {message: 'Draft the care sheet of ' ~ subject}) }}">Ask the assistant to draft it</a></p>
+    {%- endif -%}
+</div>

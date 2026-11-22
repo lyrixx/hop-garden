@@ -1,0 +1,82 @@
+# Production image: self-contained (code baked in, no bind mount), non-root, see the "Production
+# stages" of services/php/Dockerfile.
+#
+# Only for a LOCAL TEST of that image, with the "prod" castor context: `castor start -c prod` runs it
+# in a minimal stack (http://127.0.0.1:8000, demo mode, a throwaway database), and
+# `castor docker:push -c prod --tag=...` builds and pushes it. A deployment does not run this file:
+# it runs the image with its own database.
+
+x-app-env: &app-env
+    APP_SECRET: not-a-secret
+    DATABASE_URL: "postgresql://app:app@postgres:5432/app?serverVersion=18&charset=utf8"
+    DEFAULT_URI: http://127.0.0.1:8000
+    MCP_AGENT_URL: http://app:8080/_mcp/agent
+    MCP_ALLOWED_HOSTS: localhost,127.0.0.1,app
+    MERCURE_JWT_ISSUER: http://127.0.0.1:8000
+    MERCURE_PUBLIC_URL: http://127.0.0.1:8000/.well-known/mercure
+    MERCURE_PUBLISHER_JWT_KEY: not-a-secret-but-at-least-256-bits
+    MERCURE_SUBSCRIBER_JWT_KEY: not-a-secret-but-at-least-256-bits
+    MERCURE_URL: http://app:8080/.well-known/mercure
+    # From the environment of castor: the LLM key, and APP_DEMO=0 with TREFLE_TOKEN for the real
+    # services
+    ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+    APP_DEMO: "${APP_DEMO:-1}"
+    TREFLE_TOKEN: "${TREFLE_TOKEN:-}"
+
+volumes:
+    postgres-data: {}
+    share: {}
+    uploads: {}
+
+services:
+    # The version run in production, not the one of the dev stack
+    postgres:
+        image: postgres:18
+        environment:
+            POSTGRES_USER: app
+            POSTGRES_PASSWORD: app
+        volumes:
+            - postgres-data:/var/lib/postgresql
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U app"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+    app:
+        build:
+            context: services/php
+            target: app
+            additional_contexts:
+                source: ../..
+            cache_from:
+                - "type=registry,ref=${REGISTRY}/app:cache"
+        image: "${REGISTRY}/app:latest"
+        environment: *app-env
+        ports:
+            - "8000:8080"
+        volumes:
+            - share:/var/www/var/share
+            - uploads:/var/www/public/uploads
+        depends_on:
+            postgres:
+                condition: service_healthy
+
+    # Same image, with the command of the worker. "worker" profile: started after the migrations
+    # (castor start)
+    worker_messenger:
+        image: "${REGISTRY}/app:latest"
+        command: [php, -d, memory_limit=1G, bin/console, messenger:consume, async, scheduler_default, --memory-limit=128M, --time-limit=3600]
+        environment: *app-env
+        volumes:
+            - share:/var/www/var/share
+            - uploads:/var/www/public/uploads
+        depends_on:
+            app:
+                condition: service_healthy
+        healthcheck:
+            disable: true
+        # messenger:consume stops by itself (--time-limit, --memory-limit): Docker restarts it
+        restart: unless-stopped
+        profiles:
+            - worker

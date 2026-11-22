@@ -1,0 +1,18 @@
+{#
+    The drawing of a plate, its anchors and its leader lines: each line runs from a part of the plant to the number
+    of its figure in the margin. The SVG shares the box of the image, in percent of its width and height.
+    plate: App\Plate\Model\Plate
+#}
+{% props plate %}
+<div class="plate-picture" style="aspect-ratio: {{ plate.width }} / {{ plate.height }}">
+    <img src="{{ asset(plate.image) }}" alt="{{ plate.depicts ?? 'Schematic figure of a flowering shrub' }}" width="{{ plate.width }}" height="{{ plate.height }}">
+    <svg class="plate-leaders" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        {% for figure in plate.figures %}
+            <line x1="{{ figure.anchor.x }}" y1="{{ figure.anchor.y }}" x2="{{ figure.side.value == 'left' ? -5 : 105 }}" y2="{{ figure.numberY }}" vector-effect="non-scaling-stroke"/>
+        {% endfor %}
+    </svg>
+    {% for figure in plate.figures %}
+        <span class="plate-anchor" style="left: {{ figure.anchor.x }}%; top: {{ figure.anchor.y }}%" aria-hidden="true"></span>
+        <span class="plate-number plate-mark plate-mark-{{ figure.side.value }}" style="top: {{ figure.numberY }}%" aria-hidden="true">{{ figure.number }}</span>
+    {% endfor %}
+</div>

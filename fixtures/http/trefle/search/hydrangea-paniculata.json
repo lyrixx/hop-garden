@@ -1,0 +1,34 @@
+{
+  "data": [
+    {
+      "id": 191052,
+      "common_name": "Panicled hydrangea",
+      "slug": "hydrangea-paniculata",
+      "scientific_name": "Hydrangea paniculata",
+      "year": 1829,
+      "bibliography": null,
+      "author": "Siebold",
+      "status": "accepted",
+      "rank": "species",
+      "family_common_name": "Hydrangea family",
+      "genus_id": null,
+      "image_url": null,
+      "synonyms": [],
+      "genus": "Hydrangea",
+      "family": "Hydrangeaceae",
+      "links": {
+        "self": "/api/v1/species/hydrangea-paniculata",
+        "plant": "/api/v1/plants/hydrangea-paniculata",
+        "genus": "/api/v1/genus/hydrangea"
+      }
+    }
+  ],
+  "links": {
+    "self": "/api/v1/plants/search?q=hydrangea+paniculata",
+    "first": "/api/v1/plants/search?page=1&q=hydrangea+paniculata",
+    "last": "/api/v1/plants/search?page=1&q=hydrangea+paniculata"
+  },
+  "meta": {
+    "total": 1
+  }
+}

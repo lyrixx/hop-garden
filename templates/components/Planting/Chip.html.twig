@@ -1,0 +1,15 @@
+{#
+    My plant of a species, as a chip: its photo and its name, then its space. On the page of the species and in the
+    index of the species.
+    planting: App\Garden\Entity\Planting, its space loaded
+#}
+{% props planting %}
+<li>
+    <a class="species-planting" href="{{ path('garden_show', {id: planting.id}) }}">
+        <span class="plant-card-image"><twig:PlantingPhoto :planting="planting" :size="29"/></span>
+        <span><span class="page-label page-label-plant">My plant</span> <strong>{{ planting.name }}</strong></span>
+    </a>
+    {% if planting.space %}
+        <a class="tag species-planting-space" href="{{ path('space_show', {id: planting.space.id}) }}"><twig:Icon name="grid" :size="13"/> {{ planting.space.name }}</a>
+    {% endif %}
+</li>

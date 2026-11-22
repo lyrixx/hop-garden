@@ -1,0 +1,92 @@
+name: Continuous Integration
+
+"on":
+    push:
+        branches: ["main"]
+    pull_request:
+        branches: ["main"]
+    schedule:
+        - cron: "0 0 * * MON"
+
+concurrency:
+    group: ci-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+permissions:
+    contents: read
+
+env:
+    # Fix for symfony/console color detection. We know GitHub Actions can handle it
+    ANSICON: "1"
+    CASTOR_CONTEXT: ci
+
+jobs:
+    check-dockerfiles:
+        name: Check Dockerfile
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  persist-credentials: false
+
+            - name: Check php/Dockerfile
+              uses: hadolint/hadolint-action@v3.5.0
+              with:
+                  dockerfile: infrastructure/docker/services/php/Dockerfile
+
+    ci:
+        name: Continuous Integration
+        runs-on: ubuntu-latest
+        steps:
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v4
+
+            - name: Install Castor
+              uses: castor-php/setup-castor@v1.1.0
+
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  persist-credentials: false
+
+            - name: "Build and start the infrastructure"
+              run: "castor start"
+
+            - name: "Check Security issues"
+              run: "castor qa:security-audit"
+
+            - name: "Check PHP coding standards"
+              run: "castor qa:cs --dry-run"
+
+            - name: "Run Twig CS"
+              run: "castor qa:twig-cs --dry-run"
+
+            - name: "Run PHPStan"
+              run: |
+                # PHPStan needs the container to be compiled
+                castor builder -- bin/console about --env=dev
+                castor qa:phpstan
+
+            - name: "Run PHPUnit"
+              run: "castor qa:phpunit"
+
+            # The frontend gets no APP_ENV, it serves the dev environment: its database is not the one of the tests
+            - name: "Migrate the database of the frontend"
+              run: "castor app:db:migrate"
+              env:
+                  CASTOR_CONTEXT: default
+
+            - name: "Test HTTP server"
+              run: |
+                  set -e
+                  set -o pipefail
+
+                  curl --fail --insecure --silent -H "Host: hop-garden.test" https://127.0.0.1 | grep "Hop Garden"
+
+            - name: "Show the response and the logs"
+              if: failure()
+              run: |
+                  curl --insecure --silent --include -H "Host: hop-garden.test" https://127.0.0.1 | head -n 60 || true
+                  docker ps --all --format "{{.Names}}: {{.Status}}"
+                  docker logs --tail 80 hop-garden-frontend-1 2>&1 || true

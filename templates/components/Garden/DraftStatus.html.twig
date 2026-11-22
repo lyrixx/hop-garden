@@ -1,0 +1,12 @@
+{#
+    Where the care sheet of a planting stands until it is validated: the assistant drafting it, then its draft waiting
+    for a review. No signed form: the page renders it, and the worker once the draft is proposed
+    (templates/chat/stream/care_sheet_drafted.stream.html.twig).
+    planting: App\Garden\Entity\Planting
+#}
+{% props planting %}
+{% if planting.plant %}
+    <p class="hint" data-drafting-target="drafted">The draft of its care sheet is waiting for your review, on the page of its species. Validate it to get the recommendations.</p>
+{% elseif planting.drafting %}
+    <p class="garden-pending" data-drafting-target="pending">The assistant is drafting the care sheet of {{ planting.name }}, through MCP.</p>
+{% endif %}

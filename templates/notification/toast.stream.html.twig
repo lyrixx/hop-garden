@@ -1,0 +1,7 @@
+{# notification: App\Reminder\Entity\Notification · unread: the unread count, this one included #}
+<turbo-stream action="append" target="toasts">
+    <template><twig:Notification:Toast :notification="notification"/></template>
+</turbo-stream>
+<turbo-stream action="replace" target="notification-badge">
+    <template><twig:Notification:Badge :unread="unread"/></template>
+</turbo-stream>

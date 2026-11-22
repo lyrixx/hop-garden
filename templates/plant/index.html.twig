@@ -1,0 +1,62 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Species · Hop Garden{% endblock %}
+
+{% block body %}
+<div class="with-specimen">
+<div>
+    <nav class="breadcrumb"><span class="page-label page-label-species">Species</span> All species</nav>
+    <twig:PlateHead tab="III" title="Species" subtitle="The care sheet of each species, its plate and its Latin name, and my plants that follow it."/>
+    <p class="species-index-actions">
+        <twig:Button href="{{ path('plant_new') }}" icon="note" :iconSize="18" class="button-light button-next">New species</twig:Button>
+        <span class="callout">or <a href="{{ path('chat', {message: 'Draft the care sheet of a new species'}) }}">ask the assistant to draft it</a></span>
+    </p>
+
+    {% set validated = entries|filter(entry => entry.plant.validated) %}
+    {% set drafts = entries|filter(entry => not entry.plant.validated) %}
+    {% if entries is empty %}
+        <p class="callout">No species yet. <a href="{{ path('plant_new') }}">Create the first one</a>, or add a plant to your garden: its species follows.</p>
+    {% endif %}
+    {% for section in [
+        {id: 'validated', title: 'Validated care sheets', entries: validated},
+        {id: 'drafts', title: 'Drafts waiting for your review', entries: drafts},
+    ] %}
+        {% if section.entries is not empty %}
+            <section class="species-index-section" id="species-{{ section.id }}">
+                <h2>{{ section.title }}</h2>
+                <ul class="species-list">
+                    {% for entry in section.entries %}
+                        {% set plant = entry.plant %}
+                        {% set plate = plate(plant.scientificName) %}
+                        <li class="card species-row {{ plant.validated ? 'is-validated' : 'is-draft' }}">
+                            <a class="species-row-name" href="{{ path('plant_show', {id: plant.id}) }}">
+                                <img class="species-summary-plate" src="{{ asset(plate.image) }}" alt="{{ plate.depicts ?? 'Schematic figure of a flowering shrub' }}" width="{{ plate.width }}" height="{{ plate.height }}" loading="lazy">
+                                <span>
+                                    <strong>{{ plant.commonName }}</strong>
+                                    <em class="latin">{{ plant.scientificName }}</em>
+                                    {% if plant.family %}<span class="kicker">{{ plant.family }}</span>{% endif %}
+                                </span>
+                            </a>
+                            <twig:Status :validated="plant.validated">{{ plant.validated ? 'Care sheet validated' : 'Draft to review' }}</twig:Status>
+                            <div class="species-row-plantings">
+                                {% if entry.plantings is empty %}
+                                    <p class="hint">{{ plant.validated ? 'None of your plants follows it.' : 'No plant of yours yet: validate it, then add your plant to the garden.' }}</p>
+                                {% else %}
+                                    <p class="kicker">{{ entry.plantings|length }} {{ entry.plantings|length > 1 ? 'plants' : 'plant' }} in your garden</p>
+                                    <ul class="species-planting-list">
+                                        {% for planting in entry.plantings %}
+                                            <twig:Planting:Chip :planting="planting"/>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+    {% endfor %}
+</div>
+<twig:Specimen plate="gonystylus-miquelianus"/>
+</div>
+{% endblock %}

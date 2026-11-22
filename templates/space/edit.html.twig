@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit {{ space.name }} · Hop Garden{% endblock %}
+
+{% block body %}
+    <header class="plate-head">
+        <nav class="breadcrumb"><a href="{{ path('spaces') }}">My spaces</a> › <a href="{{ path('space_show', {id: space.id}) }}">{{ space.name }}</a> › Edit</nav>
+        <h1>Edit {{ space.name }}</h1>
+        <p>Its exposure and its soil apply to every plant growing there.</p>
+    </header>
+
+    {{ form_start(form, {attr: {class: 'card crowned care-sheet-form garden-form'}}) }}
+        {{ form_errors(form) }}
+        {{ include('space/_form.html.twig') }}
+
+        <div class="actions">
+            <twig:Button href="{{ path('space_show', {id: space.id}) }}" class="button-secondary">Cancel</twig:Button>
+            <twig:Button icon="check" :iconSize="18">Save</twig:Button>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}

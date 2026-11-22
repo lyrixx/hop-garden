@@ -1,0 +1,78 @@
+{
+  "data": [
+    {
+      "id": 155623,
+      "common_name": "English lavender",
+      "slug": "lavandula-angustifolia",
+      "scientific_name": "Lavandula angustifolia",
+      "year": 1768,
+      "bibliography": null,
+      "author": "Mill.",
+      "status": "accepted",
+      "rank": "species",
+      "family_common_name": "Mint family",
+      "genus_id": null,
+      "image_url": null,
+      "synonyms": [],
+      "genus": "Lavandula",
+      "family": "Lamiaceae",
+      "links": {
+        "self": "/api/v1/species/lavandula-angustifolia",
+        "plant": "/api/v1/plants/lavandula-angustifolia",
+        "genus": "/api/v1/genus/lavandula"
+      }
+    },
+    {
+      "id": 155631,
+      "common_name": "Lavandin",
+      "slug": "lavandula-x-intermedia",
+      "scientific_name": "Lavandula × intermedia",
+      "year": 1828,
+      "bibliography": null,
+      "author": "Emeric ex Loisel.",
+      "status": "accepted",
+      "rank": "species",
+      "family_common_name": "Mint family",
+      "genus_id": null,
+      "image_url": null,
+      "synonyms": [],
+      "genus": "Lavandula",
+      "family": "Lamiaceae",
+      "links": {
+        "self": "/api/v1/species/lavandula-x-intermedia",
+        "plant": "/api/v1/plants/lavandula-x-intermedia",
+        "genus": "/api/v1/genus/lavandula"
+      }
+    },
+    {
+      "id": 155644,
+      "common_name": "French lavender",
+      "slug": "lavandula-stoechas",
+      "scientific_name": "Lavandula stoechas",
+      "year": 1753,
+      "bibliography": null,
+      "author": "L.",
+      "status": "accepted",
+      "rank": "species",
+      "family_common_name": "Mint family",
+      "genus_id": null,
+      "image_url": null,
+      "synonyms": [],
+      "genus": "Lavandula",
+      "family": "Lamiaceae",
+      "links": {
+        "self": "/api/v1/species/lavandula-stoechas",
+        "plant": "/api/v1/plants/lavandula-stoechas",
+        "genus": "/api/v1/genus/lavandula"
+      }
+    }
+  ],
+  "links": {
+    "self": "/api/v1/plants/search?q=lavandula",
+    "first": "/api/v1/plants/search?page=1&q=lavandula",
+    "last": "/api/v1/plants/search?page=1&q=lavandula"
+  },
+  "meta": {
+    "total": 3
+  }
+}

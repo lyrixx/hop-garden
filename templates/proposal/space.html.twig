@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Create {{ proposal.name }} · Hop Garden{% endblock %}
+
+{# The card of App\Controller\ProposalController as a page: the URL propose_space gives an external MCP client #}
+{% block body %}
+    <header class="plate-head">
+        <nav class="breadcrumb"><a href="{{ path('spaces') }}">My spaces</a> › New space</nav>
+        <h1>Create a space</h1>
+        <p>Your assistant proposes this space. Pick its exposure and its soil: nothing is created until you tap the card.</p>
+    </header>
+    <twig:Proposal:SpaceCard :proposal="proposal" :space="space" :form="form ?? null"/>
+{% endblock %}

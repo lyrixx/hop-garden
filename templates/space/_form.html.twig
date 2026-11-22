@@ -1,0 +1,19 @@
+{# The fields of a space, shared by its creation, its edition and the space card of the chat. form: SpaceType #}
+{{ form_row(form.name) }}
+
+<fieldset class="choices">
+    <legend>Exposure</legend>
+    {% for choice in form.exposure %}
+        <label class="choice">{{ form_widget(choice) }}{% if choice.vars.value %}<twig:Icon :name="choice.vars.value" :size="16"/>{% endif %}<span>{{ choice.vars.label }}</span></label>
+    {% endfor %}
+    {{ form_help(form.exposure) }}
+    {{ form_errors(form.exposure) }}
+</fieldset>
+
+<fieldset class="choices">
+    <legend>Soil</legend>
+    {% for choice in form.soil %}
+        <label class="choice">{{ form_widget(choice) }}<span>{{ choice.vars.label }}</span></label>
+    {% endfor %}
+    {{ form_errors(form.soil) }}
+</fieldset>

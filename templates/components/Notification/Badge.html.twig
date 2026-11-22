@@ -1,0 +1,6 @@
+{#
+    The unread count of the top bar, replaced by the toast stream.
+    unread: int
+#}
+{%- props unread -%}
+<span class="badge" id="notification-badge" {{ unread == 0 ? 'hidden' }}>{{ unread }}</span>

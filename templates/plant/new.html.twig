@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New species · Hop Garden{% endblock %}
+
+{% block body %}
+    <header class="plate-head">
+        <nav class="breadcrumb"><span class="page-label page-label-species">Species</span> <a href="{{ path('plant_index') }}">All species</a> › New species</nav>
+        <h1>New species</h1>
+        <p>Pick it with Trefle, then fill in its care sheet yourself and validate it. Then add your plant to the garden.</p>
+    </header>
+
+    {{ form_start(form, {attr: {class: 'card crowned care-sheet-form garden-form'}}) }}
+        {{ form_errors(form) }}
+
+        <twig:SpeciesPicker :form="form" :required="true"/>
+
+        <div class="actions">
+            <twig:Button href="{{ path('plant_index') }}" class="button-secondary">Cancel</twig:Button>
+            <twig:Button icon="note" :iconSize="18">Create the draft</twig:Button>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}

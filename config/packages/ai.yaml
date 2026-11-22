@@ -1,0 +1,47 @@
+ai:
+    platform:
+        anthropic:
+            api_key: '%env(ANTHROPIC_API_KEY)%'
+        openai:
+            api_key: '%env(OPENAI_API_KEY)%'
+
+    message_store:
+        doctrine:
+            dbal:
+                # Table created by a migration, see migrations/
+                chat:
+                    connection: default
+                    table_name: chat_conversation
+
+    agent:
+        gardener:
+            # Picks ai.platform.anthropic or ai.platform.openai from AI_PLATFORM, see App\Chat\PlatformSelector
+            platform: 'app.ai.platform'
+            model:
+                name: '%env(AI_MODEL)%'
+                options:
+                    # The default of the Anthropic bridge (1000) can cut a propose_plant call short
+                    max_output_tokens: 4096
+            prompt:
+                file: '%kernel.project_dir%/config/agent/gardener.md'
+            # The agent reaches the application through its own MCP server, like any MCP client
+            tools:
+                - { mcp_server: 'chat.hopgarden' }
+            message_store: 'ai.message_store.doctrine.dbal.chat'
+            max_tool_calls: 20
+
+mcp:
+    clients:
+        chat:
+            client_info:
+                name: 'hop-garden-chat'
+                version: '1.0.0'
+            # MCP logging is deprecated since the 2026-07-28 revision
+            forward_server_logs: false
+            init_timeout: 10
+            request_timeout: 60
+            max_retries: 1
+            servers:
+                hopgarden:
+                    transport: http
+                    url: '%env(MCP_AGENT_URL)%'

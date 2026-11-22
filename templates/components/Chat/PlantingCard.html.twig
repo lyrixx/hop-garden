@@ -1,0 +1,11 @@
+{#
+    An "Add to my garden" card of the agent (propose_planting), live and in the history: the browser loads it in its
+    frame, the worker has no session to sign its form. See App\Controller\ProposalController.
+    proposal: App\Garden\Model\PlantingProposal · arriving: bool, shown as it comes, live
+#}
+{%- props proposal, arriving = false -%}
+<div class="chat-card chat-proposal{{ arriving ? ' is-arriving' }}">
+    <turbo-frame id="planting-proposal-{{ proposal.proposalId }}" src="{{ path('planting_proposal', proposal.toArray()) }}" data-action="turbo:frame-load->chat#scroll:once">
+        <p class="callout">Loading the card…</p>
+    </turbo-frame>
+</div>

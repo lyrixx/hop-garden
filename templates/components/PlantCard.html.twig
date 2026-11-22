@@ -1,0 +1,58 @@
+{#
+    The care sheet of a species (App\Twig\Components\PlantCard), in its Turbo Frame wherever it shows: Edit, Validate
+    and the reminders answer in the frame. Only the links that navigate leave it (data-turbo-frame="_top").
+    Validating it adds no plant to the garden: "In your garden" once a plant of the garden follows it. In the chat, the
+    validated card tells the agent (data-chat-notice, see chat_controller.js), which asks where the plant grows.
+#}
+{% set plate = this.plate %}
+{% set in_garden = plant.validated and my_plant_path(plant) is not null %}
+<turbo-frame id="plant-card-{{ plant.id }}-frame">
+<article class="card crowned plant-card {{ plant.validated ? 'is-validated' : 'is-draft' }}" id="plant-card-{{ plant.id }}"
+    {%- if plant.validated %} data-chat-notice="I validated the care sheet of {{ plant.commonName }}."{% endif %}>
+    <header class="card-head">
+        <div>
+            <p class="kicker">Tab. {{ plant.id }}<span>{{ plant.family }}</span></p>
+            <h3><a href="{{ path('plant_show', {id: plant.id}) }}" data-turbo-frame="_top">{{ plant.commonName }}</a></h3>
+            <p class="latin"><em>{{ plant.scientificName }}</em></p>
+        </div>
+        <twig:Status :validated="plant.validated">{{ not plant.validated ? 'Draft' : (in_garden ? 'In your garden' : 'Validated') }}</twig:Status>
+    </header>
+
+    <figure class="plant-card-plate">
+        <img src="{{ asset(plate.image) }}" alt="{{ plate.depicts ?? 'Schematic figure of a flowering shrub' }}" width="{{ plate.width }}" height="{{ plate.height }}">
+    </figure>
+
+    <div class="plant-card-parts">
+        {% for part in enum_cases('App\\Plate\\Model\\PlatePart') %}
+            <section class="plant-card-part">
+                <h4>
+                    <span class="pict"><twig:Icon :name="part.pictogram" :size="16"/></span>
+                    <em>{{ part.latinLabel }}</em>
+                    <span class="kicker">{{ part.label }}</span>
+                </h4>
+                <table class="care-sheet">
+                    <tbody>
+                        {% for row in this.rowsOf(part) %}
+                            <twig:PlantCard:Row :plant="plant" :row="row"/>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if plant.validated and part.reminderType %}
+                    <twig:PlantCard:Reminder :plant="plant" :type="part.reminderType"/>
+                {% endif %}
+            </section>
+            {# The scale sits next to the bud, which bears the frost #}
+            {% if loop.first %}
+                <section class="plant-card-hardiness">
+                    <h4>Hardiness</h4>
+                    <twig:HardinessScale :careSheet="plant.careSheet"/>
+                </section>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <footer class="card-foot">
+        <twig:PlantCard:Colophon :plant="plant" :plate="plate"/>
+    </footer>
+</article>
+</turbo-frame>

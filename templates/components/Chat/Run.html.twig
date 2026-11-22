@@ -1,0 +1,6 @@
+{#
+    Whether the agent runs, for the waiting dots of the chat (chat_controller.js).
+    busy: bool
+#}
+{%- props busy -%}
+<div id="chat-run" data-chat-target="run" data-busy="{{ busy ? 'true' : 'false' }}" hidden></div>

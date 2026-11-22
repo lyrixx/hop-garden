@@ -1,0 +1,17 @@
+{# The fields of a planting after its name and species, shared by its creation and its edition. form: PlantingType; photo_help: instead of the help of the photo #}
+{{ form_row(form.photo, photo_help is defined ? {help: photo_help} : {}) }}
+
+<div class="garden-space">
+    {{ form_row(form.space) }}
+    <p class="garden-space-new"><a href="{{ path('space_new') }}"><twig:Icon name="grid" :size="14"/> New space</a></p>
+</div>
+
+{{ form_row(form.diseases) }}
+
+<fieldset class="garden-care">
+    <legend>{{ form.careRecords.vars.label }}</legend>
+    <p class="hint">The last time, if you remember. A pruning counts for its season only: next year, Hop Garden reminds you again.</p>
+    {% for task in form.careRecords %}
+        <div class="garden-care-field">{{ form_row(task) }}</div>
+    {% endfor %}
+</fieldset>

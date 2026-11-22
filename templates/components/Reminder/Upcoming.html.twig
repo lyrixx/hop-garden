@@ -1,0 +1,17 @@
+{#
+    A reminder coming up: its type, the plant it is about and its day; for a frost alert, the coldest of its frost days.
+    upcoming: App\Reminder\Model\UpcomingReminder|App\Reminder\Model\UpcomingFrost · plantingIds: see Reminder:PlantLink
+#}
+{% props upcoming, plantingIds %}
+{% set type = upcoming.reminder.type %}
+<li class="upcoming upcoming-{{ type.value }}">
+    <span class="pict {{ type.calendar ? '' : 'pict-frost' }}"><twig:Icon :name="type.pictogram" :size="18"/></span>
+    <div>
+        <p class="upcoming-heading"><span class="tag tag-{{ type.value }}">{{ type.label }}</span> <twig:Reminder:PlantLink :plant="upcoming.reminder.plant" :plantingIds="plantingIds"/></p>
+        {# The day as it was computed: a forecast day is in the timezone of the garden #}
+        <p class="meta">
+            <time datetime="{{ upcoming.startsOn|date('Y-m-d', false) }}">{{ upcoming.startsOn|date('l j F', false) }}</time>
+            {%- if not type.calendar %}, down to {{ upcoming.risk.coldestDay.minTemperatureC|number_format(1) }} °C{% endif %}
+        </p>
+    </div>
+</li>

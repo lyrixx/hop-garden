@@ -1,0 +1,44 @@
+{#
+    The empty chat: a blank plate whose figures wait for a plant, and three suggestions, each with its small figure.
+    No prop.
+#}
+{% set blank = plate('') %}
+<div class="card crowned blank-plate">
+    {% for side in ['left', 'right'] %}
+        <ol class="plate-legend">
+            {% for figure in blank.figures|filter(figure => figure.side.value == side) %}
+                <li class="plate-fig">
+                    <h4><span class="plate-number">{{ figure.number }}</span> <em>{{ figure.part.latinLabel }}</em> <span class="kicker">{{ figure.part.label }}</span></h4>
+                    <ul class="blank-fields">
+                        {% for field in figure.part.fields %}<li>{{ field.label }}</li>{% endfor %}
+                    </ul>
+                </li>
+            {% endfor %}
+        </ol>
+        {% if loop.first %}
+            <figure class="plate-figure"><twig:PlatePicture :plate="blank"/></figure>
+        {% endif %}
+    {% endfor %}
+</div>
+
+{% set suggestions = [
+    {text: 'hortensia', plate: plate('Hydrangea macrophylla')},
+    {text: 'lavender', plate: plate('Lavandula angustifolia')},
+    {text: 'What should I prune this month?', icon: 'secateurs'},
+] %}
+
+<div class="suggestions">
+    <span class="suggestions-label">Try</span>
+    {% for suggestion in suggestions %}
+        <button type="button" class="suggestion" data-action="chat#suggest" data-chat-text-param="{{ suggestion.text }}">
+            <span class="suggestion-figure">
+                {%- if suggestion.plate is defined -%}
+                    <img src="{{ asset(suggestion.plate.image) }}" alt="" loading="lazy">
+                {%- else -%}
+                    <twig:Icon :name="suggestion.icon" :size="22"/>
+                {%- endif -%}
+            </span>
+            {{ suggestion.text }}
+        </button>
+    {% endfor %}
+</div>

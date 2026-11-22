@@ -1,0 +1,14 @@
+{# The hardiness scale of a care sheet (App\Twig\Components\HardinessScale) #}
+{% set coldest = this.coldest %}
+{% set threshold = this.threshold %}
+<div class="hardiness-scale" role="img" aria-label="Hardy down to {{ coldest }} °C, frost alert below {{ threshold }} °C">
+    <div class="hardiness-track">
+        <span class="hardiness-hardy" style="left: {{ this.position(coldest) }}%"></span>
+        {% for degrees in this.ticks %}
+            <span class="hardiness-tick {{ degrees == 0 ? 'is-zero' }}" style="left: {{ this.position(degrees) }}%">{% if this.labelled(degrees) %}<span>{{ degrees|replace({'-': '−'}) }}</span>{% endif %}</span>
+        {% endfor %}
+        <span class="hardiness-mark hardiness-coldest" style="left: {{ this.position(coldest) }}%"><span>{{ coldest|replace({'-': '−'}) }} °C</span></span>
+        <span class="hardiness-mark hardiness-threshold" style="left: {{ this.position(threshold) }}%"><span>frost alert {{ threshold|replace({'-': '−'}) }} °C</span></span>
+    </div>
+    <p class="hardiness-caption">Scale of hardiness, in °C</p>
+</div>

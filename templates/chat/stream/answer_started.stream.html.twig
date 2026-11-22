@@ -1,0 +1,2 @@
+{# answer: App\Chat\Model\StreamedAnswer #}
+<turbo-stream action="append" target="chat-log"><template><twig:Chat:Bubble kind="assistant" :id="answer.id" :text="answer.text" :arriving="true"/></template></turbo-stream>

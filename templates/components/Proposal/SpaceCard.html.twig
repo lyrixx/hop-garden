@@ -1,0 +1,36 @@
+{#
+    A space card (App\Controller\ProposalController), in its Turbo Frame: its name prefilled, its exposure and its soil
+    to tap, then "Created" once tapped. In the chat, the created card tells the agent (data-chat-notice, see
+    chat_controller.js).
+    proposal: App\Garden\Model\SpaceProposal · space: ?App\Garden\Entity\Space, once created · form: ?FormView, until
+    created
+#}
+{%- props proposal, space = null, form = null -%}
+<turbo-frame id="space-proposal-{{ proposal.proposalId }}">
+<article class="card proposal-card {{ space ? 'is-done' }}"
+    {%- if space %} data-chat-notice="I created the space {{ space.name }}."{% endif %}>
+    <header class="proposal-card-head">
+        <span class="proposal-card-figure"><twig:Icon name="grid" :size="28"/></span>
+        <div>
+            <p class="kicker">{{ space ? 'My space' : 'New space' }}</p>
+            <h3>{{ space ? space.name : proposal.name }}</h3>
+        </div>
+        {% if space %}<twig:Status :validated="true">Created</twig:Status>{% endif %}
+    </header>
+
+    {% if space %}
+        <twig:Space:Conditions :space="space"/>
+        <div class="actions">
+            <twig:Button href="{{ path('space_show', {id: space.id}) }}" icon="grid" class="button-next" data-turbo-frame="_top">See the space</twig:Button>
+        </div>
+    {% elseif form %}
+        {{ form_start(form, {attr: {class: 'proposal-form', 'data-chat-follow-up': ''}}) }}
+            {{ form_errors(form) }}
+            {{ include('space/_form.html.twig') }}
+            <div class="actions">
+                <twig:Button icon="grid" :iconSize="18">Create the space</twig:Button>
+            </div>
+        {{ form_end(form) }}
+    {% endif %}
+</article>
+</turbo-frame>
