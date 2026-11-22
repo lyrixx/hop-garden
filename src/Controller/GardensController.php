@@ -58,7 +58,7 @@ final class GardensController extends AbstractController
         return $this->render('gardens/new.html.twig', [
             'form' => $form,
             'first' => [] === $gardenRepository->findOfMember($user),
-        ], new Response(status: $form->isSubmitted() && !$form->isValid() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
+        ], self::formResponse($form));
     }
 
     /**
@@ -95,7 +95,17 @@ final class GardensController extends AbstractController
             return $this->redirectToRoute('garden_settings', ['id' => $garden->getId()], Response::HTTP_SEE_OTHER);
         }
 
-        return $this->render('gardens/settings.html.twig', ['garden' => $garden, 'form' => $form], new Response(status: $form->isSubmitted() && !$form->isValid() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
+        return $this->render('gardens/settings.html.twig', ['garden' => $garden, 'form' => $form], self::formResponse($form));
+    }
+
+    /**
+     * A form sent and shown again, searched or invalid: a 422, which Turbo Drive renders in place.
+     *
+     * @param FormInterface<GardenFormData> $form
+     */
+    private static function formResponse(FormInterface $form): Response
+    {
+        return new Response(status: $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK);
     }
 
     /**

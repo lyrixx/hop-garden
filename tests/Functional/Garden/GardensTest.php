@@ -44,7 +44,7 @@ final class GardensTest extends WebTestCase
 
         // Paris has homonyms: one to pick
         $crawler = $this->client->submit($crawler->selectButton('Find')->form(), ['garden[name]' => 'The orchard', 'garden[city]' => 'Paris']);
-        self::assertResponseIsSuccessful();
+        self::assertResponseStatusCodeSame(422, 'Shown again: Turbo Drive renders it in place.');
         self::assertSame(
             ['Paris, Île-de-France, France', 'Paris, Texas, United States', 'Paris, Tennessee, United States'],
             $crawler->filter('.garden-places .choice span')->each(static fn (Crawler $label): string => $label->text()),
