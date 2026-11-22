@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'garden.settings.title'|trans }} · Hop Garden{% endblock %}
+
+{# By its owner only (GARDEN_MANAGE): its name, and its place, kept unless a city is searched #}
+{% block body %}
+    <header class="plate-head">
+        <span class="plate-tab">{{ 'garden.settings.tab'|trans }}</span>
+        <h1>{{ garden.name }}</h1>
+        <p>{{ 'garden.settings.intro'|trans({place: garden.location.placeName, timezone: garden.location.timezone.name}) }}</p>
+    </header>
+
+    {{ include('gardens/_form.html.twig', {submit: 'action.save'|trans}) }}
+
+    <section class="card account-section garden-members">
+        <h2>{{ 'garden.settings.members'|trans }}</h2>
+        <ul>
+            {% for membership in garden.memberships %}
+                <li>{{ membership.user.displayName }} · {{ membership.role|trans }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+{% endblock %}

@@ -8,7 +8,7 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\String\Slugger\AsciiSlugger;
 
 /**
- * Serves the responses stored in fixtures/http/ in place of Trefle and Open-Meteo.
+ * Serves the responses stored in fixtures/http/ in place of Trefle and Open-Meteo (its forecast and its geocoding).
  */
 final readonly class RecordedResponses
 {
@@ -31,7 +31,8 @@ final readonly class RecordedResponses
 
         return match (true) {
             'trefle.io' === $host && '/api/v1/plants/search' === $path => $this->trefleSearch($this->stringParameter($query, 'q')),
-            'api.open-meteo.com' === $host && '/v1/forecast' === $path => $this->openMeteoForecast((int) $this->stringParameter($query, 'forecast_days')),
+            'api.open-meteo.com' === $host && '/v1/forecast' === $path => $this->openMeteoForecast((int) $this->stringParameter($query, 'forecast_days'), (float) $this->stringParameter($query, 'latitude'), (float) $this->stringParameter($query, 'longitude')),
+            'geocoding-api.open-meteo.com' === $host && '/v1/search' === $path => $this->openMeteoGeocoding($this->stringParameter($query, 'name')),
             default => throw new \LogicException(\sprintf('No recorded response for "%s %s".', $method, $url)),
         };
     }
@@ -46,12 +47,15 @@ final readonly class RecordedResponses
     }
 
     /**
-     * The recorded forecast is moved to start today, so the demo always warns about the coming days.
+     * The recorded forecast is moved to start today, so the demo always warns about the coming days, and to the position
+     * asked: the same cold snap in every garden.
      */
-    private function openMeteoForecast(int $days): MockResponse
+    private function openMeteoForecast(int $days, float $latitude, float $longitude): MockResponse
     {
-        /** @var array{daily: array{time: list<string>, temperature_2m_min: list<float>}} $forecast */
+        /** @var array{latitude: float, longitude: float, daily: array{time: list<string>, temperature_2m_min: list<float>}} $forecast */
         $forecast = json_decode((string) file_get_contents($this->fixturesDir . '/open-meteo/forecast-frost.json'), true, flags: JSON_THROW_ON_ERROR);
+        $forecast['latitude'] = $latitude;
+        $forecast['longitude'] = $longitude;
 
         $minimums = \array_slice($forecast['daily']['temperature_2m_min'], 0, max(1, $days));
         $today = $this->clock->now()->setTime(0, 0);
@@ -63,6 +67,16 @@ final readonly class RecordedResponses
         );
 
         return new MockResponse(json_encode($forecast, JSON_THROW_ON_ERROR), ['response_headers' => ['content-type' => 'application/json']]);
+    }
+
+    /**
+     * The places of a few cities, whatever the language asked: any other name finds none.
+     */
+    private function openMeteoGeocoding(string $name): MockResponse
+    {
+        $file = 'open-meteo/geocoding/' . $this->slug($name) . '.json';
+
+        return $this->json(is_file($this->fixturesDir . '/' . $file) ? $file : 'open-meteo/geocoding/_empty.json');
     }
 
     private function json(string $file): MockResponse

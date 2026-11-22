@@ -2,6 +2,7 @@
 
 namespace App\Garden\Form;
 
+use App\Garden\Entity\Garden;
 use App\Garden\Entity\Planting;
 use App\Garden\Entity\Space;
 use App\Garden\Form\Model\PlantingFormData;
@@ -43,6 +44,8 @@ final class PlantingType extends AbstractType
             ]);
         }
 
+        /** @var Garden $garden */
+        $garden = $options['garden'];
         /** @var ?Planting $planting */
         $planting = $options['planting'];
         /** @var ?Plant $plant */
@@ -77,7 +80,8 @@ final class PlantingType extends AbstractType
                 },
                 // Its name is the user's, its conditions translated already
                 'choice_translation_domain' => false,
-                'query_builder' => static fn (SpaceRepository $spaceRepository) => $spaceRepository->createOrderedQueryBuilder(),
+                // The spaces of its garden only: a space of another one is no choice, sent or not
+                'query_builder' => static fn (SpaceRepository $spaceRepository) => $spaceRepository->createOrderedQueryBuilder($garden),
                 'help' => 'planting.form.space.help',
             ])
             ->add('diseases', TextareaType::class, [
@@ -91,6 +95,9 @@ final class PlantingType extends AbstractType
 
     public function configureOptions(OptionsResolver $resolver): void
     {
+        // The garden of the planting: its spaces are the choices
+        $resolver->setRequired('garden');
+        $resolver->setAllowedTypes('garden', Garden::class);
         $resolver->setDefaults([
             'data_class' => PlantingFormData::class,
             // The planting to edit, or null for a new one

@@ -6,6 +6,7 @@ use App\DataSource\DataSourceCache;
 use App\DataSource\Exception\DataSourceUnavailableException;
 use App\DataSource\OpenMeteo\Model\DailyMinimum;
 use App\DataSource\OpenMeteo\OpenMeteoClient;
+use App\Garden\Entity\GardenLocation;
 use Monolog\Handler\TestHandler;
 use Monolog\Level;
 use Monolog\Logger;
@@ -34,7 +35,7 @@ final class OpenMeteoClientTest extends TestCase
         $response = self::forecast(['2026-12-01' => -3.2, '2026-12-02' => null, '2026-12-03' => -12.4]);
         $httpClient = new MockHttpClient($response, 'https://api.open-meteo.com');
 
-        $forecast = $this->client($httpClient)->getFrostForecast(3);
+        $forecast = $this->client($httpClient)->getFrostForecast(self::garden(), 3);
 
         self::assertSame('GET', $response->getRequestMethod());
         self::assertSame('https://api.open-meteo.com/v1/forecast?latitude=46.6&longitude=2.4&daily=temperature_2m_min&forecast_days=3&timezone=auto', $response->getRequestUrl());
@@ -49,7 +50,7 @@ final class OpenMeteoClientTest extends TestCase
 
     public function testAnIntegerTemperatureIsAFloat(): void
     {
-        $forecast = $this->client(new MockHttpClient(self::forecast(['2026-12-01' => -3]), 'https://api.open-meteo.com'))->getFrostForecast(1);
+        $forecast = $this->client(new MockHttpClient(self::forecast(['2026-12-01' => -3]), 'https://api.open-meteo.com'))->getFrostForecast(self::garden(), 1);
 
         self::assertSame(-3.0, $forecast->days[0]->minTemperatureC);
     }
@@ -62,7 +63,7 @@ final class OpenMeteoClientTest extends TestCase
     {
         $response = self::forecast(['2026-12-01' => 1.0]);
 
-        $this->client(new MockHttpClient($response, 'https://api.open-meteo.com'))->getFrostForecast($days);
+        $this->client(new MockHttpClient($response, 'https://api.open-meteo.com'))->getFrostForecast(self::garden(), $days);
 
         self::assertStringContainsString('&forecast_days=' . $forecastDays . '&', $response->getRequestUrl());
     }
@@ -76,24 +77,39 @@ final class OpenMeteoClientTest extends TestCase
         ], 'https://api.open-meteo.com');
         $client = $this->client($httpClient);
 
-        $client->getFrostForecast(1);
+        $client->getFrostForecast(self::garden(), 1);
         $this->clock->modify('+10 hours');
-        $client->getFrostForecast(1);
+        $client->getFrostForecast(self::garden(), 1);
         self::assertSame(1, $httpClient->getRequestsCount(), 'Cached for the day.');
 
-        $client->getFrostForecast(2);
+        $client->getFrostForecast(self::garden(), 2);
         self::assertSame(2, $httpClient->getRequestsCount(), 'Another length, another forecast.');
 
         $this->clock->modify('+1 day');
-        self::assertSame('2026-12-02', $client->getFrostForecast(1)->days[0]->date->format('Y-m-d'));
+        self::assertSame('2026-12-02', $client->getFrostForecast(self::garden(), 1)->days[0]->date->format('Y-m-d'));
         self::assertSame(3, $httpClient->getRequestsCount(), 'A new day, a new forecast.');
+    }
+
+    public function testTheGardensOfATownShareTheirForecast(): void
+    {
+        $response = self::forecast(['2026-12-01' => -3.2]);
+        $httpClient = new MockHttpClient([$response, self::forecast(['2026-12-01' => 4.0])], 'https://api.open-meteo.com');
+        $client = $this->client($httpClient);
+
+        $client->getFrostForecast(new GardenLocation('Montluçon', 46.3409, 2.6031, 'Europe/Paris'), 3);
+        $client->getFrostForecast(new GardenLocation('Désertines', 46.3142, 2.6148, 'Europe/Paris'), 3);
+        self::assertSame(1, $httpClient->getRequestsCount(), 'The same position, rounded to a tenth of a degree.');
+        self::assertStringStartsWith('https://api.open-meteo.com/v1/forecast?latitude=46.3&longitude=2.6&', $response->getRequestUrl());
+
+        $client->getFrostForecast(new GardenLocation('Paris', 48.85341, 2.3488, 'Europe/Paris'), 3);
+        self::assertSame(2, $httpClient->getRequestsCount(), 'Another town, another forecast.');
     }
 
     #[DataProvider('provideAFailureIsUnavailableCases')]
     public function testAFailureIsUnavailable(MockResponse $response): void
     {
         try {
-            $this->client(new MockHttpClient($response, 'https://api.open-meteo.com'))->getFrostForecast(3);
+            $this->client(new MockHttpClient($response, 'https://api.open-meteo.com'))->getFrostForecast(self::garden(), 3);
             self::fail('The forecast must fail.');
         } catch (DataSourceUnavailableException $e) {
             self::assertStringStartsWith('Open-Meteo ', $e->getMessage());
@@ -120,7 +136,12 @@ final class OpenMeteoClientTest extends TestCase
 
     private function client(MockHttpClient $httpClient): OpenMeteoClient
     {
-        return new OpenMeteoClient($httpClient, new DataSourceCache(new ArrayAdapter(), false), new Logger('test', [$this->logs]), $this->clock, 46.6, 2.4);
+        return new OpenMeteoClient($httpClient, new DataSourceCache(new ArrayAdapter(), false), new Logger('test', [$this->logs]), $this->clock);
+    }
+
+    private static function garden(): GardenLocation
+    {
+        return new GardenLocation('The center of France', 46.6, 2.4, 'Europe/Paris');
     }
 
     /**

@@ -1,8 +1,9 @@
 {#
-    The member logged in, at the end of the top bar: their account, the back-office for the administrator, the logout.
-    No prop.
+    The member logged in, at the end of the top bar: their garden, their account, the back-office for the administrator,
+    the logout. No prop.
 #}
 <div class="account-menu">
+    <twig:GardenSwitcher/>
     {% if is_granted('ROLE_ADMIN') %}
         <a href="{{ path('admin') }}" class="account-menu-item" title="{{ 'nav.admin'|trans }}"><twig:Icon name="shield" :size="18"/><span class="account-menu-label">{{ 'nav.admin'|trans }}</span></a>
     {% endif %}

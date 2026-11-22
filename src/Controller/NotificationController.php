@@ -2,9 +2,12 @@
 
 namespace App\Controller;
 
+use App\Account\Entity\User;
 use App\DataSource\Exception\DataSourceUnavailableException;
 use App\DataSource\OpenMeteo\Model\FrostForecast;
 use App\DataSource\OpenMeteo\OpenMeteoClient;
+use App\Garden\CurrentGarden;
+use App\Garden\Entity\Garden;
 use App\Garden\PlantingRepository;
 use App\Plant\Entity\Plant;
 use App\Plant\PlantRepository;
@@ -20,10 +23,12 @@ use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 /**
- * The reminders and alerts by hand, what the agent gets from upcoming_reminders and get_frost_forecast: the reminders
- * coming up, the frost forecast with the plants it threatens, then the notifications received.
+ * The reminders and alerts of the current garden by hand, what the agent gets from upcoming_reminders and
+ * get_frost_forecast: the reminders coming up, the frost forecast at the garden with the plants it threatens, then the
+ * notifications the member received there.
  */
 final class NotificationController extends AbstractController
 {
@@ -35,6 +40,7 @@ final class NotificationController extends AbstractController
     public function __construct(
         private readonly CalendarSchedule $calendarSchedule,
         private readonly ClockInterface $clock,
+        private readonly CurrentGarden $currentGarden,
         private readonly EntityManagerInterface $entityManager,
         private readonly FrostRiskEvaluator $frostRiskEvaluator,
         private readonly NotificationRepository $notificationRepository,
@@ -46,10 +52,11 @@ final class NotificationController extends AbstractController
     }
 
     #[Route('/notifications', name: 'notifications', methods: ['GET'])]
-    public function index(): Response
+    public function index(#[CurrentUser] User $user): Response
     {
-        $forecast = $this->frostForecast();
-        $reminders = $this->reminderRepository->findEnabled();
+        $garden = $this->currentGarden->get();
+        $forecast = $this->frostForecast($garden);
+        $reminders = $this->reminderRepository->findEnabled($garden);
 
         $comingUp = [
             ...$this->calendarSchedule->upcoming($reminders, $this->clock->now(), self::COMING_UP_DAYS),
@@ -58,8 +65,8 @@ final class NotificationController extends AbstractController
         // By day: a forecast day starts at midnight in the timezone of the garden, a calendar one in the one of the clock
         usort($comingUp, static fn (UpcomingReminder|UpcomingFrost $a, UpcomingReminder|UpcomingFrost $b): int => $a->startsOn->format('Y-m-d') <=> $b->startsOn->format('Y-m-d'));
 
-        $forecastDays = null !== $forecast ? $this->frostRiskEvaluator->plantsAtRiskByDay($this->plantRepository->findValidated(), $forecast) : null;
-        $notifications = $this->notificationRepository->findLatest();
+        $forecastDays = null !== $forecast ? $this->frostRiskEvaluator->plantsAtRiskByDay($this->plantRepository->findValidated($garden), $forecast) : null;
+        $notifications = $this->notificationRepository->findLatest($user, $garden);
 
         $plants = [];
         foreach ($comingUp as $upcoming) {
@@ -78,11 +85,11 @@ final class NotificationController extends AbstractController
             'forecast_days' => $forecastDays,
             'notifications' => $notifications,
             // Each plant links to my plant of its species, in the garden: see my_plant_path()
-            'planting_ids' => $this->plantingRepository->findIdsForPlants(self::distinct($plants)),
+            'planting_ids' => $this->plantingRepository->findIdsForPlants($garden, self::distinct($plants)),
         ]);
 
         // Seen once listed: the "unread" highlight is computed before
-        foreach ($this->notificationRepository->findUnread() as $notification) {
+        foreach ($this->notificationRepository->findUnread($user, $garden) as $notification) {
             $notification->markRead($this->clock->now());
         }
         $this->entityManager->flush();
@@ -90,11 +97,11 @@ final class NotificationController extends AbstractController
         return $response;
     }
 
-    private function frostForecast(): ?FrostForecast
+    private function frostForecast(Garden $garden): ?FrostForecast
     {
         try {
             // The days and the cache of the reminder check and of the page of my plant
-            return $this->openMeteoClient->getFrostForecast(ReminderChecker::FROST_FORECAST_DAYS);
+            return $this->openMeteoClient->getFrostForecast($garden->getLocation(), ReminderChecker::FROST_FORECAST_DAYS);
         } catch (DataSourceUnavailableException) {
             // Already logged by the client: the page says the forecast is unavailable
             return null;

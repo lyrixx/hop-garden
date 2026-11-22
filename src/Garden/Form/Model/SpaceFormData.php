@@ -2,6 +2,7 @@
 
 namespace App\Garden\Form\Model;
 
+use App\Garden\Entity\Garden;
 use App\Garden\Entity\Space;
 use App\Garden\Model\Soil;
 use App\Garden\Model\SpaceProposal;
@@ -49,14 +50,14 @@ final class SpaceFormData
         return $data;
     }
 
-    public function toSpace(\DateTimeImmutable $createdAt): Space
+    public function toSpace(Garden $garden, \DateTimeImmutable $createdAt): Space
     {
-        return new Space(trim($this->name), $this->exposure, $this->soil, $createdAt);
+        return new Space($garden, trim($this->name), $this->exposure, $this->soil, $createdAt);
     }
 
-    public function toProposedSpace(string $proposalId, \DateTimeImmutable $createdAt): Space
+    public function toProposedSpace(Garden $garden, string $proposalId, \DateTimeImmutable $createdAt): Space
     {
-        return Space::proposed($proposalId, trim($this->name), $this->exposure, $this->soil, $createdAt);
+        return Space::proposed($garden, $proposalId, trim($this->name), $this->exposure, $this->soil, $createdAt);
     }
 
     public function applyTo(Space $space): void

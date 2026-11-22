@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Garden\CurrentGarden;
 use App\Garden\Entity\Planting;
 use App\Garden\Form\Model\PlantingProposalFormData;
 use App\Garden\Form\Model\SpaceFormData;
@@ -11,6 +12,8 @@ use App\Garden\Model\PlantingProposal;
 use App\Garden\Model\Soil;
 use App\Garden\Model\SpaceProposal;
 use App\Garden\PlantingRepository;
+use App\Garden\Security\GardenOfTheResource;
+use App\Garden\Security\GardenResourceVoter;
 use App\Garden\SpaceRepository;
 use App\Plant\Model\Exposure;
 use App\Plant\PlantRepository;
@@ -34,6 +37,9 @@ use Symfony\Component\Translation\TranslatableMessage;
  *
  * What the card proposes travels in its URL (see PlantingProposal and SpaceProposal); the row created from it keeps its
  * id, so that the card says "Added" or "Created" once tapped, after a reload too, and a second tap adds nothing.
+ *
+ * In the current garden: the care sheet and the space of a card are of it, or gone; a card tapped in another garden
+ * answers 404, whether it is a garden of the member (a switch first, GardenOfTheResource) or not.
  */
 final class ProposalController extends AbstractController
 {
@@ -42,6 +48,8 @@ final class ProposalController extends AbstractController
         private readonly ClockInterface $clock,
         private readonly FormFactoryInterface $formFactory,
         private readonly LoggerInterface $logger,
+        private readonly CurrentGarden $currentGarden,
+        private readonly GardenOfTheResource $gardenOfTheResource,
     ) {
     }
 
@@ -58,14 +66,24 @@ final class ProposalController extends AbstractController
 
         $planting = $plantingRepository->findOneByProposalId($proposal->proposalId);
         if (null !== $planting) {
+            $this->gardenOfTheResource->follow($planting->getGarden());
+            if (!$this->isGranted(GardenResourceVoter::PLANTING_VIEW, $planting)) {
+                throw $this->createNotFoundException(\sprintf('No planting of the current garden was added from proposal %s.', $proposal->proposalId));
+            }
+
             return $request->isMethod('POST')
                 ? $this->redirect($cardUrl, Response::HTTP_SEE_OTHER)
                 : $this->card($request, 'Proposal:PlantingCard', 'proposal/planting.html.twig', ['proposal' => $proposal, 'planting' => $planting, 'plant' => $planting->getPlant(), 'space' => $planting->getSpace()]);
         }
 
-        // Deleted since the agent proposed it, or a URL made by hand
-        $plant = $plantRepository->find($proposal->plantId);
-        $space = null !== $proposal->spaceId ? $spaceRepository->find($proposal->spaceId) : null;
+        // Deleted since the agent proposed it, a URL made by hand, or of another garden: the same
+        $proposed = $plantRepository->find($proposal->plantId);
+        if (null !== $proposed) {
+            $this->gardenOfTheResource->follow($proposed->getGarden());
+        }
+        $garden = $this->currentGarden->get();
+        $plant = $plantRepository->findOneInGarden($garden, $proposal->plantId);
+        $space = null !== $proposal->spaceId ? $spaceRepository->findOneInGarden($garden, $proposal->spaceId) : null;
         $unavailable = match (true) {
             null === $plant => new TranslatableMessage('proposal.planting.care_sheet_gone'),
             !$plant->isValidated() => new TranslatableMessage('proposal.planting.validate_first'),
@@ -101,6 +119,11 @@ final class ProposalController extends AbstractController
 
         $space = $spaceRepository->findOneByProposalId($proposal->proposalId);
         if (null !== $space) {
+            $this->gardenOfTheResource->follow($space->getGarden());
+            if (!$this->isGranted(GardenResourceVoter::SPACE_VIEW, $space)) {
+                throw $this->createNotFoundException(\sprintf('No space of the current garden was created from proposal %s.', $proposal->proposalId));
+            }
+
             return $request->isMethod('POST')
                 ? $this->redirect($cardUrl, Response::HTTP_SEE_OTHER)
                 : $this->card($request, 'Proposal:SpaceCard', 'proposal/space.html.twig', ['proposal' => $proposal, 'space' => $space]);
@@ -114,7 +137,7 @@ final class ProposalController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $spaceRepository->add($data->toProposedSpace($proposal->proposalId, $this->clock->now()));
+            $spaceRepository->add($data->toProposedSpace($this->currentGarden->get(), $proposal->proposalId, $this->clock->now()));
             $this->flushOnce();
 
             return $this->redirect($cardUrl, Response::HTTP_SEE_OTHER);

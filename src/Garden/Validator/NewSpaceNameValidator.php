@@ -2,6 +2,7 @@
 
 namespace App\Garden\Validator;
 
+use App\Garden\CurrentGarden;
 use App\Garden\SpaceRepository;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
@@ -11,6 +12,7 @@ final class NewSpaceNameValidator extends ConstraintValidator
 {
     public function __construct(
         private readonly SpaceRepository $spaceRepository,
+        private readonly CurrentGarden $currentGarden,
     ) {
     }
 
@@ -25,7 +27,7 @@ final class NewSpaceNameValidator extends ConstraintValidator
             return;
         }
 
-        $existing = $this->spaceRepository->findOneByName(trim($value));
+        $existing = $this->spaceRepository->findOneByName($this->currentGarden->get(), trim($value));
         if (null !== $existing) {
             $this->context->buildViolation($constraint->message)->setParameter('{{ name }}', $existing->getName())->addViolation();
         }

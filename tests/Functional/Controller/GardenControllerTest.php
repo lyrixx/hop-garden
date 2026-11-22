@@ -15,6 +15,7 @@ use App\Garden\PlantingRepository;
 use App\Plant\Entity\Plant;
 use App\Plant\Model\Exposure;
 use App\Reminder\Model\ReminderType;
+use App\Tests\Utils\Chat\AgentRunsTrait;
 use App\Tests\Utils\Chat\ScriptedGardener;
 use App\Tests\Utils\Env\EnvVarsTrait;
 use App\Tests\Utils\Http\UnavailableDataSources;
@@ -29,6 +30,7 @@ use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
 
 final class GardenControllerTest extends WebTestCase
 {
+    use AgentRunsTrait;
     use ClockSensitiveTrait;
     use EnvVarsTrait;
     use LogInTrait;
@@ -93,19 +95,29 @@ final class GardenControllerTest extends WebTestCase
 
         $photoFilename = $planting->getPhotoFilename() ?? self::fail('The photo is stored.');
         self::assertMatchesRegularExpression('/^[0-9a-f]{32}\.png$/', $photoFilename, 'The server names the file, not the client.');
-        $photoPath = self::getContainer()->getParameter('kernel.project_dir') . '/public/uploads/plantings/' . $photoFilename;
+        $photoPath = self::getContainer()->getParameter('kernel.share_dir') . '/uploads/plantings/' . $photoFilename;
         $this->storedPhotos[] = $photoPath;
-        self::assertFileExists($photoPath);
+        self::assertFileExists($photoPath, 'Out of public/.');
 
         // No validated plant of this species: the agent drafts its care sheet, in the worker
         self::assertTrue($planting->isDrafting());
         self::assertSame([[$planting->getId(), $planting->getConversationId()]], $this->draftMessages());
 
         $crawler = $this->client->followRedirect();
-        self::assertSelectorExists('.garden-photo img[src="/uploads/plantings/' . $photoFilename . '"]');
+        $photoUrl = '/garden/' . $planting->getId() . '/photos/' . $photoFilename;
+        self::assertSelectorExists('.garden-photo img[src="' . $photoUrl . '"]');
         self::assertSelectorTextContains('.garden-pending', 'The assistant is drafting the care sheet of Hortensia du portail');
-        self::assertStringEndsWith('=' . rawurlencode('chat/' . $planting->getConversationId()), (string) $crawler->filter('[data-controller="drafting"] turbo-mercure-stream-source')->attr('src'), 'The page listens to the agent drafting.');
+        self::assertStringEndsWith('=' . rawurlencode($this->draftingTopic($planting)), (string) $crawler->filter('[data-controller="drafting"] turbo-mercure-stream-source')->attr('src'), 'The page listens to the agent drafting, in its garden.');
         self::assertSelectorExists('[data-controller="drafting"][data-drafting-drafting-value="true"] #drafting-tool-calls.garden-tool-calls');
+
+        // Served to a member of its garden only, kept by their browser alone
+        $this->client->request('GET', $photoUrl);
+        self::assertResponseIsSuccessful();
+        self::assertResponseHeaderSame('Content-Type', 'image/png');
+        self::assertStringContainsString('private', (string) $this->client->getResponse()->headers->get('Cache-Control'));
+        self::assertStringContainsString('immutable', (string) $this->client->getResponse()->headers->get('Cache-Control'), 'Its name changes with the photo.');
+        $this->client->request('GET', '/garden/' . $planting->getId() . '/photos/' . str_repeat('0', 32) . '.png');
+        self::assertResponseStatusCodeSame(404, 'Not its photo.');
     }
 
     public function testAPlantOfASpeciesAlreadyValidatedNeedsNoAgent(): void
@@ -646,7 +658,7 @@ final class GardenControllerTest extends WebTestCase
 
     private function storedPhoto(Planting $planting): string
     {
-        $path = self::getContainer()->getParameter('kernel.project_dir') . '/public/uploads/plantings/' . ($planting->getPhotoFilename() ?? self::fail('The photo is stored.'));
+        $path = self::getContainer()->getParameter('kernel.share_dir') . '/uploads/plantings/' . ($planting->getPhotoFilename() ?? self::fail('The photo is stored.'));
         $this->storedPhotos[] = $path;
 
         return $path;
@@ -693,7 +705,7 @@ final class GardenControllerTest extends WebTestCase
     {
         $planting = PlantingFactory::new()->drafting()->create(['name' => ScriptedGardener::NARRATED, 'createdAt' => new \DateTimeImmutable('2026-03-01')]);
 
-        self::getContainer()->get(DraftCareSheetHandler::class)(new DraftCareSheet($planting->getId(), $planting->getConversationId() ?? self::fail(), 'en'));
+        self::getContainer()->get(DraftCareSheetHandler::class)($this->draftCareSheetMessage($planting));
 
         return $planting;
     }

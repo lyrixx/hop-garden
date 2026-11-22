@@ -2,8 +2,11 @@
 
 namespace App\Controller;
 
+use App\Garden\CurrentGarden;
 use App\Garden\PlantingRepository;
 use App\Garden\PlantValidation;
+use App\Garden\Security\GardenResourceVoter;
+use App\Garden\Security\PlantValidationVoter;
 use App\Garden\SpeciesSearch;
 use App\Plant\Entity\Plant;
 use App\Plant\Exception\PlantAlreadyValidatedException;
@@ -21,14 +24,20 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\UX\TwigComponent\ComponentRendererInterface;
 
+/**
+ * The care sheets of the species of the current garden. One of another garden answers 404: IsGranted comes before
+ * IsCsrfTokenValid, so that a form sent to it says nothing either.
+ */
 final class PlantController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly PlantRepository $plantRepository,
+        private readonly CurrentGarden $currentGarden,
     ) {
     }
 
@@ -38,7 +47,7 @@ final class PlantController extends AbstractController
     #[Route('/plants', name: 'plant_index', methods: ['GET'])]
     public function index(): Response
     {
-        return $this->render('plant/index.html.twig', ['entries' => $this->plantRepository->findAllWithPlantings()]);
+        return $this->render('plant/index.html.twig', ['entries' => $this->plantRepository->findAllWithPlantings($this->currentGarden->get())]);
     }
 
     /**
@@ -48,6 +57,7 @@ final class PlantController extends AbstractController
     #[Route('/plants/new', name: 'plant_new', methods: ['GET', 'POST'])]
     public function new(Request $request, SpeciesSearch $speciesSearch, ClockInterface $clock): Response
     {
+        $garden = $this->currentGarden->get();
         $data = new NewPlantFormData();
         $form = $this->createForm(NewPlantType::class, $data);
         $form->handleRequest($request);
@@ -55,14 +65,14 @@ final class PlantController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $candidate = $data->pickedAmong($speciesSearch->search($data->name));
 
-            $existing = $this->plantRepository->findOneBySpecies($candidate->trefleId, $candidate->scientificName);
+            $existing = $this->plantRepository->findOneBySpecies($garden, $candidate->trefleId, $candidate->scientificName);
             if (null !== $existing) {
                 $this->addFlash('success', new TranslatableMessage('flash.species.exists', ['species' => $existing->getScientificName()]));
 
                 return $this->redirectToRoute('plant_show', ['id' => $existing->getId()], Response::HTTP_SEE_OTHER);
             }
 
-            $plant = $data->toPlant($candidate, $clock->now());
+            $plant = $data->toPlant($garden, $candidate, $clock->now());
             $this->plantRepository->add($plant);
             $this->entityManager->flush();
 
@@ -78,6 +88,7 @@ final class PlantController extends AbstractController
      * The species: its card, and my plants that follow it in the garden.
      */
     #[Route('/plants/{id}', name: 'plant_show', requirements: ['id' => '\d+'], methods: ['GET'])]
+    #[IsGranted(GardenResourceVoter::PLANT_VIEW, 'plant', statusCode: Response::HTTP_NOT_FOUND)]
     public function show(Plant $plant, PlantingRepository $plantingRepository): Response
     {
         return $this->render('plant/show.html.twig', [
@@ -91,12 +102,14 @@ final class PlantController extends AbstractController
      * validate, reminders) come back, wherever it shows.
      */
     #[Route('/plants/{id}/card', name: 'plant_card', requirements: ['id' => '\d+'], methods: ['GET'])]
+    #[IsGranted(GardenResourceVoter::PLANT_VIEW, 'plant', statusCode: Response::HTTP_NOT_FOUND)]
     public function card(Plant $plant, ComponentRendererInterface $componentRenderer): Response
     {
         return new Response($componentRenderer->createAndRender('PlantCard', ['plant' => $plant]));
     }
 
     #[Route('/plants/{id}/validate', name: 'plant_validate', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[IsGranted(PlantValidationVoter::VALIDATE, 'plant', statusCode: Response::HTTP_NOT_FOUND)]
     #[IsCsrfTokenValid('plant', tokenKey: '_token')]
     public function validate(Request $request, Plant $plant, PlantValidation $plantValidation): Response
     {
@@ -124,6 +137,7 @@ final class PlantController extends AbstractController
      * card, and the card comes back once saved. Without a frame, a page of its own.
      */
     #[Route('/plants/{id}/edit', name: 'plant_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    #[IsGranted(GardenResourceVoter::PLANT_EDIT, 'plant', statusCode: Response::HTTP_NOT_FOUND)]
     public function edit(Request $request, Plant $plant): Response
     {
         $inFrame = $request->headers->has('Turbo-Frame');
@@ -150,6 +164,7 @@ final class PlantController extends AbstractController
     }
 
     #[Route('/plants/{id}/reminders/{type}', name: 'plant_reminder', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[IsGranted(GardenResourceVoter::PLANT_EDIT, 'plant', statusCode: Response::HTTP_NOT_FOUND)]
     #[IsCsrfTokenValid('plant', tokenKey: '_token')]
     public function reminder(Request $request, Plant $plant, ReminderType $type): Response
     {

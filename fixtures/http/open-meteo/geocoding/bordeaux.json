@@ -1,0 +1,6 @@
+{
+    "results": [
+        {"id": 3031582, "name": "Bordeaux", "latitude": 44.84044, "longitude": -0.5805, "elevation": 15.0, "feature_code": "PPLA", "country_code": "FR", "admin1_id": 11071620, "admin2_id": 3013760, "timezone": "Europe/Paris", "population": 260958, "country_id": 3017382, "country": "France", "admin1": "Nouvelle-Aquitaine", "admin2": "Gironde"}
+    ],
+    "generationtime_ms": 0.47
+}

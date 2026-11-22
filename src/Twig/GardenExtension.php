@@ -3,18 +3,14 @@
 namespace App\Twig;
 
 use App\Garden\Entity\Planting;
-use App\Garden\PlantingPhotoStorage;
 use App\Garden\PlantingRepository;
 use App\Plant\Entity\Plant;
-use Symfony\Component\Asset\Packages;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Twig\Attribute\AsTwigFunction;
 
 final readonly class GardenExtension
 {
     public function __construct(
-        private PlantingPhotoStorage $photoStorage,
-        private Packages $packages,
         private PlantingRepository $plantingRepository,
         private UrlGeneratorInterface $urlGenerator,
     ) {
@@ -31,7 +27,7 @@ final readonly class GardenExtension
     #[AsTwigFunction('my_plant_path')]
     public function myPlantPath(Plant $plant, ?array $plantingIdsByPlant = null): ?string
     {
-        $plantingIds = ($plantingIdsByPlant ?? $this->plantingRepository->findIdsForPlants([$plant]))[$plant->getId()] ?? [];
+        $plantingIds = ($plantingIdsByPlant ?? $this->plantingRepository->findIdsForPlants($plant->getGarden(), [$plant]))[$plant->getId()] ?? [];
 
         return match (\count($plantingIds)) {
             0 => null,
@@ -41,6 +37,8 @@ final readonly class GardenExtension
     }
 
     /**
+     * Served to the members of its garden only: GardenController::photo().
+     *
      * @return ?string null when the user took no photo: the template shows a picto
      */
     #[AsTwigFunction('planting_photo_url')]
@@ -48,6 +46,6 @@ final readonly class GardenExtension
     {
         $filename = $planting->getPhotoFilename();
 
-        return null !== $filename ? $this->packages->getUrl($this->photoStorage->publicPath($filename)) : null;
+        return null !== $filename ? $this->urlGenerator->generate('garden_photo', ['id' => $planting->getId(), 'filename' => $filename]) : null;
     }
 }

@@ -53,8 +53,16 @@ admin:
         already_decided: "Le compte de {name} a déjà une réponse."
         approved: "Le compte de {name} est approuvé : l’email est parti."
         refused: "Le compte de {name} est refusé : l’email est parti."
+    garden:
+        created_at: "Créé le"
+        members: "Membres"
+        name: "Nom"
+        place: "Lieu"
+        plural: "Jardins"
+        singular: "Jardin"
     menu:
         back: "Retour à Hop Garden"
+        gardens: "Jardins"
         users: "Comptes"
         waiting_list: "Liste d’attente"
     user:
@@ -108,7 +116,10 @@ care_task:
 chat:
     draft_gone: "Ce brouillon n’existe plus."
     error:
+        expired: "Votre message a trop attendu l’assistant : envoyez-le de nouveau."
         failed: "L’assistant n’a pas pu répondre : {reason}"
+        not_a_member: "Vous n’êtes plus membre de ce jardin : l’assistant n’a pas répondu."
+        quota: "L’assistant a assez répondu pour votre jardin aujourd’hui. Il revient demain."
         unknown: "L’assistant n’a pas pu répondre, voyez les logs du worker."
     heading: "Votre assistant de jardinage"
     loading_card: "Chargement de la carte…"
@@ -189,12 +200,18 @@ flash:
         email_taken: "Un autre compte a maintenant cette adresse."
         password_changed: "Votre mot de passe est changé."
         saved: "Votre compte est enregistré."
+    garden:
+        created: "{name} est prêt. Dites à l’assistant ce qui y pousse."
+        saved: "{name} est enregistré."
     planting:
         added_drafting: "{name} est dans votre jardin. L’assistant rédige sa fiche de culture."
+        added_quota_reached: "{name} est dans votre jardin. Sa fiche attend : l’assistant a assez travaillé pour votre jardin aujourd’hui, réessayez demain."
         added_with_care_sheet: "{name} est dans votre jardin, avec la fiche de culture de {species}."
         linked: "{name} suit maintenant la fiche de culture de {species}."
         not_same_species: "Cette fiche de culture n’est pas une fiche validée de la même espèce."
         saved: "Les infos de jardin de {name} sont enregistrées."
+    quota:
+        agent_runs: "L’assistant a assez travaillé pour votre jardin aujourd’hui : réessayez demain."
     registration:
         link_expired: "Ce lien a expiré. Choisissez un nouveau mot de passe : son lien vérifie aussi votre adresse."
     reset_password:
@@ -229,8 +246,30 @@ form:
     name: "Nom"
 garden:
     add_a_plant: "Ajouter une plante"
+    create:
+        first_heading: "Votre premier jardin"
+        intro: "Nommez-le, et dites où il pousse : la prévision de gel est celle de sa ville, et les rappels arrivent à 7 h, son heure."
+        submit: "Créer le jardin"
+        tab: "Nouveau"
+        title: "Un nouveau jardin"
     drafts: "Brouillons d’espèces à relire"
     empty: "Rien de planté pour l’instant. {first}Ajoutez votre première plante{first_end}, ou {assistant}demandez à l’assistant{assistant_end}."
+    form:
+        city:
+            help: "Tapez sa ville, puis Chercher : choisissez la bonne parmi les lieux trouvés."
+            label: "Ville"
+            placeholder: "Lyon"
+        name:
+            label: "Nom du jardin"
+            placeholder: "Le potager"
+        place:
+            label: "Laquelle ?"
+        search: "Chercher"
+    settings:
+        intro: "Il pousse à {place} ({timezone}). Cherchez une autre ville pour le déplacer."
+        members: "Ses membres"
+        tab: "Réglages"
+        title: "Réglages du jardin"
     subtitle: "Chacune de mes plantes là où elle pousse : sa photo, les soins reçus, et l’espèce à laquelle elle appartient, avec sa fiche de culture et ses rappels."
 hardiness:
     caption: "Échelle de rusticité, en °C"
@@ -340,6 +379,9 @@ legal:
             locale:
                 how_long: "1 an."
                 what: "La langue que vous choisissez, dans la barre du haut, le pied de page ou le bandeau : les pages que vous voyez déconnecté la gardent. Connecté, votre compte la garde aussi."
+            mercure:
+                how_long: "jusqu’à la fermeture du navigateur, la clé qu’il porte 1 heure, renouvelée par chaque page. La déconnexion le supprime."
+                what: "Connecté : il permet à la page de recevoir, au fil de l’eau, les réponses de l’assistant et vos rappels, ceux de votre jardin et de personne d’autre."
             remember_me:
                 how_long: "30 jours, ou jusqu’à votre déconnexion. Un nouveau mot de passe y met fin."
                 what: "Seulement si vous cochez « Se souvenir de moi pendant 30 jours » à la connexion : il vous reconnecte une fois votre session terminée."
@@ -351,7 +393,7 @@ legal:
             conversations: "Vos conversations avec l’assistant : vos messages et ses réponses sont enregistrés, et envoyés au fournisseur du modèle de langage qui rédige les réponses. Pour répondre, l’assistant lit votre jardin (fiches, plantes, espaces), et ce qu’il lit part chez le même fournisseur. Le nom d’une espèce que vous cherchez peut aussi lui être envoyé, pour trouver son nom latin ou rédiger sa fiche."
             garden: "Votre jardin : les fiches de culture de vos espèces, vos plantes et leurs espaces, les soins que vous notez, vos notes, vos rappels et vos notifications."
             heading: "Les données que Hop Garden traite"
-            location: "La position de votre jardin (latitude et longitude), envoyée à Open-Meteo pour la prévision de gel."
+            location: "La position de votre jardin : la ville que vous cherchez, envoyée à Open-Meteo pour la trouver, puis sa latitude et sa longitude, envoyées à Open-Meteo pour la prévision de gel."
             logs:
                 text: "Les journaux techniques :"
                 to_complete: "ce qu’enregistrent les journaux du serveur et de l’hébergeur, comme l’adresse IP, la date et la page demandée"
@@ -457,11 +499,18 @@ login:
     submit: "Se connecter"
     subtitle: "Votre jardin vous attend."
     title: "Connexion"
+membership_role:
+    member: "Membre"
+    owner: "Propriétaire"
 nav:
     account: "Mon compte"
     admin: "Back-office"
     assistant: "Assistant"
     garden: "Mon jardin"
+    garden_current: "Votre jardin"
+    garden_new: "Nouveau jardin"
+    garden_settings: "Réglages du jardin"
+    garden_switch: "Changer de jardin"
     log_in: "Connexion"
     log_out: "Se déconnecter"
     notifications: "Notifications"
@@ -726,6 +775,7 @@ species:
 species_picker:
     ask_the_assistant: "Demandez à l’assistant de la rédiger"
     change: "Changer"
+    quota_reached: "Trefle ne connaît pas ce nom, et votre jardin a demandé assez de noms latins aujourd’hui : tapez son nom latin."
     rather_not: "Vous préférez ne pas remplir sa fiche de culture vous-même ?"
     unavailable: "Trefle ne répond pas : votre nom est gardé tel quel."
     unavailable_required: "Trefle ne répond pas : réessayez dans un instant."

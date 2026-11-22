@@ -7,6 +7,7 @@ use App\Garden\Form\Model\PlantingFormData;
 use App\Garden\Form\PlantingType;
 use App\Plant\Form\Model\NewPlantFormData;
 use App\Plant\Form\NewPlantType;
+use App\Story\DefaultGardenStory;
 use App\Tests\Utils\Http\UnavailableDataSources;
 use App\Twig\Components\SpeciesPicker;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -135,7 +136,7 @@ final class SpeciesPickerTest extends KernelTestCase
 
     private function formView(PlantingFormData $data): FormView
     {
-        return self::getContainer()->get(FormFactoryInterface::class)->create(PlantingType::class, $data)->createView();
+        return self::getContainer()->get(FormFactoryInterface::class)->create(PlantingType::class, $data, ['garden' => DefaultGardenStory::get('garden')])->createView();
     }
 
     private static function component(TestLiveComponent $picker): SpeciesPicker

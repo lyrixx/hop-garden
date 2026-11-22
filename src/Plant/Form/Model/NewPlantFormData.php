@@ -3,6 +3,7 @@
 namespace App\Plant\Form\Model;
 
 use App\DataSource\Trefle\Model\PlantCandidate;
+use App\Garden\Entity\Garden;
 use App\Garden\Form\Model\SpeciesPickerData;
 use App\Garden\Model\SpeciesSearchResult;
 use App\Garden\Validator\PickedSpecies;
@@ -41,9 +42,10 @@ final class NewPlantFormData implements SpeciesPickerData
     /**
      * A draft with the names of Trefle, and a care sheet to fill in.
      */
-    public function toPlant(PlantCandidate $candidate, \DateTimeImmutable $createdAt): Plant
+    public function toPlant(Garden $garden, PlantCandidate $candidate, \DateTimeImmutable $createdAt): Plant
     {
         return Plant::propose(
+            $garden,
             $candidate->commonName ?? trim($this->name),
             $candidate->scientificName,
             // Trefle may not know its family: the card shows none

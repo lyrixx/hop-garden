@@ -20,7 +20,7 @@
         data-action="turbo:before-stream-render@document->drafting#watch"
     {%- endif %}>
     {# The tool calls of the agent as they come, then the draft, or a refresh: see App\Garden\DraftCareSheetHandler #}
-    {% if topic %}{{ turbo_stream_from(topic) }}{% endif %}
+    {% if topic %}{{ turbo_stream_from(topic, private: true) }}{% endif %}
     <div class="planting-layout">
         <article class="card crowned planting-card">
             {% if photo_url %}

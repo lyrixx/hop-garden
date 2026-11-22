@@ -7,9 +7,9 @@ use App\DataSource\Exception\DataSourceUnavailableException;
 use App\DataSource\Exception\UnexpectedResponseException;
 use App\DataSource\OpenMeteo\Model\DailyMinimum;
 use App\DataSource\OpenMeteo\Model\FrostForecast;
+use App\Garden\Entity\GardenLocation;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -23,6 +23,10 @@ final readonly class OpenMeteoClient
 {
     public const int MAX_FORECAST_DAYS = 16;
     private const int CACHE_TTL_IN_SECONDS = 3600;
+    /**
+     * A tenth of a degree, about 10 km: the gardens of a town share their forecast, and its cache.
+     */
+    private const int POSITION_PRECISION = 1;
 
     public function __construct(
         #[Target('open_meteo.client')]
@@ -30,26 +34,27 @@ final readonly class OpenMeteoClient
         private DataSourceCache $cache,
         private LoggerInterface $logger,
         private ClockInterface $clock,
-        #[Autowire(env: 'float:GARDEN_LATITUDE')]
-        private float $latitude,
-        #[Autowire(env: 'float:GARDEN_LONGITUDE')]
-        private float $longitude,
     ) {
     }
 
-    public function getFrostForecast(int $days): FrostForecast
+    /**
+     * At the position of a garden, rounded.
+     */
+    public function getFrostForecast(GardenLocation $location, int $days): FrostForecast
     {
         $days = max(1, min(self::MAX_FORECAST_DAYS, $days));
+        $latitude = round($location->getLatitude(), self::POSITION_PRECISION);
+        $longitude = round($location->getLongitude(), self::POSITION_PRECISION);
 
         // A forecast is only valid on the day it was made
-        $key = \sprintf('open_meteo.forecast.%F.%F.%d.%s', $this->latitude, $this->longitude, $days, $this->clock->now()->format('Y-m-d'));
+        $key = \sprintf('open_meteo.forecast.%.1F.%.1F.%d.%s', $latitude, $longitude, $days, $this->clock->now()->format('Y-m-d'));
 
-        return $this->cache->get($key, self::CACHE_TTL_IN_SECONDS, function () use ($days): FrostForecast {
+        return $this->cache->get($key, self::CACHE_TTL_IN_SECONDS, function () use ($latitude, $longitude, $days): FrostForecast {
             try {
                 return self::frostForecast($this->httpClient->request('GET', '/v1/forecast', [
                     'query' => [
-                        'latitude' => $this->latitude,
-                        'longitude' => $this->longitude,
+                        'latitude' => $latitude,
+                        'longitude' => $longitude,
                         'daily' => 'temperature_2m_min',
                         'forecast_days' => $days,
                         'timezone' => 'auto',

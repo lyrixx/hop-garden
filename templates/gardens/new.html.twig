@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'garden.create.title'|trans }} · Hop Garden{% endblock %}
+
+{# The wizard of a garden: the first one of a new member, before any page of the garden (App\Garden\NoGardenListener) #}
+{% block body %}
+    <header class="plate-head">
+        <span class="plate-tab">{{ 'garden.create.tab'|trans }}</span>
+        <h1>{{ (first ? 'garden.create.first_heading' : 'garden.create.title')|trans }}</h1>
+        <p>{{ 'garden.create.intro'|trans }}</p>
+    </header>
+
+    {{ include('gardens/_form.html.twig', {submit: 'garden.create.submit'|trans}) }}
+{% endblock %}

@@ -7,6 +7,12 @@ account:
         wrong: "This is not your current password."
 care_record:
     in_the_future: "This date is in the future."
+garden:
+    place:
+        not_found: "No place named \"{{ city }}\": check its spelling, or try a city nearby."
+        not_picked: "Pick the place of your garden among the ones found."
+        required: "Search the city of your garden first."
+        unavailable: "The search of places does not answer: try again in a moment."
 planting:
     photo:
         mime_types: "Send a JPEG, PNG or WebP photo."

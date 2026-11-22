@@ -124,3 +124,10 @@
 .space-card { max-width: 640px; margin-top: var(--crown-room); }
 .space-plants { margin-top: 2rem; }
 .garden-space-new { margin: .3rem 0 0; font-size: .88rem; font-weight: 600; }
+
+/* The city of a garden, and its search: App\Garden\Form\GardenType */
+.garden-city { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .6rem; }
+.garden-city > :first-child { flex: 1; min-width: 12rem; }
+.garden-city .button { margin-bottom: 1.6rem; }
+.garden-places .choice { width: 100%; }
+.garden-members ul { margin: .6rem 0 0; padding-left: 1.2rem; }

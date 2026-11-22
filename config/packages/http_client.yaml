@@ -6,6 +6,9 @@ framework:
         scoped_clients:
             open_meteo.client:
                 base_uri: 'https://api.open-meteo.com'
+            # The places of a garden, by name (App\DataSource\OpenMeteo\GeocodingClient)
+            open_meteo_geocoding.client:
+                base_uri: 'https://geocoding-api.open-meteo.com'
             trefle.client:
                 base_uri: 'https://trefle.io'
 
@@ -16,6 +19,11 @@ services:
         class: Symfony\Contracts\HttpClient\HttpClientInterface
         factory: ['@App\DataSource\Demo\DemoHttpClientFactory', 'create']
         arguments: ['@.inner', 'https://api.open-meteo.com']
+    app.open_meteo_geocoding.client.demo_aware:
+        decorates: open_meteo_geocoding.client
+        class: Symfony\Contracts\HttpClient\HttpClientInterface
+        factory: ['@App\DataSource\Demo\DemoHttpClientFactory', 'create']
+        arguments: ['@.inner', 'https://geocoding-api.open-meteo.com']
     app.trefle.client.demo_aware:
         decorates: trefle.client
         class: Symfony\Contracts\HttpClient\HttpClientInterface

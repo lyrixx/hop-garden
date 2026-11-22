@@ -53,8 +53,16 @@ admin:
         already_decided: "{name} has a decision already."
         approved: "{name} is approved, and gets the email."
         refused: "{name} is refused, and gets the email."
+    garden:
+        created_at: "Created on"
+        members: "Members"
+        name: "Name"
+        place: "Place"
+        plural: "Gardens"
+        singular: "Garden"
     menu:
         back: "Back to Hop Garden"
+        gardens: "Gardens"
         users: "Accounts"
         waiting_list: "Waiting list"
     user:
@@ -108,7 +116,10 @@ care_task:
 chat:
     draft_gone: "This draft no longer exists."
     error:
+        expired: "Your message waited too long for the assistant: send it again."
         failed: "The assistant could not answer: {reason}"
+        not_a_member: "You are no longer a member of this garden: the assistant did not answer."
+        quota: "The assistant has answered enough for your garden today. It is back tomorrow."
         unknown: "The assistant could not answer, see the logs of the worker."
     heading: "Your gardening assistant"
     loading_card: "Loading the card…"
@@ -189,12 +200,18 @@ flash:
         email_taken: "Another account has this address now."
         password_changed: "Your password is changed."
         saved: "Your account is saved."
+    garden:
+        created: "{name} is ready. Tell the assistant what grows in it."
+        saved: "{name} is saved."
     planting:
         added_drafting: "{name} is in your garden. The assistant drafts its care sheet."
+        added_quota_reached: "{name} is in your garden. Its care sheet waits: the assistant has worked enough for your garden today, retry tomorrow."
         added_with_care_sheet: "{name} is in your garden, with the care sheet of {species}."
         linked: "{name} now follows the care sheet of {species}."
         not_same_species: "This care sheet is not a validated one of the same species."
         saved: "The garden info of {name} is saved."
+    quota:
+        agent_runs: "The assistant has worked enough for your garden today: retry tomorrow."
     registration:
         link_expired: "This link has expired. Choose a new password: its link verifies your email too."
     reset_password:
@@ -229,8 +246,30 @@ form:
     name: "Name"
 garden:
     add_a_plant: "Add a plant"
+    create:
+        first_heading: "Your first garden"
+        intro: "Name it, and tell where it grows: the frost forecast is the one of its city, and the reminders come at 7:00, its time."
+        submit: "Create the garden"
+        tab: "New"
+        title: "A new garden"
     drafts: "Species drafts waiting for your review"
     empty: "Nothing planted yet. {first}Add your first plant{first_end}, or {assistant}ask the assistant{assistant_end}."
+    form:
+        city:
+            help: "Type its city, then Find: pick the right one among the places found."
+            label: "City"
+            placeholder: "Lyon"
+        name:
+            label: "Name of the garden"
+            placeholder: "The allotment"
+        place:
+            label: "Which one?"
+        search: "Find"
+    settings:
+        intro: "It grows in {place} ({timezone}). Search another city to move it."
+        members: "Its members"
+        tab: "Settings"
+        title: "Garden settings"
     subtitle: "Each of my plants where it grows: its photo, the care it got, and the species it belongs to, with its care sheet and its reminders."
 hardiness:
     caption: "Scale of hardiness, in °C"
@@ -340,6 +379,9 @@ legal:
             locale:
                 how_long: "1 year."
                 what: "The language you choose, in the top bar, the footer or the banner: the pages you see logged out keep it. Logged in, your account keeps it too."
+            mercure:
+                how_long: "until you close your browser, the key it holds 1 hour, renewed by each page. Logging out deletes it."
+                what: "Logged in: it lets the page receive, as they come, the answers of the assistant and your reminders, those of your garden and no one else's."
             remember_me:
                 how_long: "30 days, or until you log out. A new password ends it."
                 what: "Only if you tick “Remember me for 30 days” when you log in: it logs you in again once your session has ended."
@@ -351,7 +393,7 @@ legal:
             conversations: "Your conversations with the assistant: your messages and its answers are stored, and sent to the provider of the language model that writes the answers. To answer, the assistant reads your garden (care sheets, plants, spaces), and what it reads goes to the same provider. The name of a species you look up may be sent to it too, to find its Latin name or draft its care sheet."
             garden: "Your garden: the care sheets of your species, your plants and their spaces, the care you record, your notes, your reminders and your notifications."
             heading: "The data Hop Garden processes"
-            location: "The location of your garden (latitude and longitude), sent to Open-Meteo for the frost forecast."
+            location: "The location of your garden: the city you search, sent to Open-Meteo to find it, then its latitude and longitude, sent to Open-Meteo for the frost forecast."
             logs:
                 text: "Technical logs:"
                 to_complete: "what the logs of the server and of the host record, such as the IP address, the date and the page requested"
@@ -457,11 +499,18 @@ login:
     submit: "Log in"
     subtitle: "Your garden is waiting for you."
     title: "Log in"
+membership_role:
+    member: "Member"
+    owner: "Owner"
 nav:
     account: "My account"
     admin: "Back-office"
     assistant: "Assistant"
     garden: "My garden"
+    garden_current: "Your garden"
+    garden_new: "New garden"
+    garden_settings: "Garden settings"
+    garden_switch: "Switch garden"
     log_in: "Log in"
     log_out: "Log out"
     notifications: "Notifications"
@@ -726,6 +775,7 @@ species:
 species_picker:
     ask_the_assistant: "Ask the assistant to draft it"
     change: "Change"
+    quota_reached: "Trefle does not know this name, and your garden has asked enough Latin names today: type its Latin name."
     rather_not: "Rather not fill in its care sheet yourself?"
     unavailable: "Trefle does not answer: your name is kept as is."
     unavailable_required: "Trefle does not answer: try again in a moment."

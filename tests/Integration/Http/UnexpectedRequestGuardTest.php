@@ -4,6 +4,7 @@ namespace App\Tests\Integration\Http;
 
 use App\DataSource\OpenMeteo\OpenMeteoClient;
 use App\DataSource\Trefle\TrefleClient;
+use App\Garden\Entity\GardenLocation;
 use App\Tests\Utils\Env\EnvVarsTrait;
 use App\Tests\Utils\Http\UnexpectedRequestException;
 use App\Tests\Utils\Http\UnexpectedRequestGuard;
@@ -42,7 +43,7 @@ final class UnexpectedRequestGuardTest extends KernelTestCase
         );
         self::assertBlocked(
             'GET https://api.open-meteo.com/v1/forecast?latitude=46.6&longitude=2.4&daily=temperature_2m_min&forecast_days=3&timezone=auto',
-            static fn () => self::getContainer()->get(OpenMeteoClient::class)->getFrostForecast(3),
+            static fn () => self::getContainer()->get(OpenMeteoClient::class)->getFrostForecast(new GardenLocation('The center of France', 46.6, 2.4, 'Europe/Paris'), 3),
         );
     }
 

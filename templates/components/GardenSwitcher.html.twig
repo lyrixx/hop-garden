@@ -1,0 +1,34 @@
+{#
+    The current garden of the member, at the start of their menu: its settings for its owner and, from two gardens on,
+    the others to switch to (App\Controller\GardensController). Nothing before the first one: the wizard makes it.
+    No prop.
+#}
+{% set current = current_garden() %}
+{% if current %}
+    {% set gardens = member_gardens() %}
+    {% if gardens|length > 1 %}
+        <details class="garden-switcher">
+            <summary class="account-menu-item" title="{{ 'nav.garden_switch'|trans }}"><twig:Icon name="people" :size="18"/><span class="account-menu-label">{{ current.name }}</span></summary>
+            <ul class="card garden-switcher-list">
+                {% for garden in gardens %}
+                    <li>
+                        {% if garden == current %}
+                            <span class="garden-switcher-current" aria-current="true"><twig:Icon name="check" :size="16"/> {{ garden.name }}</span>
+                        {% else %}
+                            <form method="post" action="{{ path('garden_switch', {id: garden.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('garden_switch') }}">
+                                <button type="submit">{{ garden.name }}</button>
+                            </form>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+                <li><a href="{{ path('garden_create') }}">{{ 'nav.garden_new'|trans }}</a></li>
+            </ul>
+        </details>
+    {% else %}
+        <span class="account-menu-item garden-name" title="{{ 'nav.garden_current'|trans }}"><twig:Icon name="people" :size="18"/><span class="account-menu-label">{{ current.name }}</span></span>
+    {% endif %}
+    {% if current.ownedBy(app.user) %}
+        <a href="{{ path('garden_settings', {id: current.id}) }}" class="account-menu-item{{ app.current_route == 'garden_settings' ? ' active' }}" title="{{ 'nav.garden_settings'|trans }}"><twig:Icon name="pencil" :size="18"/><span class="visually-hidden">{{ 'nav.garden_settings'|trans }}</span></a>
+    {% endif %}
+{% endif %}

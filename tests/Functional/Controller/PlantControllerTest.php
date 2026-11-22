@@ -617,7 +617,7 @@ final class PlantControllerTest extends WebTestCase
     {
         self::getContainer()->get(EntityManagerInterface::class)->clear();
 
-        return self::getContainer()->get(PlantRepository::class)->get($plant->getId());
+        return self::getContainer()->get(PlantRepository::class)->get($this->gardenOfTheTest(), $plant->getId());
     }
 
     /**

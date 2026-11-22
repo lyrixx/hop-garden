@@ -24,7 +24,7 @@ final class LoginTest extends WebTestCase
 
     public function testLogInThenLogOut(): void
     {
-        UserFactory::new()->approved()->create(['email' => 'alice@example.com', 'displayName' => 'Alice']);
+        $this->joinTheGardenOfTheTest(UserFactory::new()->approved()->create(['email' => 'alice@example.com', 'displayName' => 'Alice']));
 
         $this->logInWithTheForm($this->client, 'Alice@Example.com');
 
@@ -101,7 +101,7 @@ final class LoginTest extends WebTestCase
 
     public function testRememberMeOutlivesTheSession(): void
     {
-        UserFactory::new()->approved()->create(['email' => 'alice@example.com']);
+        $this->joinTheGardenOfTheTest(UserFactory::new()->approved()->create(['email' => 'alice@example.com']));
 
         $this->logInWithTheForm($this->client, 'alice@example.com', rememberMe: true);
 
@@ -110,6 +110,19 @@ final class LoginTest extends WebTestCase
         $cookieJar->expire('MOCKSESSID');
         $this->client->request('GET', '/garden');
         self::assertResponseIsSuccessful('Logged in again by the cookie.');
+    }
+
+    public function testAMemberWithoutGardenMakesTheirFirstOneAfterTheLogin(): void
+    {
+        UserFactory::new()->approved()->create(['email' => 'alice@example.com']);
+
+        $this->logInWithTheForm($this->client, 'alice@example.com');
+        self::assertResponseRedirects('/assistant');
+        $this->client->followRedirect();
+
+        self::assertResponseRedirects('/gardens/new', 303, 'The pages of a garden need one.');
+        $this->client->followRedirect();
+        self::assertSelectorTextSame('h1', 'Your first garden');
     }
 
     public function testAMemberLoggedInGoesStraightToTheChat(): void

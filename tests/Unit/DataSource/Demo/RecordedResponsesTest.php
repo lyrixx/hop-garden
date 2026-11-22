@@ -43,6 +43,16 @@ final class RecordedResponsesTest extends TestCase
         self::assertSame(['2026-12-03', '2026-12-04'], $data['daily']['time']);
         self::assertSame([-3.2, -8.5], $data['daily']['temperature_2m_min']);
         self::assertSame('Europe/Paris', $data['timezone']);
+        self::assertSame([46.6, 2.4], [$data['latitude'], $data['longitude']], 'At the position asked.');
+    }
+
+    public function testTheRecordedPlacesOfACity(): void
+    {
+        $paris = $this->get('https://geocoding-api.open-meteo.com/v1/search?name=Paris&count=5&language=fr&format=json');
+        self::assertSame(['Europe/Paris', 'America/Chicago', 'America/Chicago'], array_column($paris['results'], 'timezone'), 'Its homonyms too.');
+
+        self::assertArrayNotHasKey('results', $this->get('https://geocoding-api.open-meteo.com/v1/search?name=Atlantis&count=5&language=en&format=json'), 'As Open-Meteo: no results at all.');
+        self::assertArrayNotHasKey('results', $this->get('https://geocoding-api.open-meteo.com/v1/search?name=..%2F..%2Ftrefle%2Faliases&count=5&language=en&format=json'), 'A name, never a path.');
     }
 
     #[TestWith(['forecast_days=0', 1])]

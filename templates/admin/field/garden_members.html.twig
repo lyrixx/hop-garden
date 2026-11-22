@@ -1,0 +1,4 @@
+{# The members of a garden in the back-office, the oldest first: "Alice (Owner), Bob (Member)". entity: of Garden #}
+{%- for membership in entity.instance.memberships -%}
+    {{- membership.user.displayName }} ({{ membership.role|trans }}){{ not loop.last ? ', ' -}}
+{%- endfor -%}

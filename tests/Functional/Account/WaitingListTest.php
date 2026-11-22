@@ -5,6 +5,7 @@ namespace App\Tests\Functional\Account;
 use App\Account\Entity\User;
 use App\Account\Model\AccessStatus;
 use App\Account\UserRepository;
+use App\Factory\GardenFactory;
 use App\Factory\UserFactory;
 use App\Locale\Model\SupportedLocale;
 use App\Tests\Utils\Mailer\SentEmailsTrait;
@@ -41,12 +42,12 @@ final class WaitingListTest extends WebTestCase
         $this->client->request('GET', '/admin');
         self::assertResponseStatusCodeSame(403, 'A member is no administrator.');
 
-        $this->logIn($this->client, UserFactory::new()->admin()->create());
+        $this->logInWithoutGarden($this->client, UserFactory::new()->admin()->create());
         $this->client->request('GET', '/admin');
         self::assertResponseRedirects('/admin/waiting-list', 302, 'The waiting list first.');
         $crawler = $this->client->followRedirect();
         self::assertSelectorTextSame('h1', 'Waiting list');
-        self::assertSame(['Waiting list', 'Accounts', 'Back to Hop Garden'], $crawler->filter('.ea-sidebar-item-label')->each(static fn (Crawler $label): string => $label->text()));
+        self::assertSame(['Waiting list', 'Accounts', 'Gardens', 'Back to Hop Garden'], $crawler->filter('.ea-sidebar-item-label')->each(static fn (Crawler $label): string => $label->text()));
         self::assertSame(['/legal-notice', '/terms', '/privacy'], $crawler->filter('.content-footer .footer-links a')->each(static fn (Crawler $link): ?string => $link->attr('href')), 'The legal links too.');
     }
 
@@ -57,7 +58,7 @@ final class WaitingListTest extends WebTestCase
         UserFactory::new()->create(['displayName' => 'Unverified']);
         UserFactory::new()->approved()->create(['displayName' => 'Approved']);
         UserFactory::new()->refused()->create(['displayName' => 'Refused']);
-        $this->logIn($this->client, UserFactory::new()->admin()->create(['displayName' => 'Admin']));
+        $this->logInWithoutGarden($this->client, UserFactory::new()->admin()->create(['displayName' => 'Admin']));
 
         $crawler = $this->client->request('GET', '/admin/waiting-list');
 
@@ -71,7 +72,7 @@ final class WaitingListTest extends WebTestCase
     {
         self::mockTime('2026-11-22 10:00');
         $dave = UserFactory::new()->verified()->create(['email' => 'dave@example.com', 'displayName' => 'Dave', 'preferredLocale' => SupportedLocale::French]);
-        $this->logIn($this->client, UserFactory::new()->admin()->create(['preferredLocale' => SupportedLocale::English]));
+        $this->logInWithoutGarden($this->client, UserFactory::new()->admin()->create(['preferredLocale' => SupportedLocale::English]));
 
         $crawler = $this->client->request('GET', '/admin/waiting-list');
         $this->client->submit($crawler->filter('form[action*="/approve"]')->form());
@@ -96,7 +97,7 @@ final class WaitingListTest extends WebTestCase
     public function testRefusedTheMemberGetsAnEmailAndStaysOut(): void
     {
         $dave = UserFactory::new()->verified()->create(['email' => 'dave@example.com', 'displayName' => 'Dave']);
-        $this->logIn($this->client, UserFactory::new()->admin()->create());
+        $this->logInWithoutGarden($this->client, UserFactory::new()->admin()->create());
 
         $crawler = $this->client->request('GET', '/admin/waiting-list');
         $this->client->submit($crawler->filter('form[action*="/refuse"]')->form());
@@ -114,7 +115,7 @@ final class WaitingListTest extends WebTestCase
     public function testASecondClickDecidesNothingMore(): void
     {
         $dave = UserFactory::new()->verified()->create(['displayName' => 'Dave']);
-        $this->logIn($this->client, UserFactory::new()->admin()->create());
+        $this->logInWithoutGarden($this->client, UserFactory::new()->admin()->create());
         $approve = $this->client->request('GET', '/admin/waiting-list')->filter('form[action*="/approve"]')->form();
 
         $this->client->submit($approve);
@@ -131,7 +132,7 @@ final class WaitingListTest extends WebTestCase
     public function testADecisionNeedsItsToken(): void
     {
         $dave = UserFactory::new()->verified()->create();
-        $this->logIn($this->client, UserFactory::new()->admin()->create());
+        $this->logInWithoutGarden($this->client, UserFactory::new()->admin()->create());
 
         $this->client->request('POST', '/admin/waiting-list/' . $dave->getId() . '/approve?token=forged');
 
@@ -144,7 +145,7 @@ final class WaitingListTest extends WebTestCase
     {
         UserFactory::new()->verified()->create(['displayName' => 'Dave', 'registeredAt' => new \DateTimeImmutable('2026-11-03')]);
         UserFactory::new()->approved()->create(['displayName' => 'Alice', 'registeredAt' => new \DateTimeImmutable('2026-11-02')]);
-        $this->logIn($this->client, UserFactory::new()->admin()->create(['displayName' => 'Admin', 'registeredAt' => new \DateTimeImmutable('2026-11-01')]));
+        $this->logInWithoutGarden($this->client, UserFactory::new()->admin()->create(['displayName' => 'Admin', 'registeredAt' => new \DateTimeImmutable('2026-11-01')]));
 
         $crawler = $this->client->request('GET', '/admin/users');
 
@@ -154,11 +155,30 @@ final class WaitingListTest extends WebTestCase
         self::assertCount(0, $crawler->filter('form[action*="/approve"]'), 'Decided on the waiting list only.');
     }
 
+    public function testTheGardensWithTheirMembersReadOnly(): void
+    {
+        $alice = UserFactory::new()->approved()->create(['displayName' => 'Alice']);
+        $bob = UserFactory::new()->approved()->create(['displayName' => 'Bob']);
+        GardenFactory::new()->ownedBy($alice)->withMembers($bob)->create(['name' => 'The allotment', 'createdAt' => new \DateTimeImmutable('2026-11-02')]);
+        GardenFactory::new()->ownedBy(UserFactory::new()->approved()->with(['displayName' => 'Carol']))->create(['name' => "Carol's balcony", 'createdAt' => new \DateTimeImmutable('2026-11-03')]);
+        $this->logInWithoutGarden($this->client, UserFactory::new()->admin()->create(['displayName' => 'Admin']));
+
+        $crawler = $this->client->request('GET', '/admin/gardens');
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(
+            [["Carol's balcony", 'Carol (Owner)'], ['The allotment', 'Alice (Owner), Bob (Member)']],
+            $crawler->filter('tbody tr')->each(static fn (Crawler $row): array => [trim($row->filter('td[data-column="name"]')->text()), trim($row->filter('td[data-column="memberships"]')->text())]),
+            'The newest first, the oldest member first.',
+        );
+        self::assertCount(0, $crawler->filter('a[href*="/edit"], a[href*="/new"], form[action*="/delete"]'), 'Read only.');
+    }
+
     public function testTheAccountsByAccess(): void
     {
         UserFactory::new()->verified()->create(['displayName' => 'Dave']);
         $carol = UserFactory::new()->refused()->create(['displayName' => 'Carol']);
-        $this->logIn($this->client, UserFactory::new()->admin()->create(['displayName' => 'Admin']));
+        $this->logInWithoutGarden($this->client, UserFactory::new()->admin()->create(['displayName' => 'Admin']));
 
         $crawler = $this->client->request('GET', '/admin/users', ['filters' => ['accessStatus' => ['comparison' => '=', 'value' => 'refused']]]);
 

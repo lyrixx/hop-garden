@@ -2,6 +2,7 @@
 
 namespace App\Garden\Form\Model;
 
+use App\Garden\Entity\Garden;
 use App\Garden\Entity\Planting;
 use App\Garden\Entity\Space;
 use App\Garden\Model\CareTask;
@@ -69,11 +70,12 @@ final class PlantingFormData implements SpeciesPickerData
         return $data;
     }
 
-    public function toPlanting(\DateTimeImmutable $createdAt, ?string $photoFilename): Planting
+    public function toPlanting(Garden $garden, \DateTimeImmutable $createdAt, ?string $photoFilename): Planting
     {
         $scientificName = trim($this->scientificName ?? '');
 
         $planting = new Planting(
+            $garden,
             trim($this->name),
             $this->space,
             self::nullIfBlank($this->diseases),

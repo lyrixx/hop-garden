@@ -1,0 +1,27 @@
+{#
+    The name and the place of a garden: its city searched with "Find", then its place picked among the ones found.
+    form: App\Garden\Form\GardenType · submit: the label of the button that saves
+#}
+{{ form_start(form, {attr: {class: 'card crowned care-sheet-form garden-form garden-place-form'}}) }}
+    {{ form_errors(form) }}
+    {{ form_row(form.name) }}
+
+    <div class="garden-city">
+        {{ form_row(form.city) }}
+        {{ form_widget(form.search, {attr: {class: 'button button-secondary'}}) }}
+    </div>
+
+    {% if form.placeId is defined %}
+        <fieldset class="choices garden-places">
+            <legend>{{ form.placeId.vars.label|trans }}</legend>
+            {% for choice in form.placeId %}
+                <label class="choice">{{ form_widget(choice) }}<twig:Icon name="globe" :size="16"/><span>{{ choice.vars.label }}</span></label>
+            {% endfor %}
+            {{ form_errors(form.placeId) }}
+        </fieldset>
+    {% endif %}
+
+    <div class="actions">
+        <twig:Button icon="sprout" :iconSize="18">{{ submit }}</twig:Button>
+    </div>
+{{ form_end(form) }}

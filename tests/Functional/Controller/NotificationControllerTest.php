@@ -209,7 +209,7 @@ final class NotificationControllerTest extends WebTestCase
 
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
         $entityManager->clear();
-        $notifications = self::getContainer()->get(NotificationRepository::class)->findLatest();
+        $notifications = self::getContainer()->get(NotificationRepository::class)->findLatest($this->gardenOfTheTest()->getOwner(), $this->gardenOfTheTest());
         self::assertSame('2026-12-01 09:30', $notifications[0]->getReadAt()?->format('Y-m-d H:i'), 'Read now.');
         self::assertSame('2026-11-01 08:00', $notifications[1]->getReadAt()?->format('Y-m-d H:i'), 'Read before.');
 

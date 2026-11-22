@@ -44,11 +44,16 @@
             {% endif %}
         </header>
 
-        {# Reminders pushed by the worker show up as toasts, on every page. Both survive a Turbo Drive visit: the toasts
-           on screen stay, and the stream is not closed and opened again #}
+        {# Reminders pushed by the worker show up as toasts, on every page: the ones of the member in their current garden.
+           Both survive a Turbo Drive visit: the toasts on screen stay, and the stream is not closed and opened again,
+           until the member switches to another garden. Every page renews their subscriber cookie of the Mercure hub #}
         {% if is_granted('ROLE_USER') %}
+        {{ grant_mercure_topics() }}
+        {% set notifications_topic = notifications_topic() %}
+        {% if notifications_topic %}
         <div class="toasts" id="toasts" data-turbo-permanent aria-live="polite"></div>
-        <div id="notifications-stream" data-turbo-permanent hidden>{{ turbo_stream_from('notifications') }}</div>
+        <div id="notifications-stream-{{ current_garden().id }}" data-turbo-permanent hidden>{{ turbo_stream_from(notifications_topic, private: true) }}</div>
+        {% endif %}
         {% endif %}
         {% endblock %}
 

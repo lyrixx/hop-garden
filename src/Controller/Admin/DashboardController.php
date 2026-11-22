@@ -17,8 +17,8 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Translation\TranslatableMessage;
 
 /**
- * The back-office, for ROLE_ADMIN only (access_control): the waiting list first, then every account. In the default
- * theme of EasyAdmin, in the colours of Hop Garden (assets/styles/admin.css).
+ * The back-office, for ROLE_ADMIN only (access_control): the waiting list first, then every account and every garden
+ * with its members, read only. In the default theme of EasyAdmin, in the colours of Hop Garden (assets/styles/admin.css).
  */
 #[AdminDashboard(routePath: '/admin', routeName: 'admin')]
 final class DashboardController extends AbstractDashboardController
@@ -61,6 +61,7 @@ final class DashboardController extends AbstractDashboardController
             ->setBadge($waiting > 0 ? $waiting : false, 'warning')
         ;
         yield MenuItem::linkTo(UserCrudController::class, new TranslatableMessage('admin.menu.users'), 'fa fa-users');
+        yield MenuItem::linkTo(GardenCrudController::class, new TranslatableMessage('admin.menu.gardens'), 'fa fa-leaf');
         yield MenuItem::section();
         yield MenuItem::linkToRoute(new TranslatableMessage('admin.menu.back'), 'fa fa-seedling', 'chat');
     }
