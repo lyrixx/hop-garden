@@ -8,6 +8,7 @@ use App\Account\UserRepository;
 use App\Factory\GardenFactory;
 use App\Factory\UserFactory;
 use App\Locale\Model\SupportedLocale;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use App\Tests\Utils\Mailer\SentEmailsTrait;
 use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,6 +23,7 @@ use Symfony\Component\DomCrawler\Crawler;
 final class WaitingListTest extends WebTestCase
 {
     use ClockSensitiveTrait;
+    use GardenPathsTrait;
     use LogInTrait;
     use SentEmailsTrait;
 
@@ -49,6 +51,26 @@ final class WaitingListTest extends WebTestCase
         self::assertSelectorTextSame('h1', 'Waiting list');
         self::assertSame(['Waiting list', 'Accounts', 'Gardens', 'Back to Hop Garden'], $crawler->filter('.ea-sidebar-item-label')->each(static fn (Crawler $label): string => $label->text()));
         self::assertSame(['/legal-notice', '/terms', '/privacy'], $crawler->filter('.content-footer .footer-links a')->each(static fn (Crawler $link): ?string => $link->attr('href')), 'The legal links too.');
+    }
+
+    /**
+     * A plain link: EasyAdmin runs a route of the application in its own URL (/admin?routeName=...), without its
+     * defaults.
+     */
+    public function testTheWayBackLeadsToTheAssistant(): void
+    {
+        $this->logIn($this->client, UserFactory::new()->admin()->create());
+        $back = $this->client->request('GET', '/admin/waiting-list')->selectLink('Back to Hop Garden');
+        self::assertSame('/assistant', $back->attr('href'));
+
+        $this->client->click($back->link());
+        self::assertResponseRedirects(self::inGarden('/assistant'), 302, 'The assistant of their garden.');
+        $this->client->followRedirect();
+        self::assertResponseIsSuccessful();
+
+        $this->logInWithoutGarden($this->client, UserFactory::new()->admin()->create());
+        $this->client->click($this->client->request('GET', '/admin/waiting-list')->selectLink('Back to Hop Garden')->link());
+        self::assertResponseRedirects('/gardens/new', 303, 'The wizard of a first garden.');
     }
 
     public function testTheWaitingListShowsTheVerifiedAccountsWithoutDecision(): void

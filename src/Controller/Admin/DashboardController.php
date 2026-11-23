@@ -63,7 +63,9 @@ final class DashboardController extends AbstractDashboardController
         yield MenuItem::linkTo(UserCrudController::class, new TranslatableMessage('admin.menu.users'), 'fa fa-users');
         yield MenuItem::linkTo(GardenCrudController::class, new TranslatableMessage('admin.menu.gardens'), 'fa fa-leaf');
         yield MenuItem::section();
-        yield MenuItem::linkToRoute(new TranslatableMessage('admin.menu.back'), 'fa fa-seedling', 'assistant');
+        // Its URL, not linkToRoute(): EasyAdmin would run LastGardenController in its own, /admin?routeName=assistant,
+        // without the defaults of the route (config/routes.yaml)
+        yield MenuItem::linkToUrl(new TranslatableMessage('admin.menu.back'), 'fa fa-seedling', $this->generateUrl('assistant'));
     }
 
     public function configureUserMenu(UserInterface $user): UserMenu
