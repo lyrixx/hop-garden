@@ -147,15 +147,17 @@ The owner of a garden invites by email, on the page of its members, as a member 
   `/invitations/{token}`, works 14 days, once: the page shows it too, with a *Copy* button, to send another way.
 - An invitation waiting is sent again, its link copied again, or revoked. Only the hash of its token is stored, so every
   new link replaces the one before. Inviting an address again renews its invitation: one per address in a garden.
-- The link presents the garden and who invites. A visitor creates an account there, or logs in and comes back to join.
-  The invitation lets a new account in without the waiting list: at once with the address invited, which it verifies,
-  once its email is verified with another one. Logged in with another account, they join with it, or log out to change.
-  Whoever has the link may use it: the owner, who sees it, could as well.
+- The link presents the garden and who invites. A visitor creates an account there, or logs in from it and comes back to
+  join. The invitation lets a new account in without the waiting list: at once with the address invited, which it
+  verifies, once its email is verified with another one. Logged in with another account, they join with it, or log out
+  to change. Whoever has the link may use it: the owner, who sees it, could as well.
 - The one who invited gets a notification, and its toast, when somebody joins. An invitation expired, revoked or used,
   or of a garden deleted, says so, and nothing of its garden.
 - 30 days after it ends (expired, accepted or revoked), an invitation is deleted, with its address and the notification
   of the member who joined with it: every day at 3:00 UTC, by the worker.
-- An account still on the waiting list waits for the administrator: its login is refused until then.
+- An account still on the waiting list waits for the administrator: its login is refused until then, but the one of the
+  link of an invitation (`/invitations/{token}/login`). It lets the account in as a new one would (at once with the
+  address invited, once verified with another one), and it joins the garden: one account per invitation.
 
 In `castor demo:reset`, Alice has invited `erin@hop-garden.test`, who has no account: the task prints the link.
 

@@ -142,12 +142,14 @@ Without option, the `default` context applies.
   deleted 30 days after it ends by `App\Garden\Scheduler\PurgeEndedInvitations`)
   as a member only: a garden has one owner. Its token is the whole link, `/invitations/{token}`
   (`App\Controller\InvitationController`, public, out of any garden): whoever has it joins, with their account or a new
-  one, which skips the waiting list (`User::admitByInvitation()`) and has its email verified when it is the address
-  invited, then opens the garden. `App\Garden\Invitations` sends it (the language of the account of the address, else
-  of the page), renews its token (each new link replaces the one before, the page of the members shows it once) and
-  accepts it, the invitation locked, telling who invited with a `Notification::newMember()`. A visitor of the link logs
-  in back to it (its target path), and the logout from it leads back too (`InvitationLogoutListener`). A link that no
-  longer works says why, never its garden
+  one, which skips the waiting list and has its email verified when it is the address invited (`Invitation::accept()`,
+  `User::admitByInvitation()`), then opens the garden. `App\Garden\Invitations` sends it (the language of the account
+  of the address, else of the page), renews its token (each new link replaces the one before, the page of the members
+  shows it once) and accepts it, the invitation locked, telling who invited with a `Notification::newMember()`. A
+  visitor of the link logs in from it (`/invitations/{token}/login`, `App\Garden\Security\InvitationAuthenticator` on
+  the firewall `main`): an approved account goes back to it, one still on the waiting list joins at once, the only login
+  `App\Account\Security\UserChecker` lets it through, for a pending invitation. The logout from the link leads back too
+  (`InvitationLogoutListener`). A link that no longer works says why, never its garden
 - Spaces: `App\Garden\Entity\Space` carries the exposure and the soil; a `Planting` has an optional space (`SET NULL`),
   and its neighbours are the other plantings of its space. Pages `/g/{garden}/spaces`, `/spaces/new`, `/spaces/{space}`
   and `/spaces/{space}/edit` (`SpaceController`); `RecommendationEngine` reads the exposure of the space

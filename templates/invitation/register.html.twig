@@ -32,7 +32,7 @@
         </div>
     {{ form_end(form) }}
 
-    <p class="callout auth-aside">{{ 'registration.have_account'|trans({link: '<a href="' ~ path('login') ~ '">', link_end: '</a>'})|raw }}</p>
+    <p class="callout auth-aside">{{ 'registration.have_account'|trans({link: '<a href="' ~ path('invitation_login', {token: token}) ~ '">', link_end: '</a>'})|raw }}</p>
 </div>
 <twig:Specimen plate="wormia-subsessilis"/>
 </div>

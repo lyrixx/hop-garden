@@ -3,6 +3,7 @@
 namespace App\Garden\Entity;
 
 use App\Account\Entity\User;
+use App\Account\Model\AccessStatus;
 use App\Garden\InvitationRepository;
 use App\Garden\Model\InvitationStatus;
 use Doctrine\ORM\Mapping as ORM;
@@ -101,7 +102,8 @@ class Invitation
     }
 
     /**
-     * The garden takes them in, whatever the address of their account.
+     * The garden takes them in, whatever the address of their account. An account on the waiting list skips it, and the
+     * link proves the address it was sent to.
      */
     public function accept(User $user, \DateTimeImmutable $at): void
     {
@@ -111,6 +113,12 @@ class Invitation
 
         $this->garden->join($user, $at);
         $this->acceptedAt = $at;
+        if ($this->isSentTo($user)) {
+            $user->verifyEmail($at);
+        }
+        if (AccessStatus::Pending === $user->getAccessStatus()) {
+            $user->admitByInvitation($at);
+        }
     }
 
     public function revoke(\DateTimeImmutable $at): void

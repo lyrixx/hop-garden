@@ -386,6 +386,10 @@ invitation:
     intro: "{inviter} invites you to garden together: you share its plants, their care sheets and their reminders."
     log_in: "I have an account: log in"
     log_out: "Use another account"
+    login:
+        no_account: "No account yet? {link}Create it{link_end}: no waiting list with this invitation."
+        subtitle: "With your account, even one still on the waiting list: this invitation lets it in."
+        title: "Log in to join {garden}"
     member:
         body: "You are a member of {garden} already."
         open: "Open {garden}"
@@ -521,7 +525,7 @@ legal:
         access:
             availability: "The publisher strives to keep Hop Garden available, without guarantee: it may be interrupted for maintenance, or when a provider fails (host, language model, Trefle, Open-Meteo)."
             heading: "Access to the service"
-            text: "Hop Garden works in a web browser, with an internet connection at your expense. Access opens through a waiting list: you sign up, confirm your email address, and your account opens once the publisher has validated it. Except with an invitation: an account created from the link the owner of a garden sends gets in without the waiting list, at once with the address invited, and with another one once that address is confirmed. The publisher may limit the number of accounts and the use of the assistant."
+            text: "Hop Garden works in a web browser, with an internet connection at your expense. Access opens through a waiting list: you sign up, confirm your email address, and your account opens once the publisher has validated it. Except with an invitation: from the link the owner of a garden sends, a new account, or an account still on the waiting list that logs in there, gets in without waiting, at once with the address invited, and with another one once that address is confirmed. The publisher may limit the number of accounts and the use of the assistant."
         account:
             heading: "Your account"
             text: "You give an email address that is yours and keep your password secret: what is done with your account is your responsibility. You can delete your account at any time; your data is then deleted as the {link}privacy policy{link_end} explains, except what you added to a shared garden, which stays with its other members."

@@ -386,6 +386,10 @@ invitation:
     intro: "{inviter} vous invite à jardiner ensemble : vous partagez ses plantes, leurs fiches de culture et leurs rappels."
     log_in: "J’ai un compte : me connecter"
     log_out: "Utiliser un autre compte"
+    login:
+        no_account: "Pas encore de compte ? {link}Créez-le{link_end} : pas de liste d’attente avec cette invitation."
+        subtitle: "Avec votre compte, même s’il est encore sur la liste d’attente : cette invitation le fait entrer."
+        title: "Connectez-vous pour rejoindre {garden}"
     member:
         body: "Vous êtes déjà membre de {garden}."
         open: "Ouvrir {garden}"
@@ -521,7 +525,7 @@ legal:
         access:
             availability: "L’éditeur s’efforce de garder Hop Garden disponible, sans garantie : le service peut être interrompu pour maintenance, ou quand un prestataire fait défaut (hébergeur, modèle de langage, Trefle, Open-Meteo)."
             heading: "Accès au service"
-            text: "Hop Garden fonctionne dans un navigateur web, avec une connexion internet à votre charge. L’accès passe par une liste d’attente : vous vous inscrivez, confirmez votre adresse email, et votre compte ouvre une fois validé par l’éditeur. Sauf invitation : un compte créé depuis le lien qu’envoie le propriétaire d’un jardin entre sans liste d’attente, tout de suite avec l’adresse invitée, et avec une autre une fois celle-ci confirmée. L’éditeur peut limiter le nombre de comptes et l’usage de l’assistant."
+            text: "Hop Garden fonctionne dans un navigateur web, avec une connexion internet à votre charge. L’accès passe par une liste d’attente : vous vous inscrivez, confirmez votre adresse email, et votre compte ouvre une fois validé par l’éditeur. Sauf invitation : depuis le lien qu’envoie le propriétaire d’un jardin, un nouveau compte, ou un compte encore sur la liste d’attente qui s’y connecte, entre sans attendre, tout de suite avec l’adresse invitée, et avec une autre une fois celle-ci confirmée. L’éditeur peut limiter le nombre de comptes et l’usage de l’assistant."
         account:
             heading: "Votre compte"
             text: "Vous donnez une adresse email qui est la vôtre et gardez votre mot de passe secret : ce qui est fait avec votre compte relève de votre responsabilité. Vous pouvez supprimer votre compte à tout moment ; vos données sont alors supprimées comme l’explique la {link}politique de confidentialité{link_end}, sauf ce que vous avez ajouté à un jardin partagé, qui reste à ses autres membres."

@@ -1,0 +1,45 @@
+{% extends 'base.html.twig' %}
+
+{% set garden = invitation.garden %}
+
+{% block title %}{{ 'invitation.login.title'|trans({garden: garden.name}) }} · Hop Garden{% endblock %}
+
+{#
+    The login of templates/security/login.html.twig, from the link of an invitation: checked by
+    App\Garden\Security\InvitationAuthenticator, it lets in an account still on the waiting list
+    (App\Controller\InvitationController::loggedIn()). token: the one of its link
+#}
+{% block body %}
+<div class="with-specimen auth">
+<div>
+    <header class="plate-head">
+        <span class="plate-tab">{{ 'invitation.tab'|trans }}</span>
+        <h1>{{ 'invitation.login.title'|trans({garden: garden.name}) }}</h1>
+        <p>{{ 'invitation.login.subtitle'|trans }}</p>
+    </header>
+
+    <form method="post" action="{{ path('invitation_login_check', {token: token}) }}" class="card crowned care-sheet-form auth-form">
+        {% if error %}
+            <p class="warning" role="alert">{{ error.messageKey|trans(error.messageData, 'security') }}</p>
+        {% endif %}
+        <div>
+            <label for="login-email">{{ 'account.form.email'|trans }}</label>
+            <input type="email" id="login-email" name="_username" value="{{ last_email ?: invitation.email }}" autocomplete="email" required autofocus>
+        </div>
+        <div>
+            <label for="login-password">{{ 'account.form.password'|trans }}</label>
+            <input type="password" id="login-password" name="_password" autocomplete="current-password" required>
+            <p class="help-text"><a href="{{ path('reset_password_request') }}">{{ 'login.forgot'|trans }}</a></p>
+        </div>
+        {# Stateless (config/packages/csrf.yaml): assets/controllers/csrf_protection_controller.js double-submits it #}
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}" data-controller="csrf-protection">
+        <div class="actions">
+            <twig:Button class="button-next">{{ 'login.submit'|trans }}</twig:Button>
+        </div>
+    </form>
+
+    <p class="callout auth-aside">{{ 'invitation.login.no_account'|trans({link: '<a href="' ~ path('invitation_register', {token: token}) ~ '">', link_end: '</a>'})|raw }}</p>
+</div>
+<twig:Specimen plate="wormia-subsessilis"/>
+</div>
+{% endblock %}
