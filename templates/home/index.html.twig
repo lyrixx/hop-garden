@@ -42,6 +42,7 @@
             {icon: 'grid', heading: 'home.problem.spaces.heading'|trans, text: 'home.problem.spaces.text'|trans},
             {icon: 'chat', tint: 'pict-water', heading: 'home.problem.notebook.heading'|trans, text: 'home.problem.notebook.text'|trans},
             {icon: 'plug', tint: 'pict-sun', heading: 'home.problem.mcp.heading'|trans, text: 'home.problem.mcp.text'|trans},
+            {icon: 'people', tint: 'pict-frost', heading: 'home.problem.shared.heading'|trans, text: 'home.problem.shared.text'|trans},
         ] %}
         <ul class="problem-grid">
             {% for problem in problems %}
@@ -52,16 +53,6 @@
                 </li>
             {% endfor %}
         </ul>
-
-        {# Not there yet: said so #}
-        <aside class="home-soon">
-            <span class="pict"><twig:Icon name="people" :size="22"/></span>
-            <div>
-                <span class="tag tag-soon">{{ 'home.problem.soon.label'|trans }}</span>
-                <h3>{{ 'home.problem.soon.heading'|trans }}</h3>
-                <p>{{ 'home.problem.soon.text'|trans }}</p>
-            </div>
-        </aside>
     </section>
 
     {# Captures of the application, in the language of the page #}

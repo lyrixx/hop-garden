@@ -370,10 +370,9 @@ home:
         pruning:
             heading: "On oublie quand tailler."
             text: "Chaque fiche donne les mois où tailler, couper les fleurs fanées et bouturer. Activez un rappel : le 1er de chacun de ces mois, une notification dans Hop Garden vous dit quelle plante attend."
-        soon:
-            heading: "À plusieurs, on ne sait pas qui a fait quoi."
-            label: "Bientôt"
-            text: "Les jardins partagés arrivent, avec des invitations pour y faire entrer ceux avec qui vous jardinez."
+        shared:
+            heading: "On jardine à plusieurs, chacun note de son côté."
+            text: "Invitez par email ceux avec qui vous jardinez : ils rejoignent votre jardin sans passer par la liste d’attente. Tous ses membres voient et modifient les mêmes fiches, plantes, espaces et rappels, et chacun reçoit les rappels et les alertes gel. Chacun peut quitter le jardin ; si son propriétaire part, le membre le plus ancien prend le relais."
         spaces:
             heading: "On ne sait plus ce qu’on a planté, ni où."
             text: "Décrivez les espaces de votre jardin, comme la terrasse ou le massif nord, avec leur exposition et leur sol. Chaque plante a son espace, sa photo, les soins reçus et ses voisines. Hop Garden vous signale une plante de plein soleil installée à l’ombre."
@@ -475,6 +474,7 @@ legal:
             conversations: "Vos conversations avec l’assistant : vos messages et ses réponses sont enregistrés, et envoyés au fournisseur du modèle de langage qui rédige les réponses. Pour répondre, l’assistant lit votre jardin (fiches, plantes, espaces), et ce qu’il lit part chez le même fournisseur. Le nom d’une espèce que vous cherchez peut aussi lui être envoyé, pour trouver son nom latin ou rédiger sa fiche."
             garden: "Votre jardin : les fiches de culture de vos espèces, vos plantes et leurs espaces, les soins que vous notez, vos notes, vos rappels et vos notifications."
             heading: "Les données que Hop Garden traite"
+            invitations: "Les invitations : l’adresse email d’une personne que le propriétaire d’un jardin invite à le rejoindre. Hop Garden lui envoie un email avec le nom affiché de celui qui l’invite, le nom du jardin et un lien valable 14 jours. Ce lien montre à qui l’ouvre le nom du jardin, sa ville, celui qui invite et l’adresse invitée. Quand la personne rejoint le jardin, celui qui l’a invitée reçoit une notification avec son nom affiché, ou le propriétaire s’il n’est plus membre du jardin."
             location: "La position de votre jardin : la ville que vous cherchez, envoyée à Open-Meteo pour la trouver, puis sa latitude et sa longitude, envoyées à Open-Meteo pour la prévision de gel."
             logs:
                 text: "Les journaux techniques :"
@@ -486,21 +486,24 @@ legal:
         purposes:
             billing: "La facturation, une fois le service payant : une obligation légale (article 6.1.c du RGPD)."
             heading: "Pourquoi, et sur quelle base légale"
+            invitation: "L’email d’invitation, envoyé à l’adresse que donne le propriétaire d’un jardin, à sa demande : l’intérêt légitime de ce propriétaire à jardiner avec la personne qu’il invite (article 6.1.f du RGPD)."
             security: "Le bon fonctionnement et la sécurité du service, avec les journaux du serveur : l’intérêt légitime de l’éditeur (article 6.1.f du RGPD)."
             service: "Fournir le service auquel vous vous êtes inscrit (votre compte, votre jardin, les rappels, les alertes gel, l’assistant, les emails sur votre compte) : l’exécution du contrat (article 6.1.b du RGPD)."
         recipients:
             heading: "Qui reçoit vos données"
-            text: "Vos données ne vont qu’aux sous-traitants dont Hop Garden a besoin pour fonctionner, et à Trefle et Open-Meteo comme décrit plus haut."
+            members: "Les membres d’un jardin partagé voient et modifient tout ce qu’il contient : fiches, plantes, photos, espaces, soins, notes et rappels. Sur la page des membres, chacun voit le nom affiché des autres, leur rôle et la date à laquelle ils ont rejoint le jardin, pas leur adresse email. Le propriétaire voit aussi les adresses des invitations en attente. La personne invitée, et quiconque a le lien, voit le nom affiché de celui qui l’invite, le nom du jardin et sa ville. Vos conversations avec l’assistant et vos notifications ne sont qu’à vous."
+            text: "Au-delà, vos données ne vont qu’aux sous-traitants dont Hop Garden a besoin pour fonctionner, et à Trefle et Open-Meteo comme décrit plus haut."
             to_complete: "la liste des sous-traitants, leur pays, et les garanties pour un transfert hors de l’Union européenne. Par exemple : l’hébergeur de l’application et de sa base de données ; le fournisseur du modèle de langage (Anthropic ou OpenAI, selon la configuration) ; le service d’envoi des emails."
             transfers: "Le fournisseur du modèle de langage peut traiter les conversations hors de l’Union européenne."
         retention:
             account:
-                text: "Votre compte et votre jardin : tant que votre compte existe. Ils sont supprimés quand vous le supprimez, dans un délai de"
+                text: "Votre compte, et chaque jardin dont vous êtes le seul membre : tant que votre compte existe. Ils sont supprimés quand vous le supprimez, dans un délai de"
                 to_complete: "délai de suppression, sauvegardes comprises"
             conversations:
                 text: "Vos conversations avec l’assistant :"
                 to_complete: "durée de conservation"
             heading: "Combien de temps"
+            invitations: "Les invitations : elles restent enregistrées après leur expiration, leur acceptation ou leur révocation, même quand la personne invitée supprime son compte. Elles ne sont supprimées qu’avec leur jardin, ou avec le compte de celui qui les a envoyées."
             invoices:
                 text: "Les factures, une fois le service payant :"
                 to_complete: "durée de conservation"
@@ -508,6 +511,7 @@ legal:
                 text: "Les journaux du serveur :"
                 to_complete: "durée de conservation"
             session: "La session : elle prend fin après 12 heures sans visite."
+            shared_garden: "Un jardin partagé : il reste à ses autres membres quand vous le quittez ou supprimez votre compte, avec ce que vous y avez ajouté. Il n’est supprimé qu’avec le compte de son dernier membre."
         rights:
             complaint: "Si vous estimez que vos droits ne sont pas respectés, vous pouvez adresser une réclamation à la CNIL ({link})."
             heading: "Vos droits"
@@ -517,16 +521,18 @@ legal:
         access:
             availability: "L’éditeur s’efforce de garder Hop Garden disponible, sans garantie : le service peut être interrompu pour maintenance, ou quand un prestataire fait défaut (hébergeur, modèle de langage, Trefle, Open-Meteo)."
             heading: "Accès au service"
-            text: "Hop Garden fonctionne dans un navigateur web, avec une connexion internet à votre charge. L’accès passe par une liste d’attente : vous vous inscrivez, confirmez votre adresse email, et votre compte ouvre une fois validé par l’éditeur. L’éditeur peut limiter le nombre de comptes et l’usage de l’assistant."
+            text: "Hop Garden fonctionne dans un navigateur web, avec une connexion internet à votre charge. L’accès passe par une liste d’attente : vous vous inscrivez, confirmez votre adresse email, et votre compte ouvre une fois validé par l’éditeur. Sauf invitation : un compte créé depuis le lien qu’envoie le propriétaire d’un jardin entre sans liste d’attente, tout de suite avec l’adresse invitée, et avec une autre une fois celle-ci confirmée. L’éditeur peut limiter le nombre de comptes et l’usage de l’assistant."
         account:
             heading: "Votre compte"
-            text: "Vous donnez une adresse email qui est la vôtre et gardez votre mot de passe secret : ce qui est fait avec votre compte relève de votre responsabilité. Vous pouvez supprimer votre compte à tout moment ; vos données sont alors supprimées comme l’explique la {link}politique de confidentialité{link_end}."
+            text: "Vous donnez une adresse email qui est la vôtre et gardez votre mot de passe secret : ce qui est fait avec votre compte relève de votre responsabilité. Vous pouvez supprimer votre compte à tout moment ; vos données sont alors supprimées comme l’explique la {link}politique de confidentialité{link_end}, sauf ce que vous avez ajouté à un jardin partagé, qui reste à ses autres membres."
         changes:
             heading: "Modification des conditions"
             text: "L’éditeur peut modifier ces conditions. Vous êtes prévenu par email avant qu’une nouvelle version s’applique à vous, avec un préavis de"
             to_complete: "durée du préavis"
         content:
             heading: "Vos contenus"
+            leaving: "En les ajoutant à un jardin partagé, vous les partagez avec ses membres : ils y restent quand vous quittez le jardin, quand son propriétaire vous en retire ou quand vous supprimez votre compte. Rien dans le jardin n’indique qui a ajouté quoi. Si le propriétaire quitte le jardin ou supprime son compte, le membre le plus ancien en devient propriétaire. Son dernier membre ne peut pas le quitter : le jardin est supprimé avec son compte."
+            shared: "Dans un jardin partagé, chaque membre voit et modifie tout ce qu’il contient : fiches, plantes, photos, espaces, soins, notes et rappels. Seul le propriétaire renomme ou déplace le jardin, invite et retire des membres. Vos conversations avec l’assistant et vos notifications restent à vous."
             text: "Vos fiches, vos notes et vos photos restent les vôtres. L’éditeur ne les conserve et ne les traite que pour fournir le service."
         data:
             heading: "Données personnelles"

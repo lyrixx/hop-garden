@@ -19,6 +19,7 @@
             <li>{{ 'legal.privacy.data.account'|trans }}</li>
             <li>{{ 'legal.privacy.data.garden'|trans }}</li>
             <li>{{ 'legal.privacy.data.photos'|trans }}</li>
+            <li>{{ 'legal.privacy.data.invitations'|trans }}</li>
             <li>{{ 'legal.privacy.data.conversations'|trans }}</li>
             <li>{{ 'legal.privacy.data.location'|trans }}</li>
             <li>{{ 'legal.privacy.data.searches'|trans }}</li>
@@ -31,6 +32,7 @@
         <h2>{{ 'legal.privacy.purposes.heading'|trans }}</h2>
         <ul>
             <li>{{ 'legal.privacy.purposes.service'|trans }}</li>
+            <li>{{ 'legal.privacy.purposes.invitation'|trans }}</li>
             <li>{{ 'legal.privacy.purposes.security'|trans }}</li>
             <li>{{ 'legal.privacy.purposes.billing'|trans }}</li>
         </ul>
@@ -40,6 +42,10 @@
         <h2>{{ 'legal.privacy.retention.heading'|trans }}</h2>
         <ul>
             <li>{{ 'legal.privacy.retention.account.text'|trans }} <twig:Legal:ToComplete :what="'legal.privacy.retention.account.to_complete'|trans"/></li>
+            {# App\Account\AccountDeletion: a garden goes with its last member only #}
+            <li>{{ 'legal.privacy.retention.shared_garden'|trans }}</li>
+            {# Nothing purges an invitation: the foreign keys of App\Garden\Entity\Invitation (its garden, who sent it) only #}
+            <li>{{ 'legal.privacy.retention.invitations'|trans }}</li>
             <li>{{ 'legal.privacy.retention.conversations.text'|trans }} <twig:Legal:ToComplete :what="'legal.privacy.retention.conversations.to_complete'|trans"/></li>
             {# framework.session.gc_maxlifetime, config/packages/framework.yaml #}
             <li>{{ 'legal.privacy.retention.session'|trans }}</li>
@@ -50,6 +56,7 @@
 
     <section>
         <h2>{{ 'legal.privacy.recipients.heading'|trans }}</h2>
+        <p>{{ 'legal.privacy.recipients.members'|trans }}</p>
         <p>{{ 'legal.privacy.recipients.text'|trans }}</p>
         <p><twig:Legal:ToComplete :what="'legal.privacy.recipients.to_complete'|trans"/></p>
         <p>{{ 'legal.privacy.recipients.transfers'|trans }}</p>

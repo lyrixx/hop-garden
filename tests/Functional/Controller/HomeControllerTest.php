@@ -39,10 +39,10 @@ final class HomeControllerTest extends WebTestCase
                 'You no longer know what you planted, or where.',
                 'Keeping a garden notebook takes too long.',
                 'Your AI assistant does not know your garden.',
+                'You garden together, yet everyone keeps their own notes.',
             ],
             $crawler->filter('.problem h3')->each(static fn (Crawler $heading): string => $heading->text()),
         );
-        self::assertSelectorTextContains('.home-soon .tag', 'Soon', 'Shared gardens are not there yet.');
         self::assertSelectorTextContains('.home-conversation .bubble-user', 'I just planted a hydrangea on the terrace');
         self::assertStringContainsString('/images/home/care-sheet.en-', (string) $crawler->filter('.home-figure img')->first()->attr('src'), 'The capture in English.');
     }

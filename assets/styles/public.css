@@ -33,13 +33,6 @@
 .problem h3 { font-size: 1.35rem; line-height: 1.2; }
 .problem p { margin: 0; }
 
-/* What is coming: on the green, a dashed outline, never a card that would pass for a feature */
-.home-soon { display: flex; align-items: flex-start; gap: 1rem; margin-top: 1.1rem; padding: 1.3rem 1.6rem; border: 1.5px dashed rgb(255 255 255 / 45%); border-radius: 24px; background: var(--veil); }
-.home-soon .pict { width: 46px; height: 46px; }
-.home-soon h3 { margin: .45rem 0 .3rem; font-size: 1.25rem; }
-.home-soon p { margin: 0; color: var(--text-soft); }
-.tag-soon { background: var(--anise); color: var(--forest-deep); letter-spacing: .08em; text-transform: uppercase; }
-
 /* The captures of the application, on their own green ground: about as tall as each other */
 .home-figures { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
 .home-figure { margin: 0; }
@@ -113,7 +106,6 @@
     .home-lede { font-size: 1.08rem; }
     .home-section > h2 { font-size: 1.8rem; }
     .problem { padding: 1.3rem 1.3rem 1.4rem; }
-    .home-soon { padding: 1.1rem 1.2rem; }
     .home-join { padding: 1.8rem 1.3rem 2rem; }
     .home-join h2 { font-size: 1.6rem; }
     .legal-card { padding: 1.6rem 1.3rem 1.8rem; border-radius: 26px; }

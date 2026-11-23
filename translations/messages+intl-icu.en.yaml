@@ -370,10 +370,9 @@ home:
         pruning:
             heading: "You forget when to prune."
             text: "Each care sheet gives the months to prune, deadhead and take cuttings. Turn on a reminder: on the 1st of each of these months, a notification in Hop Garden tells you which plant is due."
-        soon:
-            heading: "Gardening together, nobody knows who did what."
-            label: "Soon"
-            text: "Shared gardens are coming, with invitations to bring in the people you garden with."
+        shared:
+            heading: "You garden together, yet everyone keeps their own notes."
+            text: "Invite the people you garden with by email: they join your garden without going through the waiting list. Every member sees and edits the same care sheets, plants, spaces and reminders, and each of them gets the reminders and the frost alerts. Anyone can leave the garden; if its owner leaves, the oldest member takes over."
         spaces:
             heading: "You no longer know what you planted, or where."
             text: "Describe the spaces of your garden, such as the terrace or the north bed, with their exposure and their soil. Each plant has its space, its photo, the care it got and its neighbours. Hop Garden tells you when a plant that likes full sun grows in the shade."
@@ -475,6 +474,7 @@ legal:
             conversations: "Your conversations with the assistant: your messages and its answers are stored, and sent to the provider of the language model that writes the answers. To answer, the assistant reads your garden (care sheets, plants, spaces), and what it reads goes to the same provider. The name of a species you look up may be sent to it too, to find its Latin name or draft its care sheet."
             garden: "Your garden: the care sheets of your species, your plants and their spaces, the care you record, your notes, your reminders and your notifications."
             heading: "The data Hop Garden processes"
+            invitations: "Invitations: the email address of a person the owner of a garden invites to join it. Hop Garden sends them an email with the display name of the one who invites, the name of the garden and a link valid for 14 days. That link shows whoever opens it the name of the garden, its city, the one who invites and the address invited. When the person joins the garden, the one who invited them gets a notification with their display name, or the owner if the one who invited is no longer a member of the garden."
             location: "The location of your garden: the city you search, sent to Open-Meteo to find it, then its latitude and longitude, sent to Open-Meteo for the frost forecast."
             logs:
                 text: "Technical logs:"
@@ -486,21 +486,24 @@ legal:
         purposes:
             billing: "Invoicing, once the service is paid: a legal obligation (article 6(1)(c) GDPR)."
             heading: "Why, and on what legal basis"
+            invitation: "The invitation email, sent to the address the owner of a garden gives, at their request: the legitimate interest of that owner in gardening with the person they invite (article 6(1)(f) GDPR)."
             security: "Keeping the service running and secure, with the logs of the server: the legitimate interest of the publisher (article 6(1)(f) GDPR)."
             service: "Providing the service you signed up for (your account, your garden, the reminders, the frost alerts, the assistant, the emails about your account): the performance of the contract (article 6(1)(b) GDPR)."
         recipients:
             heading: "Who receives your data"
-            text: "Your data only goes to the processors Hop Garden needs to run, and to Trefle and Open-Meteo as described above."
+            members: "The members of a shared garden see and edit everything in it: care sheets, plants, photos, spaces, care, notes and reminders. On the page of the members, each of them sees the display name of the others, their role and the date they joined the garden, not their email address. The owner also sees the addresses of the invitations waiting. The person invited, and anyone with the link, sees the display name of the one who invites, the name of the garden and its city. Your conversations with the assistant and your notifications are yours alone."
+            text: "Beyond them, your data only goes to the processors Hop Garden needs to run, and to Trefle and Open-Meteo as described above."
             to_complete: "the list of the processors, their country, and the safeguards for a transfer outside the European Union. For example: the host of the application and its database; the provider of the language model (Anthropic or OpenAI, depending on the configuration); the email service."
             transfers: "The provider of the language model may process the conversations outside the European Union."
         retention:
             account:
-                text: "Your account and your garden: as long as your account exists. They are deleted when you delete it, within"
+                text: "Your account, and each garden you are the only member of: as long as your account exists. They are deleted when you delete it, within"
                 to_complete: "the delay of deletion, backups included"
             conversations:
                 text: "Your conversations with the assistant:"
                 to_complete: "how long they are kept"
             heading: "For how long"
+            invitations: "Invitations: they stay recorded once expired, accepted or revoked, even when the person invited deletes their account. They are only deleted with their garden, or with the account of the one who sent them."
             invoices:
                 text: "Invoices, once the service is paid:"
                 to_complete: "how long they are kept"
@@ -508,6 +511,7 @@ legal:
                 text: "The logs of the server:"
                 to_complete: "how long they are kept"
             session: "The session: it ends after 12 hours without a visit."
+            shared_garden: "A shared garden: it stays with its other members when you leave it or delete your account, with what you added to it. It is only deleted with the account of its last member."
         rights:
             complaint: "If you think your rights are not respected, you can lodge a complaint with a data protection authority, such as the CNIL in France ({link})."
             heading: "Your rights"
@@ -517,16 +521,18 @@ legal:
         access:
             availability: "The publisher strives to keep Hop Garden available, without guarantee: it may be interrupted for maintenance, or when a provider fails (host, language model, Trefle, Open-Meteo)."
             heading: "Access to the service"
-            text: "Hop Garden works in a web browser, with an internet connection at your expense. Access opens through a waiting list: you sign up, confirm your email address, and your account opens once the publisher has validated it. The publisher may limit the number of accounts and the use of the assistant."
+            text: "Hop Garden works in a web browser, with an internet connection at your expense. Access opens through a waiting list: you sign up, confirm your email address, and your account opens once the publisher has validated it. Except with an invitation: an account created from the link the owner of a garden sends gets in without the waiting list, at once with the address invited, and with another one once that address is confirmed. The publisher may limit the number of accounts and the use of the assistant."
         account:
             heading: "Your account"
-            text: "You give an email address that is yours and keep your password secret: what is done with your account is your responsibility. You can delete your account at any time; your data is then deleted as the {link}privacy policy{link_end} explains."
+            text: "You give an email address that is yours and keep your password secret: what is done with your account is your responsibility. You can delete your account at any time; your data is then deleted as the {link}privacy policy{link_end} explains, except what you added to a shared garden, which stays with its other members."
         changes:
             heading: "Changes to these terms"
             text: "The publisher may change these terms. You are told by email before a new version applies to you, with a notice of"
             to_complete: "the notice period"
         content:
             heading: "Your content"
+            leaving: "By adding them to a shared garden, you share them with its members: they stay there when you leave the garden, when its owner removes you from it or when you delete your account. Nothing in the garden tells who added what. If the owner leaves the garden or deletes their account, the oldest member becomes its owner. Its last member cannot leave it: the garden is deleted with their account."
+            shared: "In a shared garden, every member sees and edits everything in it: care sheets, plants, photos, spaces, care, notes and reminders. Only the owner renames or moves the garden, invites and removes members. Your conversations with the assistant and your notifications remain yours."
             text: "Your care sheets, notes and photos remain yours. The publisher only stores and processes them to provide the service."
         data:
             heading: "Personal data"
