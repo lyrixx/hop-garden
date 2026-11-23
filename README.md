@@ -153,6 +153,8 @@ The owner of a garden invites by email, on the page of its members, as a member 
   Whoever has the link may use it: the owner, who sees it, could as well.
 - The one who invited gets a notification, and its toast, when somebody joins. An invitation expired, revoked or used,
   or of a garden deleted, says so, and nothing of its garden.
+- 30 days after it ends (expired, accepted or revoked), an invitation is deleted, with its address and the notification
+  of the member who joined with it: every day at 3:00 UTC, by the worker.
 - An account still on the waiting list waits for the administrator: its login is refused until then.
 
 In `castor demo:reset`, Alice has invited `erin@hop-garden.test`, who has no account: the task prints the link.

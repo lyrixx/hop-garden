@@ -503,7 +503,7 @@ legal:
                 text: "Your conversations with the assistant:"
                 to_complete: "how long they are kept"
             heading: "For how long"
-            invitations: "Invitations: they stay recorded once expired, accepted or revoked, even when the person invited deletes their account. They are only deleted with their garden, or with the account of the one who sent them."
+            invitations: "Invitations: they are deleted 30 days after they end, that is once expired, accepted or revoked, with the notification that announced the arrival of the person invited. They go sooner with their garden, or with the account of the one who sent them."
             invoices:
                 text: "Invoices, once the service is paid:"
                 to_complete: "how long they are kept"

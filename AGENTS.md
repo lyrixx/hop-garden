@@ -65,7 +65,8 @@ Without option, the `default` context applies.
   (`mercure_cookie_controller.js`). The subscriber key is its own (`MERCURE_SUBSCRIBER_JWT_KEY`)
 - Symfony Messenger: `async` transport (Doctrine, `use_notify: true`, no retry: a chat message must not be
   answered twice) and `scheduler_default`, both consumed by the `worker_messenger` container
-  (`castor start-workers` / `castor stop-workers`)
+  (`castor start-workers` / `castor stop-workers`). The schedule `default` is `App\Reminder\Scheduler\ReminderSchedule`;
+  a task of another domain joins it with `#[AsPeriodicTask]` (`App\Garden\Scheduler\PurgeEndedInvitations`)
 - Symfony UX. Turbo: Drive between pages, Frames for the card (edited and validated in place) and its reminders,
   Streams over Mercure (the chat, the reminder toasts) rendered by the worker with Twig from the same components. The
   worker has no session: what carries a signed form is loaded by the browser (the card, a lazy frame in the chat).
@@ -137,7 +138,8 @@ Without option, the `default` context applies.
   `/g/{garden}` (its members, `/members`, GARDEN_VIEW; its invitations and removing a member, GARDEN_MANAGE, its owner
   only), the invitation or the membership found by its UUID in the garden of the URL, a 404 otherwise. Each member leaves
   it (`Garden::leave()`: the oldest of the others takes it over from its owner), its only member does not.
-  `App\Garden\Entity\Invitation` (its token hashed, 14 days, one open per address and garden by a partial unique index)
+  `App\Garden\Entity\Invitation` (its token hashed, 14 days, one open per address and garden by a partial unique index,
+  deleted 30 days after it ends by `App\Garden\Scheduler\PurgeEndedInvitations`)
   as a member only: a garden has one owner. Its token is the whole link, `/invitations/{token}`
   (`App\Controller\InvitationController`, public, out of any garden): whoever has it joins, with their account or a new
   one, which skips the waiting list (`User::admitByInvitation()`) and has its email verified when it is the address

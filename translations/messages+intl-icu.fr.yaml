@@ -503,7 +503,7 @@ legal:
                 text: "Vos conversations avec l’assistant :"
                 to_complete: "durée de conservation"
             heading: "Combien de temps"
-            invitations: "Les invitations : elles restent enregistrées après leur expiration, leur acceptation ou leur révocation, même quand la personne invitée supprime son compte. Elles ne sont supprimées qu’avec leur jardin, ou avec le compte de celui qui les a envoyées."
+            invitations: "Les invitations : elles sont supprimées 30 jours après leur fin, c’est-à-dire leur expiration, leur acceptation ou leur révocation, avec la notification qui annonçait l’arrivée de la personne invitée. Elles partent plus tôt avec leur jardin, ou avec le compte de celui qui les a envoyées."
             invoices:
                 text: "Les factures, une fois le service payant :"
                 to_complete: "durée de conservation"

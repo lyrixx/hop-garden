@@ -24,6 +24,11 @@ class Invitation
      */
     public const string LIFETIME = '+14 days';
 
+    /**
+     * Once it ends, expired, accepted or revoked: then it is deleted, its address with it (App\Garden\Scheduler\PurgeEndedInvitations).
+     */
+    public const string KEPT_AFTER_ITS_END = '30 days';
+
     #[ORM\Id]
     #[ORM\Column(type: UuidType::NAME)]
     private Uuid $id;
