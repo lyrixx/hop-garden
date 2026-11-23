@@ -309,12 +309,12 @@ garden:
             submit: "Inviter"
             title: "Inviter quelqu’un"
         leave: "Quitter le jardin"
-        leave_confirm: "Quitter {garden} ? Vous ne verrez plus ses plantes."
-        leave_confirm_owner: "Quitter {garden} ? {name} en devient propriétaire, et vous ne verrez plus ses plantes."
+        leave_confirm: "Quitter {garden} ? Vous ne verrez plus ses plantes, et vos conversations avec l’assistant et vos notifications de ce jardin seront supprimées."
+        leave_confirm_owner: "Quitter {garden} ? {name} en devient propriétaire, vous ne verrez plus ses plantes, et vos conversations avec l’assistant et vos notifications de ce jardin seront supprimées."
         no_invitation: "Aucune invitation en attente."
         only_member: "Vous en êtes l’unique membre : invitez quelqu’un à jardiner avec vous."
         remove: "Retirer"
-        remove_confirm: "Retirer {name} de {garden} ? Cette personne ne verra plus ses plantes."
+        remove_confirm: "Retirer {name} de {garden} ? Cette personne ne verra plus ses plantes, et ses conversations avec l’assistant et ses notifications de ce jardin seront supprimées."
         since: "depuis le {date}"
         tab: "Membres"
         title: "Membres"
@@ -386,6 +386,10 @@ invitation:
     intro: "{inviter} vous invite à jardiner ensemble : vous partagez ses plantes, leurs fiches de culture et leurs rappels."
     log_in: "J’ai un compte : me connecter"
     log_out: "Utiliser un autre compte"
+    login:
+        no_account: "Pas encore de compte ? {link}Créez-le{link_end} : pas de liste d’attente avec cette invitation."
+        subtitle: "Avec votre compte, même s’il est encore sur la liste d’attente : cette invitation le fait entrer."
+        title: "Connectez-vous pour rejoindre {garden}"
     member:
         body: "Vous êtes déjà membre de {garden}."
         open: "Ouvrir {garden}"
@@ -500,10 +504,10 @@ legal:
                 text: "Votre compte, et chaque jardin dont vous êtes le seul membre : tant que votre compte existe. Ils sont supprimés quand vous le supprimez, dans un délai de"
                 to_complete: "délai de suppression, sauvegardes comprises"
             conversations:
-                text: "Vos conversations avec l’assistant :"
+                text: "Vos conversations avec l’assistant : elles sont supprimées quand vous quittez leur jardin, quand son propriétaire vous en retire, ou avec votre compte. Sinon :"
                 to_complete: "durée de conservation"
             heading: "Combien de temps"
-            invitations: "Les invitations : elles restent enregistrées après leur expiration, leur acceptation ou leur révocation, même quand la personne invitée supprime son compte. Elles ne sont supprimées qu’avec leur jardin, ou avec le compte de celui qui les a envoyées."
+            invitations: "Les invitations : elles sont supprimées 30 jours après leur fin, c’est-à-dire leur expiration, leur acceptation ou leur révocation, avec la notification qui annonçait l’arrivée de la personne invitée. Elles partent plus tôt avec leur jardin, ou avec le compte de celui qui les a envoyées."
             invoices:
                 text: "Les factures, une fois le service payant :"
                 to_complete: "durée de conservation"
@@ -511,7 +515,7 @@ legal:
                 text: "Les journaux du serveur :"
                 to_complete: "durée de conservation"
             session: "La session : elle prend fin après 12 heures sans visite."
-            shared_garden: "Un jardin partagé : il reste à ses autres membres quand vous le quittez ou supprimez votre compte, avec ce que vous y avez ajouté. Il n’est supprimé qu’avec le compte de son dernier membre."
+            shared_garden: "Un jardin partagé : il reste à ses autres membres quand vous le quittez, quand son propriétaire vous en retire ou quand vous supprimez votre compte, avec ce que vous y avez ajouté ; vos conversations avec l’assistant dans ce jardin et vos notifications de ce jardin sont supprimées. Il n’est supprimé qu’avec le compte de son dernier membre."
         rights:
             complaint: "Si vous estimez que vos droits ne sont pas respectés, vous pouvez adresser une réclamation à la CNIL ({link})."
             heading: "Vos droits"
@@ -521,7 +525,7 @@ legal:
         access:
             availability: "L’éditeur s’efforce de garder Hop Garden disponible, sans garantie : le service peut être interrompu pour maintenance, ou quand un prestataire fait défaut (hébergeur, modèle de langage, Trefle, Open-Meteo)."
             heading: "Accès au service"
-            text: "Hop Garden fonctionne dans un navigateur web, avec une connexion internet à votre charge. L’accès passe par une liste d’attente : vous vous inscrivez, confirmez votre adresse email, et votre compte ouvre une fois validé par l’éditeur. Sauf invitation : un compte créé depuis le lien qu’envoie le propriétaire d’un jardin entre sans liste d’attente, tout de suite avec l’adresse invitée, et avec une autre une fois celle-ci confirmée. L’éditeur peut limiter le nombre de comptes et l’usage de l’assistant."
+            text: "Hop Garden fonctionne dans un navigateur web, avec une connexion internet à votre charge. L’accès passe par une liste d’attente : vous vous inscrivez, confirmez votre adresse email, et votre compte ouvre une fois validé par l’éditeur. Sauf invitation : depuis le lien qu’envoie le propriétaire d’un jardin, un nouveau compte, ou un compte encore sur la liste d’attente qui s’y connecte, entre sans attendre, tout de suite avec l’adresse invitée, et avec une autre une fois celle-ci confirmée. L’éditeur peut limiter le nombre de comptes et l’usage de l’assistant."
         account:
             heading: "Votre compte"
             text: "Vous donnez une adresse email qui est la vôtre et gardez votre mot de passe secret : ce qui est fait avec votre compte relève de votre responsabilité. Vous pouvez supprimer votre compte à tout moment ; vos données sont alors supprimées comme l’explique la {link}politique de confidentialité{link_end}, sauf ce que vous avez ajouté à un jardin partagé, qui reste à ses autres membres."
@@ -531,8 +535,8 @@ legal:
             to_complete: "durée du préavis"
         content:
             heading: "Vos contenus"
-            leaving: "En les ajoutant à un jardin partagé, vous les partagez avec ses membres : ils y restent quand vous quittez le jardin, quand son propriétaire vous en retire ou quand vous supprimez votre compte. Rien dans le jardin n’indique qui a ajouté quoi. Si le propriétaire quitte le jardin ou supprime son compte, le membre le plus ancien en devient propriétaire. Son dernier membre ne peut pas le quitter : le jardin est supprimé avec son compte."
-            shared: "Dans un jardin partagé, chaque membre voit et modifie tout ce qu’il contient : fiches, plantes, photos, espaces, soins, notes et rappels. Seul le propriétaire renomme ou déplace le jardin, invite et retire des membres. Vos conversations avec l’assistant et vos notifications restent à vous."
+            leaving: "En les ajoutant à un jardin partagé, vous les partagez avec ses membres : ils y restent quand vous quittez le jardin, quand son propriétaire vous en retire ou quand vous supprimez votre compte. Vos conversations avec l’assistant dans ce jardin et vos notifications de ce jardin, elles, sont alors supprimées. Rien dans le jardin n’indique qui a ajouté quoi. Si le propriétaire quitte le jardin ou supprime son compte, le membre le plus ancien en devient propriétaire. Son dernier membre ne peut pas le quitter : le jardin est supprimé avec son compte."
+            shared: "Dans un jardin partagé, chaque membre voit et modifie tout ce qu’il contient : fiches, plantes, photos, espaces, soins, notes et rappels. Seul le propriétaire renomme ou déplace le jardin, invite et retire des membres. Vos conversations avec l’assistant et vos notifications ne sont qu’à vous."
             text: "Vos fiches, vos notes et vos photos restent les vôtres. L’éditeur ne les conserve et ne les traite que pour fournir le service."
         data:
             heading: "Données personnelles"

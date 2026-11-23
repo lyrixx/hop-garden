@@ -11,6 +11,7 @@ use App\Garden\Form\Model\InvitationFormData;
 use App\Garden\GardenQuotas;
 use App\Garden\InvitationRepository;
 use App\Garden\Invitations;
+use App\Garden\MemberDeparture;
 use App\Garden\Model\InvitationLink;
 use App\Garden\Security\GardenVoter;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
@@ -49,6 +50,7 @@ final class GardenMembersController extends AbstractController
         private readonly EntityManagerInterface $entityManager,
         private readonly Invitations $invitations,
         private readonly InvitationRepository $invitationRepository,
+        private readonly MemberDeparture $memberDeparture,
         private readonly GardenQuotas $gardenQuotas,
         private readonly ClockInterface $clock,
         private readonly LoggerInterface $logger,
@@ -168,7 +170,7 @@ final class GardenMembersController extends AbstractController
     }
 
     /**
-     * By its owner, never themselves: they leave it.
+     * By its owner, never themselves: they leave it. Their conversations and notifications of it go (MemberDeparture).
      */
     #[Route('/members/{membershipId}/remove', name: 'garden_member_remove', requirements: ['membershipId' => Requirement::UUID_V7], methods: ['POST'])]
     #[IsGranted(GardenVoter::MANAGE, 'garden', statusCode: Response::HTTP_NOT_FOUND)]
@@ -183,8 +185,11 @@ final class GardenMembersController extends AbstractController
         }
 
         $name = $membership->getUser()->getDisplayName();
-        $garden->remove($membership);
-        $this->entityManager->flush();
+        // The messages of the conversations, in the table of the message store, go in the same transaction
+        $this->entityManager->wrapInTransaction(function () use ($garden, $membership): void {
+            $this->memberDeparture->remove($garden, $membership);
+            $this->entityManager->flush();
+        });
 
         $this->addFlash('success', new TranslatableMessage('flash.member.removed', ['name' => $name, 'garden' => $garden->getName()]));
 
@@ -192,8 +197,8 @@ final class GardenMembersController extends AbstractController
     }
 
     /**
-     * Any member, its owner too: the oldest of the others takes it over (Garden::leave()). Its only member does not
-     * leave it: it goes with their account.
+     * Any member, its owner too: the oldest of the others takes it over (Garden::leave()), and their conversations and
+     * notifications of it go (MemberDeparture). Its only member does not leave it: it goes with their account.
      */
     #[Route('/leave', name: 'garden_leave', methods: ['POST'])]
     #[IsGranted(GardenVoter::VIEW, 'garden', statusCode: Response::HTTP_NOT_FOUND)]
@@ -206,8 +211,10 @@ final class GardenMembersController extends AbstractController
             return $this->redirectToRoute('garden_members', ['garden' => $garden->getSlug()], Response::HTTP_SEE_OTHER);
         }
 
-        $garden->leave($user);
-        $this->entityManager->flush();
+        $this->entityManager->wrapInTransaction(function () use ($garden, $user): void {
+            $this->memberDeparture->leave($garden, $user);
+            $this->entityManager->flush();
+        });
 
         // Out of it: their last garden, another one now, or the wizard
         $this->addFlash('success', new TranslatableMessage('flash.member.left', ['garden' => $garden->getName()]));

@@ -51,7 +51,7 @@ final class GardenIsolationTest extends WebTestCase
         // Her subscriber cookie, renewed: her topics (MercureSubscriptionTest)
         'mercure_cookie',
         // The link of an invitation: whoever has its token joins its garden, it is all they need (AcceptInvitationTest)
-        'invitation', 'invitation_register', 'invitation_accept',
+        'invitation', 'invitation_register', 'invitation_login', 'invitation_login_check', 'invitation_accept',
     ];
 
     /**

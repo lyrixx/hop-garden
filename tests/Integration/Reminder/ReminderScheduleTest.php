@@ -19,12 +19,10 @@ final class ReminderScheduleTest extends KernelTestCase
         self::bootKernel();
         $schedule = self::getContainer()->get(ReminderSchedule::class)->getSchedule();
 
-        $recurringMessages = $schedule->getRecurringMessages();
-        self::assertCount(1, $recurringMessages);
-        $trigger = $recurringMessages[0]->getTrigger();
-        $messages = self::messagesOf($recurringMessages[0]);
-        self::assertCount(1, $messages);
-        self::assertInstanceOf(CheckRemindersMessage::class, $messages[0]);
+        // Not alone: other tasks join this schedule (App\Garden\Scheduler\PurgeEndedInvitations)
+        $checks = array_values(array_filter($schedule->getRecurringMessages(), static fn (RecurringMessage $recurringMessage): bool => [CheckRemindersMessage::class] === array_map(get_class(...), self::messagesOf($recurringMessage))));
+        self::assertCount(1, $checks);
+        $trigger = $checks[0]->getTrigger();
         self::assertSame('every 1 hour', (string) $trigger);
 
         $run = $trigger->getNextRunDate(new \DateTimeImmutable('2000-01-01')) ?? self::fail('The schedule never runs.');

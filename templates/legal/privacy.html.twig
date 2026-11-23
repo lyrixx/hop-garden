@@ -44,7 +44,7 @@
             <li>{{ 'legal.privacy.retention.account.text'|trans }} <twig:Legal:ToComplete :what="'legal.privacy.retention.account.to_complete'|trans"/></li>
             {# App\Account\AccountDeletion: a garden goes with its last member only #}
             <li>{{ 'legal.privacy.retention.shared_garden'|trans }}</li>
-            {# Nothing purges an invitation: the foreign keys of App\Garden\Entity\Invitation (its garden, who sent it) only #}
+            {# App\Garden\Scheduler\PurgeEndedInvitations, every day (Invitation::KEPT_AFTER_ITS_END), and the foreign keys of App\Garden\Entity\Invitation #}
             <li>{{ 'legal.privacy.retention.invitations'|trans }}</li>
             <li>{{ 'legal.privacy.retention.conversations.text'|trans }} <twig:Legal:ToComplete :what="'legal.privacy.retention.conversations.to_complete'|trans"/></li>
             {# framework.session.gc_maxlifetime, config/packages/framework.yaml #}

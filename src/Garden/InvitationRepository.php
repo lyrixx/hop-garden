@@ -62,6 +62,26 @@ class InvitationRepository extends ServiceEntityRepository
     }
 
     /**
+     * An invitation ends at the first of its expiration, its acceptance and its revocation (one revoked once expired
+     * ended when it expired). The notification of the member who joined with it goes with it, by its foreign key.
+     *
+     * @return int how many were deleted
+     */
+    public function deleteEndedBefore(\DateTimeImmutable $date): int
+    {
+        /** @var int $deleted */
+        $deleted = $this->createQueryBuilder('invitation')
+            ->delete()
+            ->andWhere('invitation.expiresAt < :date OR invitation.acceptedAt < :date OR invitation.revokedAt < :date')
+            ->setParameter('date', $date)
+            ->getQuery()
+            ->execute()
+        ;
+
+        return $deleted;
+    }
+
+    /**
      * @return list<Invitation> neither accepted nor revoked, expired or not: the newest first
      */
     public function findOpenOfGarden(Garden $garden): array

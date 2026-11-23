@@ -27,11 +27,21 @@
 .home-section > h2 { margin-bottom: 1.4rem; font-size: 2.3rem; }
 
 /* What it takes care of: the problem as its title, then what Hop Garden does about it */
-.problem-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 1.1rem; margin: 0; padding: 0; list-style: none; }
+.problem-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 1.1rem; margin: 0; padding: 0; list-style: none; container-type: inline-size; }
 .problem { display: flex; flex-direction: column; gap: .65rem; padding: 1.5rem 1.6rem 1.6rem; }
 .problem .pict { width: 46px; height: 46px; }
 .problem h3 { font-size: 1.35rem; line-height: 1.2; }
 .problem p { margin: 0; }
+
+/* On three columns of the grid exactly (320px each, and their gaps), the last card alone on its line takes all of it:
+   its icon and title on the left, about the width of a card, its text on the right, lined up with the second column of
+   cards (a gap of the padding of a card and half the gap of the grid). On two columns, or one, it stays a card */
+@container (calc(3 * 320px + 2 * 1.1rem) <= width < calc(4 * 320px + 3 * 1.1rem)) {
+    .problem:last-child:nth-child(3n + 1) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); grid-column: 1 / -1; gap: .65rem calc(1.6rem + 1.1rem / 2); }
+    .problem:last-child:nth-child(3n + 1) .pict { grid-area: 1 / 1; }
+    .problem:last-child:nth-child(3n + 1) h3 { grid-area: 2 / 1; }
+    .problem:last-child:nth-child(3n + 1) p { grid-area: 1 / 2 / 4 / 3; align-self: center; }
+}
 
 /* The captures of the application, on their own green ground: about as tall as each other */
 .home-figures { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }

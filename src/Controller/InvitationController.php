@@ -6,11 +6,13 @@ use App\Account\AccountMailer;
 use App\Account\Entity\User;
 use App\Account\Form\Model\RegistrationFormData;
 use App\Account\Form\RegistrationType;
+use App\Account\Model\AccessStatus;
 use App\Account\UserRepository;
 use App\Garden\Entity\Invitation;
 use App\Garden\InvitationRepository;
 use App\Garden\Invitations;
 use App\Garden\Model\InvitationStatus;
+use App\Garden\Security\InvitationAuthenticator;
 use App\Locale\PreferredLocale;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -24,14 +26,15 @@ use Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
+use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
 use Symfony\Component\Translation\TranslatableMessage;
 
 /**
  * The link of an invitation, its token only: whoever has it joins the garden, with their account, or a new one that
  * comes in without the waiting list. The new account has its email verified when it is the address invited, and is
- * logged in at once; with another address, it verifies it first. An invitation that no longer works says why, without
- * naming its garden nor who sent it.
+ * logged in at once; with another address, it verifies it first. So does an account still on the waiting list, logged in
+ * from the link. An invitation that no longer works says why, without naming its garden nor who sent it.
  */
 final class InvitationController extends AbstractController
 {
@@ -110,7 +113,7 @@ final class InvitationController extends AbstractController
         $form->handleRequest($request);
 
         if (!$form->isSubmitted() || !$form->isValid()) {
-            return $this->render('invitation/register.html.twig', ['invitation' => $invitation, 'form' => $form]);
+            return $this->render('invitation/register.html.twig', ['invitation' => $invitation, 'token' => $token, 'form' => $form]);
         }
 
         // Before the lookup: the answer takes as long whether the address has an account or not
@@ -124,14 +127,9 @@ final class InvitationController extends AbstractController
             return $this->redirectToRoute('register_check_email', status: Response::HTTP_SEE_OTHER);
         }
 
-        $now = $this->clock->now();
-        $user = $data->toUser($passwordHash, $preferredLocale->isChosen() ? $locale : null, $now);
+        $user = $data->toUser($passwordHash, $preferredLocale->isChosen() ? $locale : null, $this->clock->now());
+        // The invitation verifies the address it came to, and lets the account in: Invitation::accept()
         $sentToThem = $invitation->isSentTo($user);
-        if ($sentToThem) {
-            // The link came to this address
-            $user->verifyEmail($now);
-        }
-        $user->admitByInvitation($now);
 
         try {
             $accepted = $this->entityManager->wrapInTransaction(function () use ($invitation, $user, $userRepository): bool {
@@ -166,6 +164,64 @@ final class InvitationController extends AbstractController
         return $this->welcome($invitation);
     }
 
+    /**
+     * The login of the link, for any account: one still on the waiting list, or whose address is the one invited without
+     * being verified, comes in by accepting it at once (loggedIn()). A login of /login does not let it in.
+     */
+    #[Route('/invitations/{token}/login', name: 'invitation_login', requirements: ['token' => self::TOKEN_REQUIREMENT], methods: ['GET'])]
+    public function logIn(#[\SensitiveParameter] string $token, AuthenticationUtils $authenticationUtils): Response
+    {
+        if ($this->isGranted('ROLE_USER')) {
+            return $this->redirectToRoute('invitation', ['token' => $token]);
+        }
+
+        $invitation = $this->invitationRepository->findOneByToken($token);
+        if (null === $invitation) {
+            return $this->unknown();
+        }
+        if (null !== $response = $this->unavailable($invitation, null)) {
+            return $response;
+        }
+
+        return $this->render('invitation/login.html.twig', [
+            'invitation' => $invitation,
+            'token' => $token,
+            'last_email' => $authenticationUtils->getLastUsername(),
+            'error' => $authenticationUtils->getLastAuthenticationError(),
+        ]);
+    }
+
+    /**
+     * Logged in by App\Garden\Security\InvitationAuthenticator. An approved account is back on the invitation, as from
+     * /login, to join with it or not. Any other one got in for this invitation only (App\Account\Security\UserChecker):
+     * it joins the garden now, admitted, or leaves.
+     */
+    #[Route('/invitations/{token}/login', name: 'invitation_login_check', requirements: ['token' => self::TOKEN_REQUIREMENT], methods: ['POST'])]
+    public function loggedIn(Request $request, #[\SensitiveParameter] string $token, #[CurrentUser] User $user, Security $security): Response
+    {
+        if ($user->isEmailVerified() && AccessStatus::Approved === $user->getAccessStatus()) {
+            return $this->redirectToRoute('invitation', ['token' => $token], Response::HTTP_SEE_OTHER);
+        }
+
+        $invitation = $request->attributes->get(InvitationAuthenticator::INVITATION);
+        if (!$invitation instanceof Invitation) {
+            throw new \LogicException(\sprintf('User %s logged in from the link of an invitation without one: App\Account\Security\UserChecker lets them in for a pending invitation only.', $user->getId()));
+        }
+
+        if (!$this->join($invitation, $user)) {
+            // Used or revoked since the login: out, its page says why
+            $security->logout(validateCsrfToken: false);
+
+            return $this->redirectToRoute('invitation', ['token' => $token], Response::HTTP_SEE_OTHER);
+        }
+
+        $this->removeTargetPath($request->getSession(), 'main');
+        // The token of the login has the roles of before, none: ROLE_USER comes with the approval
+        $security->login($user, 'form_login', 'main');
+
+        return $this->welcome($invitation);
+    }
+
     #[Route('/invitations/{token}/accept', name: 'invitation_accept', requirements: ['token' => self::TOKEN_REQUIREMENT], methods: ['POST'])]
     #[IsCsrfTokenValid('invitation_accept', tokenKey: '_token')]
     public function accept(Request $request, #[\SensitiveParameter] string $token, #[CurrentUser] User $user): Response
@@ -175,14 +231,7 @@ final class InvitationController extends AbstractController
             return $this->unknown();
         }
 
-        try {
-            $accepted = $this->entityManager->wrapInTransaction(fn (): bool => $this->invitations->accept($invitation, $user));
-        } catch (UniqueConstraintViolationException $e) {
-            // Two invitations of the same garden accepted at once by the same member: the first one joins
-            $this->logger->warning('A member joined the same garden twice at once.', ['exception' => $e]);
-            $accepted = false;
-        }
-        if (!$accepted) {
+        if (!$this->join($invitation, $user)) {
             // Its page says why: a member already, or it no longer works
             return $this->redirectToRoute('invitation', ['token' => $token], Response::HTTP_SEE_OTHER);
         }
@@ -190,6 +239,21 @@ final class InvitationController extends AbstractController
         $this->removeTargetPath($request->getSession(), 'main');
 
         return $this->welcome($invitation);
+    }
+
+    /**
+     * @return bool false when it is not pending any more, or they are a member already
+     */
+    private function join(Invitation $invitation, User $user): bool
+    {
+        try {
+            return $this->entityManager->wrapInTransaction(fn (): bool => $this->invitations->accept($invitation, $user));
+        } catch (UniqueConstraintViolationException $e) {
+            // Two invitations of the same garden accepted at once by the same member: the first one joins
+            $this->logger->warning('A member joined the same garden twice at once.', ['exception' => $e]);
+
+            return false;
+        }
     }
 
     /**

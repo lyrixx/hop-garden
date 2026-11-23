@@ -11,7 +11,8 @@ use Symfony\Contracts\Cache\CacheInterface;
 
 /**
  * Consumed by the worker: "messenger:consume scheduler_default". Every hour, on the hour: each garden is checked once a
- * day, from 7:00 in its own timezone (CheckRemindersHandler, App\Garden\Entity\Garden::isDueForReminderCheck()).
+ * day, from 7:00 in its own timezone (CheckRemindersHandler, App\Garden\Entity\Garden::isDueForReminderCheck()). The
+ * tasks of the other domains join it with #[AsPeriodicTask]: App\Garden\Scheduler\PurgeEndedInvitations.
  */
 #[AsSchedule]
 final readonly class ReminderSchedule implements ScheduleProviderInterface

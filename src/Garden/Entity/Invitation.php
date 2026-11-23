@@ -3,6 +3,7 @@
 namespace App\Garden\Entity;
 
 use App\Account\Entity\User;
+use App\Account\Model\AccessStatus;
 use App\Garden\InvitationRepository;
 use App\Garden\Model\InvitationStatus;
 use Doctrine\ORM\Mapping as ORM;
@@ -23,6 +24,11 @@ class Invitation
      * From the last link: a new one gets 14 days again.
      */
     public const string LIFETIME = '+14 days';
+
+    /**
+     * Once it ends, expired, accepted or revoked: then it is deleted, its address with it (App\Garden\Scheduler\PurgeEndedInvitations).
+     */
+    public const string KEPT_AFTER_ITS_END = '30 days';
 
     #[ORM\Id]
     #[ORM\Column(type: UuidType::NAME)]
@@ -96,7 +102,8 @@ class Invitation
     }
 
     /**
-     * The garden takes them in, whatever the address of their account.
+     * The garden takes them in, whatever the address of their account. An account on the waiting list skips it, and the
+     * link proves the address it was sent to.
      */
     public function accept(User $user, \DateTimeImmutable $at): void
     {
@@ -106,6 +113,12 @@ class Invitation
 
         $this->garden->join($user, $at);
         $this->acceptedAt = $at;
+        if ($this->isSentTo($user)) {
+            $user->verifyEmail($at);
+        }
+        if (AccessStatus::Pending === $user->getAccessStatus()) {
+            $user->admitByInvitation($at);
+        }
     }
 
     public function revoke(\DateTimeImmutable $at): void

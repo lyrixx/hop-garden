@@ -44,8 +44,8 @@
                 <p>{{ 'invitation.no_waiting'|trans }}</p>
                 <div class="actions">
                     <twig:Button href="{{ path('invitation_register', {token: token}) }}" class="button-next">{{ 'invitation.create_account'|trans }}</twig:Button>
-                    {# The login leads back here: InvitationController::show() kept this page as its target #}
-                    <twig:Button href="{{ path('login') }}" class="button-secondary">{{ 'invitation.log_in'|trans }}</twig:Button>
+                    {# The login of the link, which lets in an account of the waiting list too, then leads back here #}
+                    <twig:Button href="{{ path('invitation_login', {token: token}) }}" class="button-secondary">{{ 'invitation.log_in'|trans }}</twig:Button>
                 </div>
             {% endif %}
         </div>

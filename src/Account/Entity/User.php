@@ -135,7 +135,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * Invited into a garden, a new account skips the waiting list: in once its email is verified.
+     * Invited into a garden, an account without a decision skips the waiting list (Invitation::accept()), a new one or
+     * one still waiting: in once its email is verified.
      */
     public function admitByInvitation(\DateTimeImmutable $at): void
     {

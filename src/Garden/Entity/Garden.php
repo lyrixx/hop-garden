@@ -83,7 +83,8 @@ class Garden
 
     /**
      * The oldest of the other members takes it over when its owner leaves: the one who knows it best. Its last member
-     * does not leave it: the garden goes with them (App\Account\AccountDeletion).
+     * does not leave it: the garden goes with them (App\Account\AccountDeletion). Their conversations and notifications
+     * of it go too: App\Garden\MemberDeparture.
      */
     public function leave(User $user): void
     {

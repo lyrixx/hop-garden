@@ -2,6 +2,7 @@
 
 namespace App\Tests\Unit\Garden;
 
+use App\Account\Model\AccessStatus;
 use App\Factory\UserFactory;
 use App\Garden\Entity\Garden;
 use App\Garden\Entity\GardenLocation;
@@ -53,6 +54,26 @@ final class InvitationTest extends TestCase
 
         $this->expectException(\LogicException::class);
         $invitation->accept(UserFactory::createOne(), new \DateTimeImmutable('2026-11-03'));
+    }
+
+    /**
+     * As a new account: the address invited is verified by the link, another one is not.
+     */
+    public function testItLetsAnAccountOfTheWaitingListIn(): void
+    {
+        $garden = self::garden();
+        $erin = UserFactory::createOne(['email' => 'erin@example.com']);
+        $frank = UserFactory::new()->verified(new \DateTimeImmutable('2026-10-15'))->create(['email' => 'frank@example.com']);
+        $george = UserFactory::createOne(['email' => 'george@example.com']);
+
+        Invitation::send($garden, 'erin@example.com', $garden->getOwner(), 'the-token', new \DateTimeImmutable('2026-11-01'))->accept($erin, new \DateTimeImmutable('2026-11-02'));
+        Invitation::send($garden, 'f@example.com', $garden->getOwner(), 'the-token', new \DateTimeImmutable('2026-11-01'))->accept($frank, new \DateTimeImmutable('2026-11-02'));
+        Invitation::send($garden, 'g@example.com', $garden->getOwner(), 'the-token', new \DateTimeImmutable('2026-11-01'))->accept($george, new \DateTimeImmutable('2026-11-02'));
+
+        self::assertSame([AccessStatus::Approved, AccessStatus::Approved, AccessStatus::Approved], [$erin->getAccessStatus(), $frank->getAccessStatus(), $george->getAccessStatus()]);
+        self::assertSame('2026-11-02', $erin->getEmailVerifiedAt()?->format('Y-m-d'), 'The link came to her address.');
+        self::assertSame('2026-10-15', $frank->getEmailVerifiedAt()?->format('Y-m-d'));
+        self::assertNull($george->getEmailVerifiedAt(), 'He verifies it first.');
     }
 
     public function testItIsSentToTheAccountOfItsAddress(): void

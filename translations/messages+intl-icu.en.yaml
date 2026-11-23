@@ -309,12 +309,12 @@ garden:
             submit: "Invite"
             title: "Invite somebody"
         leave: "Leave the garden"
-        leave_confirm: "Leave {garden}? You will no longer see its plants."
-        leave_confirm_owner: "Leave {garden}? {name} becomes its owner, and you will no longer see its plants."
+        leave_confirm: "Leave {garden}? You will no longer see its plants, and your conversations with the assistant and your notifications in it will be deleted."
+        leave_confirm_owner: "Leave {garden}? {name} becomes its owner, you will no longer see its plants, and your conversations with the assistant and your notifications in it will be deleted."
         no_invitation: "No invitation waiting."
         only_member: "You are its only member: invite somebody to garden with you."
         remove: "Remove"
-        remove_confirm: "Remove {name} from {garden}? They will no longer see its plants."
+        remove_confirm: "Remove {name} from {garden}? They will no longer see its plants, and their conversations with the assistant and their notifications in it will be deleted."
         since: "since {date}"
         tab: "Members"
         title: "Members"
@@ -386,6 +386,10 @@ invitation:
     intro: "{inviter} invites you to garden together: you share its plants, their care sheets and their reminders."
     log_in: "I have an account: log in"
     log_out: "Use another account"
+    login:
+        no_account: "No account yet? {link}Create it{link_end}: no waiting list with this invitation."
+        subtitle: "With your account, even one still on the waiting list: this invitation lets it in."
+        title: "Log in to join {garden}"
     member:
         body: "You are a member of {garden} already."
         open: "Open {garden}"
@@ -500,10 +504,10 @@ legal:
                 text: "Your account, and each garden you are the only member of: as long as your account exists. They are deleted when you delete it, within"
                 to_complete: "the delay of deletion, backups included"
             conversations:
-                text: "Your conversations with the assistant:"
+                text: "Your conversations with the assistant: they are deleted when you leave their garden, when its owner removes you from it, or with your account. Otherwise:"
                 to_complete: "how long they are kept"
             heading: "For how long"
-            invitations: "Invitations: they stay recorded once expired, accepted or revoked, even when the person invited deletes their account. They are only deleted with their garden, or with the account of the one who sent them."
+            invitations: "Invitations: they are deleted 30 days after they end, that is once expired, accepted or revoked, with the notification that announced the arrival of the person invited. They go sooner with their garden, or with the account of the one who sent them."
             invoices:
                 text: "Invoices, once the service is paid:"
                 to_complete: "how long they are kept"
@@ -511,7 +515,7 @@ legal:
                 text: "The logs of the server:"
                 to_complete: "how long they are kept"
             session: "The session: it ends after 12 hours without a visit."
-            shared_garden: "A shared garden: it stays with its other members when you leave it or delete your account, with what you added to it. It is only deleted with the account of its last member."
+            shared_garden: "A shared garden: it stays with its other members when you leave it, when its owner removes you from it or when you delete your account, with what you added to it; your conversations with the assistant in that garden and your notifications of it are deleted. It is only deleted with the account of its last member."
         rights:
             complaint: "If you think your rights are not respected, you can lodge a complaint with a data protection authority, such as the CNIL in France ({link})."
             heading: "Your rights"
@@ -521,7 +525,7 @@ legal:
         access:
             availability: "The publisher strives to keep Hop Garden available, without guarantee: it may be interrupted for maintenance, or when a provider fails (host, language model, Trefle, Open-Meteo)."
             heading: "Access to the service"
-            text: "Hop Garden works in a web browser, with an internet connection at your expense. Access opens through a waiting list: you sign up, confirm your email address, and your account opens once the publisher has validated it. Except with an invitation: an account created from the link the owner of a garden sends gets in without the waiting list, at once with the address invited, and with another one once that address is confirmed. The publisher may limit the number of accounts and the use of the assistant."
+            text: "Hop Garden works in a web browser, with an internet connection at your expense. Access opens through a waiting list: you sign up, confirm your email address, and your account opens once the publisher has validated it. Except with an invitation: from the link the owner of a garden sends, a new account, or an account still on the waiting list that logs in there, gets in without waiting, at once with the address invited, and with another one once that address is confirmed. The publisher may limit the number of accounts and the use of the assistant."
         account:
             heading: "Your account"
             text: "You give an email address that is yours and keep your password secret: what is done with your account is your responsibility. You can delete your account at any time; your data is then deleted as the {link}privacy policy{link_end} explains, except what you added to a shared garden, which stays with its other members."
@@ -531,8 +535,8 @@ legal:
             to_complete: "the notice period"
         content:
             heading: "Your content"
-            leaving: "By adding them to a shared garden, you share them with its members: they stay there when you leave the garden, when its owner removes you from it or when you delete your account. Nothing in the garden tells who added what. If the owner leaves the garden or deletes their account, the oldest member becomes its owner. Its last member cannot leave it: the garden is deleted with their account."
-            shared: "In a shared garden, every member sees and edits everything in it: care sheets, plants, photos, spaces, care, notes and reminders. Only the owner renames or moves the garden, invites and removes members. Your conversations with the assistant and your notifications remain yours."
+            leaving: "By adding them to a shared garden, you share them with its members: they stay there when you leave the garden, when its owner removes you from it or when you delete your account. Your conversations with the assistant in that garden and your notifications of it are deleted then. Nothing in the garden tells who added what. If the owner leaves the garden or deletes their account, the oldest member becomes its owner. Its last member cannot leave it: the garden is deleted with their account."
+            shared: "In a shared garden, every member sees and edits everything in it: care sheets, plants, photos, spaces, care, notes and reminders. Only the owner renames or moves the garden, invites and removes members. Your conversations with the assistant and your notifications are yours alone."
             text: "Your care sheets, notes and photos remain yours. The publisher only stores and processes them to provide the service."
         data:
             heading: "Personal data"

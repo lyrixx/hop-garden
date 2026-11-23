@@ -29,8 +29,9 @@ use Symfony\Component\DomCrawler\Crawler;
 
 /**
  * The link of an invitation, public: whoever has it joins the garden, with their account or a new one. A new account
- * comes in without the waiting list, at once with the address invited, once verified with another one. Who invited is
- * told. A link that no longer works says why, and nothing of its garden.
+ * comes in without the waiting list, at once with the address invited, once verified with another one; so does an
+ * account of the waiting list logged in from the link, and only from it. Who invited is told. A link that no longer
+ * works says why, and nothing of its garden.
  */
 final class AcceptInvitationTest extends WebTestCase
 {
@@ -50,6 +51,8 @@ final class AcceptInvitationTest extends WebTestCase
         self::mockTime('2026-11-22 10:00');
         $this->gardens = TwoGardens::create(self::getContainer());
         RecordingHub::reset();
+        // Of the logins refused by the tests before, as erin@example.com
+        $this->forgetTheFailedLogins();
     }
 
     public function testANewAccountWithTheAddressInvitedComesInAtOnce(): void
@@ -126,10 +129,12 @@ final class AcceptInvitationTest extends WebTestCase
         InvitationFactory::createOne(['garden' => $this->gardens->allotment, 'email' => $this->gardens->carol->getEmail(), 'token' => $token = str_repeat('c', 43), 'sentAt' => new \DateTimeImmutable('2026-11-21')]);
         $crawler = $this->client->request('GET', '/invitations/' . $token);
 
-        $this->client->click($crawler->selectLink('I have an account: log in')->link());
-        $this->logInWithTheForm($this->client, $this->gardens->carol->getEmail());
+        $crawler = $this->client->click($crawler->selectLink('I have an account: log in')->link());
+        self::assertSelectorTextSame('h1', 'Log in to join Allotment of Alice and Bob');
+        $this->client->submit($crawler->filter('main form')->form(), ['_password' => UserFactory::PASSWORD]);
 
-        self::assertResponseRedirects('/invitations/' . $token, 302, 'Back on the invitation.');
+        self::assertResponseRedirects('/invitations/' . $token, 303, 'Back on the invitation: an approved account joins it, or not.');
+        self::assertFalse($this->isMember($this->gardens->carol->getEmail()), 'Not yet.');
         $crawler = $this->client->followRedirect();
         self::assertSelectorNotExists('.invitation-card .warning', 'Her address.');
         $this->client->submit($crawler->selectButton('Join Allotment of Alice and Bob')->form());
@@ -266,9 +271,143 @@ final class AcceptInvitationTest extends WebTestCase
     }
 
     /**
-     * Their login is refused until the administrator decides: the invitation waits, they join once approved.
+     * Logged in from the link, an account of the waiting list joins the garden, let in by the invitation as a new account
+     * would be: the address invited is verified by it, whether it was already or not.
      */
-    public function testAnAccountOnTheWaitingListWaitsForTheAdministrator(): void
+    #[DataProvider('provideAnAccountOfTheWaitingListLogsInFromTheLinkAndJoinsCases')]
+    public function testAnAccountOfTheWaitingListLogsInFromTheLinkAndJoins(bool $verified): void
+    {
+        ($verified ? UserFactory::new()->verified(new \DateTimeImmutable('2026-11-10')) : UserFactory::new())->create(['email' => 'erin@example.com', 'displayName' => 'Erin']);
+        $crawler = $this->client->request('GET', self::LINK);
+
+        $crawler = $this->client->click($crawler->selectLink('I have an account: log in')->link());
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('.plate-head', 'With your account, even one still on the waiting list: this invitation lets it in.');
+        self::assertSame('erin@example.com', $crawler->filter('input[name="_username"]')->attr('value'), 'The address invited.');
+        $this->client->submit($crawler->filter('main form')->form(), ['_password' => UserFactory::PASSWORD]);
+
+        self::assertResponseRedirects('/g/allotment-of-alice-and-bob/garden', 303);
+        $erin = $this->user('erin@example.com');
+        self::assertSame(AccessStatus::Approved, $erin->getAccessStatus(), 'Out of the waiting list.');
+        self::assertSame($verified ? '2026-11-10' : '2026-11-22', $erin->getEmailVerifiedAt()?->format('Y-m-d'));
+        self::assertSame(InvitationStatus::Accepted, $this->invitation()->statusAt(new \DateTimeImmutable('2026-11-22 10:00')));
+        $this->client->followRedirect();
+        self::assertResponseIsSuccessful('Logged in as a member: the roles of the approval.');
+        self::assertSelectorTextContains('.flash-success', 'Welcome to Allotment of Alice and Bob: you are one of its members now.');
+        self::assertSelectorTextContains('main', 'Rose by the gate');
+        $this->client->request('GET', '/account');
+        self::assertResponseIsSuccessful('Still in on the next request.');
+
+        $this->assertAliceIsTold('Erin joined Allotment of Alice and Bob.');
+    }
+
+    /**
+     * @return iterable<string, array{bool}>
+     */
+    public static function provideAnAccountOfTheWaitingListLogsInFromTheLinkAndJoinsCases(): iterable
+    {
+        yield 'its email verified' => [true];
+        yield 'its email not verified yet' => [false];
+    }
+
+    /**
+     * With another address than the one invited, it verifies it first, as a new account: then it joins.
+     */
+    public function testAnAccountOfTheWaitingListWithAnotherAddressVerifiesItFirst(): void
+    {
+        UserFactory::createOne(['email' => 'frank@example.com', 'displayName' => 'Frank']);
+
+        $this->logInFromTheLink('frank@example.com');
+
+        self::assertResponseRedirects(self::LINK . '/login', 302);
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('main .warning', 'Verify your email first');
+        self::assertFalse($this->isMember('frank@example.com'));
+        self::assertSame(AccessStatus::Pending, $this->user('frank@example.com')->getAccessStatus());
+        self::assertSame(InvitationStatus::Pending, $this->invitation()->statusAt(new \DateTimeImmutable('2026-11-22 10:00')), 'It waits for him.');
+
+        $frank = $this->user('frank@example.com');
+        $frank->verifyEmail(new \DateTimeImmutable('2026-11-22 10:00'));
+        self::getContainer()->get(EntityManagerInterface::class)->flush();
+        $this->logInFromTheLink('frank@example.com');
+
+        self::assertResponseRedirects('/g/allotment-of-alice-and-bob/garden', 303);
+        self::assertSame(AccessStatus::Approved, $this->user('frank@example.com')->getAccessStatus());
+        $this->assertAliceIsTold('Frank joined Allotment of Alice and Bob, with the invitation sent to erin@example.com.');
+    }
+
+    /**
+     * Let in for the invitation only, it joins with it or goes out at once: here a member already, which the invitation
+     * does not let in twice.
+     */
+    public function testAnAccountOfTheWaitingListThatDoesNotJoinIsLoggedOut(): void
+    {
+        $erin = UserFactory::new()->verified()->create(['email' => 'erin@example.com']);
+        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+        $allotment = $entityManager->find(Garden::class, $this->gardens->allotment->getId()) ?? self::fail();
+        $allotment->join($erin, new \DateTimeImmutable('2026-11-21'));
+        $entityManager->flush();
+
+        $this->logInFromTheLink('erin@example.com');
+
+        self::assertResponseRedirects(self::LINK, 303);
+        self::assertSame(AccessStatus::Pending, $this->user('erin@example.com')->getAccessStatus());
+        self::assertSame(InvitationStatus::Pending, $this->invitation()->statusAt(new \DateTimeImmutable('2026-11-22 10:00')));
+        $this->client->request('GET', '/account');
+        self::assertResponseRedirects('/login', 302, 'Logged out.');
+    }
+
+    public function testARefusedAccountStaysOut(): void
+    {
+        UserFactory::new()->refused()->create(['email' => 'erin@example.com']);
+
+        $this->logInFromTheLink('erin@example.com');
+
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('main .warning', 'Your request to join Hop Garden was declined.');
+        self::assertSame(InvitationStatus::Pending, $this->invitation()->statusAt(new \DateTimeImmutable('2026-11-22 10:00')));
+    }
+
+    /**
+     * Expired, revoked or used between the page and its form: the account stays on the waiting list, logged out.
+     *
+     * @param \Closure(self): void $makeItUnavailable
+     */
+    #[DataProvider('provideALinkThatNoLongerWorksLetsNoAccountOfTheWaitingListInCases')]
+    public function testALinkThatNoLongerWorksLetsNoAccountOfTheWaitingListIn(\Closure $makeItUnavailable): void
+    {
+        UserFactory::new()->verified()->create(['email' => 'erin@example.com']);
+        $crawler = $this->client->request('GET', self::LINK . '/login');
+        $makeItUnavailable($this);
+        self::getContainer()->get(EntityManagerInterface::class)->flush();
+
+        $this->client->submit($crawler->filter('main form')->form(), ['_password' => UserFactory::PASSWORD]);
+
+        self::assertResponseRedirects(self::LINK . '/login', 302, 'Refused: login.pending.');
+        $this->client->followRedirect();
+        self::assertResponseStatusCodeSame(410);
+        self::assertSelectorTextSame('h1', 'This invitation no longer works');
+        self::assertSame(AccessStatus::Pending, $this->user('erin@example.com')->getAccessStatus());
+        self::assertFalse($this->isMember('erin@example.com'));
+        $this->client->request('GET', '/account');
+        self::assertResponseRedirects('/login', 302, 'Not logged in.');
+    }
+
+    /**
+     * @return iterable<string, array{\Closure(self): void}>
+     */
+    public static function provideALinkThatNoLongerWorksLetsNoAccountOfTheWaitingListInCases(): iterable
+    {
+        yield 'expired' => [static fn (self $test) => self::mockTime('2026-12-04 00:00')];
+        yield 'revoked' => [static fn (self $test) => $test->invitation()->revoke(new \DateTimeImmutable('2026-11-22 10:00'))];
+        yield 'accepted' => [static fn (self $test) => $test->invitation()->accept(UserFactory::new()->approved()->create(), new \DateTimeImmutable('2026-11-22 10:00'))];
+    }
+
+    /**
+     * The login of /login refuses it until the administrator decides, even after the page of the invitation: the
+     * invitation waits.
+     */
+    public function testAnOrdinaryLoginOfAnAccountOfTheWaitingListIsRefused(): void
     {
         UserFactory::new()->verified()->create(['email' => 'erin@example.com']);
         $this->client->request('GET', self::LINK);
@@ -278,6 +417,7 @@ final class AcceptInvitationTest extends WebTestCase
         $this->client->followRedirect();
         self::assertSelectorTextContains('main .warning', 'Your account is on the waiting list');
         self::assertSame(InvitationStatus::Pending, $this->invitation()->statusAt(new \DateTimeImmutable('2026-11-22 10:00')));
+        self::assertSame(AccessStatus::Pending, $this->user('erin@example.com')->getAccessStatus());
     }
 
     /**
@@ -298,6 +438,13 @@ final class AcceptInvitationTest extends WebTestCase
         self::assertSelectorTextContains('main', 'This invitation was used already');
         self::assertFalse($this->isMember($this->gardens->carol->getEmail()));
         self::assertSame([], self::newMembers(self::getContainer()->get(NotificationRepository::class)->findLatest($this->gardens->alice, $this->gardens->allotment)), 'Dan came in by the factory: nobody told.');
+    }
+
+    private function logInFromTheLink(string $email): void
+    {
+        $crawler = $this->client->request('GET', self::LINK . '/login');
+
+        $this->client->submit($crawler->filter('main form')->form(), ['_username' => $email, '_password' => UserFactory::PASSWORD]);
     }
 
     private function register(Crawler $crawler, string $name, ?string $email = null): void
