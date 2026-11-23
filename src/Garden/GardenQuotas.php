@@ -8,7 +8,8 @@ use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 
 /**
  * What a garden may ask the LLM in a day, whoever of its members asks (config/packages/framework.yaml, rate_limiter):
- * the runs of its agent, and the Latin names of the species search. Spent, the pages say so, translated.
+ * the runs of its agent, and the Latin names of the species search. And the invitations it sends by email in a day.
+ * Spent, the pages say so, translated.
  */
 final readonly class GardenQuotas
 {
@@ -17,6 +18,8 @@ final readonly class GardenQuotas
         private RateLimiterFactoryInterface $agentRuns,
         #[Target('garden_latin_names')]
         private RateLimiterFactoryInterface $latinNames,
+        #[Target('garden_invitations')]
+        private RateLimiterFactoryInterface $invitations,
     ) {
     }
 
@@ -34,6 +37,14 @@ final readonly class GardenQuotas
     public function consumeLatinNames(Garden $garden): bool
     {
         return $this->latinNames->create(self::key($garden))->consume()->isAccepted();
+    }
+
+    /**
+     * @return bool false when the emails of the day are spent: no invitation sent, nor sent again
+     */
+    public function consumeInvitation(Garden $garden): bool
+    {
+        return $this->invitations->create(self::key($garden))->consume()->isAccepted();
     }
 
     private static function key(Garden $garden): string

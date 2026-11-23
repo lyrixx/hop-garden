@@ -6,9 +6,12 @@ framework:
         scoped_clients:
             open_meteo.client:
                 base_uri: 'https://api.open-meteo.com'
-            # The places of a garden, by name (App\DataSource\OpenMeteo\GeocodingClient)
+            # The places of a garden, by name or postcode (App\DataSource\OpenMeteo\GeocodingClient): searched while the
+            # form waits, up to 3 requests for a postcode and a name
             open_meteo_geocoding.client:
                 base_uri: 'https://geocoding-api.open-meteo.com'
+                timeout: 5
+                max_duration: 5
             trefle.client:
                 base_uri: 'https://trefle.io'
 

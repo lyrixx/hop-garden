@@ -9,16 +9,15 @@ use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * A member of a garden: created and changed by its garden only (Garden::create(), join(), leave()).
+ * A member of a garden: created and changed by its garden only (Garden::create(), join(), leave(), remove()).
  */
 #[ORM\Entity]
 #[ORM\UniqueConstraint(fields: ['garden', 'user'])]
 class Membership
 {
-    // Only Doctrine reads it
     #[ORM\Id]
     #[ORM\Column(type: UuidType::NAME)]
-    private Uuid $id; // @phpstan-ignore property.onlyWritten
+    private Uuid $id;
 
     /**
      * @internal only for Garden
@@ -44,6 +43,11 @@ class Membership
     public function takeOver(): void
     {
         $this->role = MembershipRole::Owner;
+    }
+
+    public function getId(): Uuid
+    {
+        return $this->id;
     }
 
     public function getGarden(): Garden

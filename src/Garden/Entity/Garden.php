@@ -70,7 +70,7 @@ class Garden
     }
 
     /**
-     * A new member, by an invitation of the owner (phase 2), or by the demo and the tests until then.
+     * A new member, by an invitation (Invitation::accept()), or by the demo and the tests.
      */
     public function join(User $user, \DateTimeImmutable $joinedAt): void
     {
@@ -97,6 +97,18 @@ class Garden
         if ($membership->isOwner() && false !== $oldest) {
             $oldest->takeOver();
         }
+    }
+
+    /**
+     * By its owner, who never removes themselves: they leave it.
+     */
+    public function remove(Membership $membership): void
+    {
+        if ($membership->getGarden() !== $this || $membership->isOwner()) {
+            throw new \LogicException(\sprintf('Only a member of garden %d who is not its owner is removed from it.', $this->getId()));
+        }
+
+        $this->leave($membership->getUser());
     }
 
     public function rename(string $name): void

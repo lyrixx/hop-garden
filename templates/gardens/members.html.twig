@@ -1,0 +1,118 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'garden.members.title'|trans }} · {{ garden.name }} · Hop Garden{% endblock %}
+
+{#
+    Every member sees them, and may leave unless they are its only one. Its owner (form, not null: GARDEN_MANAGE) invites,
+    removes a member, and manages the invitations waiting (App\Controller\GardenMembersController). shown_link: the link
+    of an invitation just sent or renewed, shown once, copied at once when asked (copy). The dates in the timezone of the
+    garden, as its reminders
+#}
+{% block body %}
+<div class="with-specimen">
+<div>
+    <header class="plate-head">
+        <span class="plate-tab">{{ 'garden.members.tab'|trans }}</span>
+        <h1>{{ garden.name }}</h1>
+        <p>{{ 'garden.members.intro'|trans }}</p>
+    </header>
+
+    {% set memberships = garden.memberships %}
+    <section class="card crowned garden-members" aria-labelledby="members-title">
+        <h2 id="members-title">{{ 'garden.members.title'|trans }}</h2>
+        <ul class="member-list">
+            {% for membership in memberships %}
+                {% set member = membership.user %}
+                <li class="member">
+                    <span class="pict"><twig:Icon name="user" :size="18"/></span>
+                    <div class="member-name">
+                        <strong>{{ member.displayName }}</strong>{% if member == app.user %} <span class="meta member-you">{{ 'garden.members.you'|trans }}</span>{% endif %}
+                        <p class="meta"><span class="tag {{ membership.owner ? 'tag-owner' }}">{{ membership.role|trans }}</span> {{ 'garden.members.since'|trans({date: garden.localTime(membership.joinedAt)|long_date}) }}</p>
+                    </div>
+                    {% if member == app.user and memberships|length > 1 %}
+                        {# Its owner leaves it to the oldest of the others: Garden::leave() #}
+                        {% set successor = (memberships|filter(other => other.user != app.user)|first).user %}
+                        <form method="post" action="{{ path('garden_leave', {id: garden.id}) }}" data-turbo-confirm="{{ (membership.owner ? 'garden.members.leave_confirm_owner' : 'garden.members.leave_confirm')|trans({garden: garden.name, name: successor.displayName}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('garden_leave') }}">
+                            <twig:Button class="button-secondary">{{ 'garden.members.leave'|trans }}</twig:Button>
+                        </form>
+                    {% elseif form and not membership.owner %}
+                        <form method="post" action="{{ path('garden_member_remove', {id: garden.id, membershipId: membership.id}) }}" data-turbo-confirm="{{ 'garden.members.remove_confirm'|trans({name: member.displayName, garden: garden.name}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('garden_member') }}">
+                            <twig:Button class="button-secondary">{{ 'garden.members.remove'|trans }}</twig:Button>
+                        </form>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+        {% if memberships|length == 1 %}
+            <p class="hint">{{ 'garden.members.only_member'|trans }}</p>
+        {% endif %}
+    </section>
+
+    {% if form %}
+        {{ form_start(form, {attr: {class: 'card care-sheet-form invitation-form'}}) }}
+            <h2>{{ 'garden.members.invite.title'|trans }}</h2>
+            {{ form_errors(form) }}
+            {{ form_row(form.email) }}
+            <p class="help-text">{{ 'garden.members.invite.help'|trans }}</p>
+            <div class="actions">
+                <twig:Button icon="mail" :iconSize="18">{{ 'garden.members.invite.submit'|trans }}</twig:Button>
+            </div>
+        {{ form_end(form) }}
+
+        <section class="card garden-invitations" aria-labelledby="invitations-title">
+            <h2 id="invitations-title">{{ 'garden.members.invitations'|trans }}</h2>
+            {% if invitations is empty %}
+                <p class="hint">{{ 'garden.members.no_invitation'|trans }}</p>
+            {% else %}
+                <ul class="invitation-list">
+                    {% for invitation in invitations %}
+                        {% set id = invitation.id.toRfc4122 %}
+                        {% set shown = shown_link and shown_link.invitation == id ? shown_link %}
+                        <li class="invitation{{ shown ? ' is-shown' }}" id="invitation-{{ id }}">
+                            <div class="invitation-head">
+                                <strong>{{ invitation.email }}</strong>
+                                <p class="meta">
+                                    {{ 'garden.members.invitation.sent_on'|trans({date: garden.localTime(invitation.createdAt)|long_date, name: invitation.invitedBy.displayName}) }} ·
+                                    {% if invitation.pending(now) %}
+                                        {{ 'garden.members.invitation.expires_on'|trans({date: garden.localTime(invitation.expiresAt)|long_date}) }}
+                                    {% else %}
+                                        <span class="tag tag-draft">{{ 'garden.members.invitation.expired_on'|trans({date: garden.localTime(invitation.expiresAt)|long_date}) }}</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            {% if shown %}
+                                {# Shown once: the database keeps its hash only #}
+                                <div class="invitation-link" {{ stimulus_controller('clipboard', {copied: 'garden.members.invitation.copied'|trans, auto: shown.copy}) }}>
+                                    <label for="invitation-link-{{ id }}">{{ 'garden.members.invitation.link'|trans }}</label>
+                                    <div class="invitation-link-field">
+                                        <input type="text" id="invitation-link-{{ id }}" value="{{ shown.url }}" readonly {{ stimulus_target('clipboard', 'source') }} {{ stimulus_action('clipboard', 'select', 'focus') }}>
+                                        <twig:Button type="button" class="button-light" data-clipboard-target="button" data-action="clipboard#copy">{{ 'garden.members.invitation.copy'|trans }}</twig:Button>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            <div class="actions">
+                                <form method="post" action="{{ path('garden_invitation_resend', {id: garden.id, invitationId: id}) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('garden_invitation') }}">
+                                    <twig:Button class="button-secondary" icon="mail" :iconSize="16">{{ 'garden.members.invitation.resend'|trans }}</twig:Button>
+                                </form>
+                                <form method="post" action="{{ path('garden_invitation_link', {id: garden.id, invitationId: id}) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('garden_invitation') }}">
+                                    <twig:Button class="button-secondary" title="{{ 'garden.members.invitation.new_link_help'|trans }}">{{ 'garden.members.invitation.new_link'|trans }}</twig:Button>
+                                </form>
+                                <form method="post" action="{{ path('garden_invitation_revoke', {id: garden.id, invitationId: id}) }}" data-turbo-confirm="{{ 'garden.members.invitation.revoke_confirm'|trans({email: invitation.email}) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('garden_invitation') }}">
+                                    <twig:Button class="button-secondary">{{ 'garden.members.invitation.revoke'|trans }}</twig:Button>
+                                </form>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </section>
+    {% endif %}
+</div>
+<twig:Specimen plate="gonystylus-miquelianus"/>
+</div>
+{% endblock %}

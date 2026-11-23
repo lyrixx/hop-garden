@@ -24,7 +24,7 @@ castor app:db:migrate                        # Doctrine migrations (alias: casto
 castor app:db:fixtures                       # the demo story, as demo:reset does (alias: castor fixtures)
 castor postgres                              # psql shell on the app database (alias: castor pg)
 castor postgres -- select 1 from foobar      # one-off command database query
-castor demo:reset                            # new database: 5 accounts (printed), Alice and Bob share a garden, Bob has another, Carol hers
+castor demo:reset                            # new database: 5 accounts (printed), Alice and Bob share a garden, Bob has another, Carol hers; the link of the invitation of Erin
 castor app:garden:adopt-orphans --email=... --name=... --city=...   # the data of before the gardens, to a new garden of a member
 castor app:user:create --email=... --name=... --password=... [--admin|--approved]   # an account, e.g. the administrator
 castor demo:frost [--date=YYYY-MM-DD]        # reminder check with the recorded frost forecast
@@ -126,13 +126,26 @@ Without option, the `default` context applies.
     `/garden`, `/plants`, `/spaces`, `/notifications`, `/collection`: `LastGardenController`, `config/routes.yaml`). A
     member without garden is sent to the wizard (`/gardens/new`) from there.
   - The switcher of the menu (`GardenSwitcher`, `garden_switch_path()`) leads to the same page in another garden when it
-    is a page of the garden as a whole, else to its assistant. Its owner manages a garden (`/g/{garden}/settings`); its
-    members come with the invitations (phase 2).
+    is a page of the garden as a whole, else to its assistant. Its owner manages a garden (`/g/{garden}/settings`).
   - What the worker renders (the cards of the chat, the toasts) and what the MCP tools return have no URL to take a
-    garden from: they name it, `{garden: plant.garden.slug, ...}`. A component does the same with the resource it has. Deleting an account deletes its gardens
-  of its own, with their photos and conversations, and leaves the shared ones to the oldest other member
-  (`App\Account\AccountDeletion`). The quotas of the LLM count per garden (`App\Garden\GardenQuotas`, rate limiters
-  `garden_agent_runs` and `garden_latin_names`)
+    garden from: they name it, `{garden: plant.garden.slug, ...}`. A component does the same with the resource it has.
+  - Deleting an account deletes its gardens of its own, with their photos and conversations, and leaves the shared ones
+    to the oldest other member (`App\Account\AccountDeletion`). The quotas count per garden (`App\Garden\GardenQuotas`):
+    the LLM (rate limiters `garden_agent_runs` and `garden_latin_names`), and the emails of the invitations
+    (`garden_invitations`, 20 a day)
+- Members and invitations: the routes of a garden are in `App\Controller\GardenMembersController`, under
+  `/g/{garden}` (its members, `/members`, GARDEN_VIEW; its invitations and removing a member, GARDEN_MANAGE, its owner
+  only), the invitation or the membership found by its UUID in the garden of the URL, a 404 otherwise. Each member leaves
+  it (`Garden::leave()`: the oldest of the others takes it over from its owner), its only member does not.
+  `App\Garden\Entity\Invitation` (its token hashed, 14 days, one open per address and garden by a partial unique index)
+  as a member only: a garden has one owner. Its token is the whole link, `/invitations/{token}`
+  (`App\Controller\InvitationController`, public, out of any garden): whoever has it joins, with their account or a new
+  one, which skips the waiting list (`User::admitByInvitation()`) and has its email verified when it is the address
+  invited, then opens the garden. `App\Garden\Invitations` sends it (the language of the account of the address, else
+  of the page), renews its token (each new link replaces the one before, the page of the members shows it once) and
+  accepts it, the invitation locked, telling who invited with a `Notification::newMember()`. A visitor of the link logs
+  in back to it (its target path), and the logout from it leads back too (`InvitationLogoutListener`). A link that no
+  longer works says why, never its garden
 - Spaces: `App\Garden\Entity\Space` carries the exposure and the soil; a `Planting` has an optional space (`SET NULL`),
   and its neighbours are the other plantings of its space. Pages `/g/{garden}/spaces`, `/spaces/new`, `/spaces/{space}`
   and `/spaces/{space}/edit` (`SpaceController`); `RecommendationEngine` reads the exposure of the space
@@ -164,18 +177,20 @@ Without option, the `default` context applies.
   member. `ROLE_USER` comes with the approval (`User::getRoles()`), and `Security\UserChecker` tells the others why after
   their password. Password reset: `Entity\PasswordResetRequest`, its token hashed, one hour, one per user. The pages pay
   no attention to whether an address has an account: the email tells its owner (`AccountMailer::sendAddressInUse()`).
-  Accounts are created by `app:user:create` too (`castor app:user:create`)
+  An invitation to a garden lets a new account in without the waiting list (see Members and invitations); an account on
+  the list already waits for the administrator. Accounts are created by `app:user:create` too (`castor app:user:create`)
 - Security (`config/packages/security.yaml`): `form_login` on `/login`, which leads to `/assistant`, remember me,
   `login_throttling` (5 attempts in 15 minutes), logout on `/logout`, which leads to `/`. `access_control` denies by
-  default (`ROLE_USER`, the chat included): public are the routes `home` and `legal_*`, `/login`, `/register…`,
-  `/reset-password…` and `/locale`. `/_mcp` and `/_mcp/agent` have their own stateless firewalls, before `main`
+  default (`ROLE_USER`, the chat included): public are the routes `home`, `legal_*`, `invitation` and
+  `invitation_register`, `/login`, `/register…`, `/reset-password…` and `/locale`. `/_mcp` and `/_mcp/agent` have their own stateless firewalls, before `main`
 - Mailer: Twig emails in `templates/email/`, translated, sent at once after the flush. In dev, Mailpit catches them
   (`MAILER_DSN` of `.env.dev`, its inbox on `mail.<root_domain>`, listed by `castor about`); in the tests,
   `null://null` and the email assertions of Symfony
 - Demo accounts of `castor demo:reset`, password `hop-garden-demo` (`App\Factory\UserFactory::PASSWORD`):
   `admin@hop-garden.test` (the administrator, no garden), `alice@hop-garden.test` (English) and `bob@hop-garden.test`
   (French), who share "The allotment" (Alice its owner), `carol@hop-garden.test` (English, "Carol's balcony"),
-  `dave@hop-garden.test` (on the waiting list)
+  `dave@hop-garden.test` (on the waiting list). Alice invited `erin@hop-garden.test`, who has no account: its token is
+  `DemoStory::ERIN_INVITATION_TOKEN`, printed by `castor demo:reset`
 - PostgreSQL 16: user/pass/db = `app`/`app`, DATABASE_URL already configured
 - Traefik router, HTTPS on `<root_domain>` (see `castor.php`)
 - Production: one image, `app` (the "Production stages" of the Dockerfile, `.dockerignore` at the root). A new

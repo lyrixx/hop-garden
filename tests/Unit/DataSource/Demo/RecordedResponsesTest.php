@@ -51,8 +51,23 @@ final class RecordedResponsesTest extends TestCase
         $paris = $this->get('https://geocoding-api.open-meteo.com/v1/search?name=Paris&count=5&language=fr&format=json');
         self::assertSame(['Europe/Paris', 'America/Chicago', 'America/Chicago'], array_column($paris['results'], 'timezone'), 'Its homonyms too.');
 
+        $paron = $this->get('https://geocoding-api.open-meteo.com/v1/search?name=Paron&count=5&language=fr&format=json');
+        self::assertSame([['Paron', 'France', ['89100']], ['Paron', 'United States', ['72122']]], array_map(static fn (array $place): array => [$place['name'], $place['country'], $place['postcodes']], \array_slice($paron['results'], 0, 2)));
+        $postcode = $this->get('https://geocoding-api.open-meteo.com/v1/search?name=89100&count=100&language=fr&format=json');
+        self::assertContains('Paron', array_column($postcode['results'], 'name'), 'The places of a postcode.');
+
         self::assertArrayNotHasKey('results', $this->get('https://geocoding-api.open-meteo.com/v1/search?name=Atlantis&count=5&language=en&format=json'), 'As Open-Meteo: no results at all.');
         self::assertArrayNotHasKey('results', $this->get('https://geocoding-api.open-meteo.com/v1/search?name=..%2F..%2Ftrefle%2Faliases&count=5&language=en&format=json'), 'A name, never a path.');
+    }
+
+    public function testThePlaceQueriesARecordingAnswers(): void
+    {
+        $queries = $this->recordedResponses()->placeQueries();
+
+        self::assertSame(['Auxerre', 'Bordeaux', 'Lille', 'London', 'Lyon', 'Nantes', 'Paris', 'Paron', '89000', '89100'], $queries);
+        foreach ($queries as $query) {
+            self::assertNotEmpty($this->get('https://geocoding-api.open-meteo.com/v1/search?name=' . rawurlencode($query) . '&count=5&language=fr&format=json')['results'] ?? [], $query . ' finds its places.');
+        }
     }
 
     #[TestWith(['forecast_days=0', 1])]

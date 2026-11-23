@@ -78,7 +78,9 @@ final class NotificationController extends AbstractController
             array_push($plants, ...$day->plantsAtRisk);
         }
         foreach ($notifications as $notification) {
-            $plants[] = $notification->getReminder()->getPlant();
+            if (null !== $reminder = $notification->getReminder()) {
+                $plants[] = $reminder->getPlant();
+            }
         }
 
         $response = $this->render('notification/index.html.twig', [

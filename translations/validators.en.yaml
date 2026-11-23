@@ -9,10 +9,13 @@ care_record:
     in_the_future: "This date is in the future."
 garden:
     place:
-        not_found: "No place named \"{{ city }}\": check its spelling, or try a city nearby."
+        not_found: "No place found for \"{{ city }}\": check its spelling, or try its postcode, or a city nearby."
+        not_found_in_demo: "In demo mode, the search answers a few recorded places only. Try: {{ places }}."
         not_picked: "Pick the place of your garden among the ones found."
         required: "Search the city of your garden first."
         unavailable: "The search of places does not answer: try again in a moment."
+invitation:
+    already_member: "{{ name }} is a member of the garden already."
 planting:
     photo:
         mime_types: "Send a JPEG, PNG or WebP photo."

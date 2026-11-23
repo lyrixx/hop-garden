@@ -1,0 +1,8 @@
+{
+    "results": [
+        {"id": 3035843, "name": "Auxerre", "latitude": 47.7996, "longitude": 3.57033, "elevation": 120.0, "feature_code": "PPLA2", "country_code": "FR", "admin1_id": 11071619, "admin2_id": 2967222, "timezone": "Europe/Paris", "population": 41516, "postcodes": ["89000", "89290", "89001 CEDEX", "89002 CEDEX", "89003 CEDEX", "89004 CEDEX", "89005 CEDEX", "89006 CEDEX", "89007 CEDEX", "89009 CEDEX", "89010 CEDEX", "89011 CEDEX", "89012 CEDEX", "89015 CEDEX", "89016 CEDEX", "89019 CEDEX", "89020 CEDEX", "89021 CEDEX", "89022 CEDEX", "89023 CEDEX", "89024 CEDEX", "89025 CEDEX", "89026 CEDEX", "89027 CEDEX", "89028 CEDEX", "89029 CEDEX", "89030 CEDEX", "89089 CEDEX"], "country_id": 3017382, "country": "France", "admin1": "Bourgogne-Franche-Comté", "admin2": "Yonne"},
+        {"id": 2979893, "name": "Saint-Georges-sur-Baulche", "latitude": 47.80039, "longitude": 3.53144, "elevation": 159.0, "feature_code": "PPL", "country_code": "FR", "admin1_id": 11071619, "admin2_id": 2967222, "timezone": "Europe/Paris", "population": 3379, "postcodes": ["89000"], "country_id": 3017382, "country": "France", "admin1": "Bourgogne-Franche-Comté", "admin2": "Yonne"},
+        {"id": 2987876, "name": "Perrigny", "latitude": 47.82092, "longitude": 3.53663, "elevation": 125.0, "feature_code": "PPL", "country_code": "FR", "admin1_id": 11071619, "admin2_id": 2967222, "timezone": "Europe/Paris", "postcodes": ["89000"], "country_id": 3017382, "country": "France", "admin1": "Bourgogne-Franche-Comté", "admin2": "Yonne"}
+    ],
+    "generationtime_ms": 0.11
+}

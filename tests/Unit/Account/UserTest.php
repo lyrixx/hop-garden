@@ -63,6 +63,26 @@ final class UserTest extends TestCase
         self::assertSame([], $user->getRoles());
     }
 
+    /**
+     * Its email unverified yet: App\Account\Security\UserChecker keeps it out until it is.
+     */
+    public function testAnInvitationLetsANewAccountInWithoutTheWaitingList(): void
+    {
+        $user = self::register();
+
+        $user->admitByInvitation(new \DateTimeImmutable('2026-11-01 10:00'));
+
+        self::assertSame(AccessStatus::Approved, $user->getAccessStatus());
+        self::assertSame('2026-11-01 10:00', $user->getApprovedAt()?->format('Y-m-d H:i'));
+        self::assertFalse($user->isEmailVerified());
+        self::assertFalse($user->isWaiting());
+
+        $refused = self::waiting();
+        $refused->refuse();
+        $this->expectException(\LogicException::class);
+        $refused->admitByInvitation(new \DateTimeImmutable('2026-11-02'));
+    }
+
     public function testOnlyAnAccountOnTheWaitingListGetsADecision(): void
     {
         $unverified = self::register();

@@ -4,6 +4,7 @@ namespace App\Story;
 
 use App\Factory\CareSheetFactory;
 use App\Factory\GardenFactory;
+use App\Factory\InvitationFactory;
 use App\Factory\PlantFactory;
 use App\Factory\PlantingFactory;
 use App\Factory\SpaceFactory;
@@ -25,13 +26,20 @@ use Zenstruck\Foundry\Story;
 
 /**
  * "castor demo:reset": the administrator, three members and an account on the waiting list. Alice and Bob share "The
- * allotment" (Alice its owner): two validated plants with their reminders, their plantings in three spaces. Bob has "The
- * orchard" too, an apple tree in it: he goes from one garden to the other. Carol has "Carol's balcony", a lavender on
- * it: she sees nothing of theirs. No conversation, no notification.
+ * allotment" (Alice its owner): two validated plants with their reminders, their plantings in three spaces, and an
+ * invitation of Alice waiting for Erin, who has no account. Bob has "The orchard" too, an apple tree in it: he goes from
+ * one garden to the other. Carol has "Carol's balcony", a lavender on it: she sees nothing of theirs. No conversation, no
+ * notification.
  */
 #[AsFixture(name: 'demo')]
 final class DemoStory extends Story
 {
+    /**
+     * Of the link of the invitation of Erin: the database keeps its hash only. Keep in sync with demo_reset() in
+     * castor.php, which prints the link.
+     */
+    public const string ERIN_INVITATION_TOKEN = 'erin-is-invited-into-the-allotment-by-alice';
+
     public function __construct(
         private readonly ClockInterface $clock,
         private readonly Connection $connection,
@@ -52,6 +60,7 @@ final class DemoStory extends Story
 
         // Bob joins the day after (GardenFactory::withMembers()); the places of fixtures/http/open-meteo/geocoding/
         $allotment = GardenFactory::new()->ownedBy($alice)->withMembers($bob)->at(new GardenLocation('Lyon, Auvergne-Rhône-Alpes, France', 45.74846, 4.84671, 'Europe/Paris'))->create(['name' => 'The allotment', 'createdAt' => $now->modify('-30 days')]);
+        InvitationFactory::createOne(['garden' => $allotment, 'email' => 'erin@hop-garden.test', 'token' => self::ERIN_INVITATION_TOKEN, 'sentAt' => $now->modify('-2 days')]);
         $balcony = GardenFactory::new()->ownedBy($carol)->at(new GardenLocation('Lille, Hauts-de-France, France', 50.63297, 3.05858, 'Europe/Paris'))->create(['name' => "Carol's balcony", 'createdAt' => $now->modify('-14 days')]);
         $orchard = GardenFactory::new()->ownedBy($bob)->at(new GardenLocation('Nantes, Pays de la Loire, France', 47.21725, -1.55336, 'Europe/Paris'))->create(['name' => 'The orchard', 'createdAt' => $now->modify('-12 days')]);
 

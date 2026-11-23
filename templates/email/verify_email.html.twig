@@ -3,7 +3,8 @@
 
 {% block content %}
     <p>{{ 'email.layout.hello'|trans({name: name}) }}</p>
-    <p>{{ 'email.verify_email.intro'|trans }}</p>
+    {# admitted: an invitation let them in, no waiting list #}
+    <p>{{ (admitted ? 'email.verify_email.intro_invited' : 'email.verify_email.intro')|trans }}</p>
     {{ ui.button(url, 'email.verify_email.button'|trans) }}
     {{ ui.note('email.verify_email.expiry'|trans) }}
 {% endblock %}

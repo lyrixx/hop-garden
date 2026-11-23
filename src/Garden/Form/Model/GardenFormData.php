@@ -41,6 +41,13 @@ final class GardenFormData
      */
     public bool $placeSearchUnavailable = false;
 
+    /**
+     * In demo mode, the searches a recording answers, suggested when the city searched is none of them.
+     *
+     * @var list<string>
+     */
+    public array $demoPlaceQueries = [];
+
     private function __construct(
         /**
          * Where it grows already, for an existing garden.
@@ -95,6 +102,9 @@ final class GardenFormData
             $context->buildViolation('garden.place.unavailable')->atPath('city')->addViolation();
         } elseif ('' !== $city && [] === $this->places) {
             $context->buildViolation('garden.place.not_found')->setParameter('{{ city }}', $city)->atPath('city')->addViolation();
+            if ([] !== $this->demoPlaceQueries) {
+                $context->buildViolation('garden.place.not_found_in_demo')->setParameter('{{ places }}', implode(', ', $this->demoPlaceQueries))->atPath('city')->addViolation();
+            }
         } elseif (self::SEARCH === $context->getGroup()) {
             // Searched only: the place is picked next
         } elseif ('' !== $city && null === $this->picked()) {

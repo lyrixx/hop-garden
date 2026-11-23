@@ -37,6 +37,26 @@ final readonly class RecordedResponses
         };
     }
 
+    /**
+     * The searches of places a recording answers, for the demo mode to suggest: the names of the files of
+     * open-meteo/geocoding/, capitalized.
+     *
+     * @return list<string> the names in alphabetical order ("Lyon", "Paron"...), then the postcodes ("89100"...)
+     */
+    public function placeQueries(): array
+    {
+        $queries = [];
+        foreach (glob($this->fixturesDir . '/open-meteo/geocoding/*.json') ?: [] as $file) {
+            $name = basename($file, '.json');
+            if (!str_starts_with($name, '_')) {
+                $queries[] = ucfirst($name);
+            }
+        }
+        usort($queries, static fn (string $a, string $b): int => [ctype_digit($a), $a] <=> [ctype_digit($b), $b]);
+
+        return $queries;
+    }
+
     private function trefleSearch(string $query): MockResponse
     {
         /** @var array<string, string> $aliases */
@@ -70,7 +90,7 @@ final readonly class RecordedResponses
     }
 
     /**
-     * The places of a few cities, whatever the language asked: any other name finds none.
+     * The places of a few cities and postcodes, whatever the language asked and the count: any other name finds none.
      */
     private function openMeteoGeocoding(string $name): MockResponse
     {

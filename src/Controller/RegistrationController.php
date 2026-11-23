@@ -6,6 +6,7 @@ use App\Account\AccountMailer;
 use App\Account\Entity\User;
 use App\Account\Form\Model\RegistrationFormData;
 use App\Account\Form\RegistrationType;
+use App\Account\Model\AccessStatus;
 use App\Account\UserRepository;
 use App\Locale\Model\SupportedLocale;
 use App\Locale\PreferredLocale;
@@ -79,7 +80,8 @@ final class RegistrationController extends AbstractController
     }
 
     /**
-     * The signed link of the email (App\Account\SignedLinks). No login: the administrator decides first.
+     * The signed link of the email (App\Account\SignedLinks). No login: the administrator decides first, unless an
+     * invitation let them in (App\Controller\InvitationController).
      */
     #[Route('/register/verify', name: 'register_verify', methods: ['GET'])]
     public function verify(Request $request, UriSigner $uriSigner): Response
@@ -106,6 +108,13 @@ final class RegistrationController extends AbstractController
         $user = $this->userRepository->find(Uuid::fromString($id)) ?? throw $this->createNotFoundException('This account was deleted.');
         $user->verifyEmail($this->clock->now());
         $this->entityManager->flush();
+
+        // An invitation let them in already
+        if (AccessStatus::Approved === $user->getAccessStatus()) {
+            $this->addFlash('success', new TranslatableMessage('flash.registration.verified'));
+
+            return $this->redirectToRoute('login', status: Response::HTTP_SEE_OTHER);
+        }
 
         return $this->redirectToRoute('register_waiting_list', status: Response::HTTP_SEE_OTHER);
     }

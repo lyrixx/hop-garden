@@ -1,12 +1,13 @@
 {#
-    The garden of the page at the start of the menu of the member (the last one on a page out of a garden): its settings
-    for its owner and, from two gardens on, the others, each a link to the same page in it, or to its assistant
-    (garden_switch_path()). Nothing before the first one: the wizard makes it.
-    No prop.
+    The garden of the page at the start of the menu of the member (the last one on a page out of a garden): its members,
+    its settings for its owner and, from two gardens on, the others, each a link to the same page in it, or to its
+    assistant (garden_switch_path(); App\Controller\GardenMembersController). Nothing before the first one: the wizard
+    makes it. No prop.
 #}
 {% set current = nav_garden() %}
 {% if current %}
     {% set gardens = member_gardens() %}
+    {% set members_path = path('garden_members', {garden: current.slug}) %}
     {% if gardens|length > 1 %}
         <details class="garden-switcher">
             <summary class="account-menu-item" title="{{ 'nav.garden_switch'|trans }}"><twig:Icon name="people" :size="18"/><span class="account-menu-label">{{ current.name }}</span></summary>
@@ -20,11 +21,12 @@
                         {% endif %}
                     </li>
                 {% endfor %}
+                <li class="garden-switcher-members"><a href="{{ members_path }}">{{ 'nav.garden_members'|trans({garden: current.name}) }}</a></li>
                 <li><a href="{{ path('garden_create') }}">{{ 'nav.garden_new'|trans }}</a></li>
             </ul>
         </details>
     {% else %}
-        <span class="account-menu-item garden-name" title="{{ 'nav.garden_current'|trans }}"><twig:Icon name="people" :size="18"/><span class="account-menu-label">{{ current.name }}</span></span>
+        <a href="{{ members_path }}" class="account-menu-item garden-name{{ app.current_route == 'garden_members' ? ' active' }}" title="{{ 'nav.garden_members'|trans({garden: current.name}) }}"><twig:Icon name="people" :size="18"/><span class="account-menu-label">{{ current.name }}</span></a>
     {% endif %}
     {% if current.ownedBy(app.user) %}
         <a href="{{ path('garden_settings', {garden: current.slug}) }}" class="account-menu-item{{ app.current_route == 'garden_settings' ? ' active' }}" title="{{ 'nav.garden_settings'|trans }}"><twig:Icon name="pencil" :size="18"/><span class="visually-hidden">{{ 'nav.garden_settings'|trans }}</span></a>

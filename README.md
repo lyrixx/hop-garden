@@ -28,7 +28,7 @@ git clone https://github.com/lyrixx/hop-garden.git && cd hop-garden
 echo '127.0.0.1 hop-garden.test' | sudo tee -a /etc/hosts
 echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env.local
 castor start
-castor demo:reset   # the demo accounts and their three gardens: a rose and a lemon tree, with their reminders, in 3 spaces
+castor demo:reset   # the demo accounts and their three gardens: a rose and a lemon tree, with their reminders, in 3 spaces; an invitation for Erin
 ```
 
 Open <https://hop-garden.test/assistant>, log in as `alice@hop-garden.test` (password `hop-garden-demo`) and type
@@ -128,13 +128,34 @@ Carol has "Carol's balcony".
   one to pick). Its position gives the frost forecast, its timezone the hour of the reminders: every day from 7:00, its
   time.
 - With several gardens, the menu switches between them, to the same page of the other one when it has it (its plants,
-  its species...), else to its assistant; the chat has a conversation per garden. Its owner renames or
-  moves a garden in its settings. Inviting members comes next: until then, `castor demo:reset` gives the demo theirs.
+  its species...), else to its assistant; the chat has a conversation per garden. Its owner renames or moves a garden in
+  its settings.
+- Its name in the menu opens its members, <https://hop-garden.test/g/the-allotment/members>: each member may leave it
+  (its owner leaves it to the oldest of the others, its only member does not), its owner removes a member and invites,
+  see [Invitations](#invitations).
 - Every member gets the notifications of the garden, in their language, and the frost toast, live.
 - The assistant has a quota per garden and per day (its runs, and the Latin names of the species search): spent, the
-  chat says so.
+  chat says so. So have the invitations it sends by email, 20 a day.
 - Deleting an account deletes the gardens its owner was the only member of, with their photos and conversations; a
   shared garden stays with the others, the oldest of them its owner.
+
+### Invitations
+
+The owner of a garden invites by email, on the page of its members, as a member (one owner per garden).
+
+- The email goes in the language of the account of the address if it has one, else in the one of the owner. Its link,
+  `/invitations/{token}`, works 14 days, once: the page shows it too, with a *Copy* button, to send another way.
+- An invitation waiting is sent again, its link copied again, or revoked. Only the hash of its token is stored, so every
+  new link replaces the one before. Inviting an address again renews its invitation: one per address in a garden.
+- The link presents the garden and who invites. A visitor creates an account there, or logs in and comes back to join.
+  The invitation lets a new account in without the waiting list: at once with the address invited, which it verifies,
+  once its email is verified with another one. Logged in with another account, they join with it, or log out to change.
+  Whoever has the link may use it: the owner, who sees it, could as well.
+- The one who invited gets a notification, and its toast, when somebody joins. An invitation expired, revoked or used,
+  or of a garden deleted, says so, and nothing of its garden.
+- An account still on the waiting list waits for the administrator: its login is refused until then.
+
+In `castor demo:reset`, Alice has invited `erin@hop-garden.test`, who has no account: the task prints the link.
 
 Before the gardens, a database had none, and `castor migrate` refuses it: the migration that requires a garden for
 every row (`Version20261123120000`, the last one) names the task that gives them one, and nothing is migrated. `castor
@@ -150,13 +171,14 @@ email to verify an address, sent before, asks for a new password, which verifies
 
 ### Accounts and the waiting list
 
-Hop Garden opens to a few gardeners at a time. Everything but the public pages, the login, the registration and the
-password reset needs an approved account.
+Hop Garden opens to a few gardeners at a time. Everything but the public pages, the login, the registration, the
+password reset and the link of an invitation needs an approved account.
 
 1. *Sign up*: email, name, password, and the terms of sale. A link to verify the email follows, valid 48 hours. The
    page says the same whether the address has an account or not: the email tells its owner.
 2. Once verified, the account waits on the list. The administrator approves or refuses it in the back-office,
-   <https://hop-garden.test/admin>, and the member gets an email in their language: *You can come in*.
+   <https://hop-garden.test/admin>, and the member gets an email in their language: *You can come in*. An invitation
+   to a garden skips the list: see [Invitations](#invitations).
 3. *Log in*, with *Remember me* for 30 days. After 5 failed attempts, the login waits 15 minutes. *Forgot your
    password?* sends a link valid one hour, which verifies the email too.
 4. *My account*: the name and the language, the email (the new one verified first), the password (the current one
@@ -172,6 +194,8 @@ of `castor demo:reset`, all with the password `hop-garden-demo`:
 | `bob@hop-garden.test` | A member, in French, who shares "The allotment" and owns "The orchard" |
 | `carol@hop-garden.test` | A member, in English, owner of "Carol's balcony" |
 | `dave@hop-garden.test` | On the waiting list, in French: approve him, then he makes his garden |
+
+Erin has no account: Alice invited `erin@hop-garden.test`, and `castor demo:reset` prints the link of the invitation.
 
 On a new installation, create the administrator:
 
@@ -232,7 +256,7 @@ flowchart LR
 - Everything reads the time from `ClockInterface`: `app:reminders:run --date=2026-12-01` simulates a day.
 - Accounts: Symfony Security (`form_login`, remember me, `login_throttling`), denied by default; a `UserChecker` lets
   approved members only in, and tells the others why. The links of the emails are signed and dated (`UriSigner`), a
-  password reset token is stored hashed. The back-office is [EasyAdmin](https://symfony.com/bundles/EasyAdminBundle),
+  password reset token, as the one of an invitation, is stored hashed. The back-office is [EasyAdmin](https://symfony.com/bundles/EasyAdminBundle),
   the emails are Twig templates sent by Symfony Mailer.
 - The stack is based on [jolicode/docker-starter](https://github.com/jolicode/docker-starter): FrankenPHP,
   PostgreSQL, a Messenger worker, a Traefik router for `hop-garden.test` in HTTPS, and a builder container for

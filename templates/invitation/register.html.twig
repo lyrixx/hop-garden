@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% set garden = invitation.garden %}
+
+{% block title %}{{ 'invitation.register.title'|trans }} · Hop Garden{% endblock %}
+
+{# The registration of templates/registration/register.html.twig, its email the address invited: no waiting list #}
+{% block body %}
+<div class="with-specimen auth">
+<div>
+    <header class="plate-head">
+        <span class="plate-tab">{{ 'invitation.tab'|trans }}</span>
+        <h1>{{ 'invitation.register.title'|trans }}</h1>
+        <p>{{ 'invitation.register.subtitle'|trans({garden: garden.name, inviter: invitation.invitedBy.displayName}) }}</p>
+    </header>
+
+    {{ form_start(form, {attr: {class: 'card crowned care-sheet-form auth-form'}}) }}
+        {{ form_errors(form) }}
+        {{ form_row(form.email, {help: 'invitation.register.email_help'}) }}
+        {{ form_row(form.displayName) }}
+        {{ form_row(form.plainPassword) }}
+        <div>
+            <div class="form-check">
+                {{ form_widget(form.acceptsTerms) }}
+                {# In a new tab: the form keeps what is typed #}
+                <label for="{{ form.acceptsTerms.vars.id }}">{{ 'registration.terms'|trans({link: '<a href="' ~ path('legal_terms') ~ '" target="_blank">', link_end: '</a>'})|raw }}</label>
+            </div>
+            {{ form_errors(form.acceptsTerms) }}
+        </div>
+        <div class="actions">
+            <twig:Button class="button-next">{{ 'invitation.register.submit'|trans({garden: garden.name}) }}</twig:Button>
+        </div>
+    {{ form_end(form) }}
+
+    <p class="callout auth-aside">{{ 'registration.have_account'|trans({link: '<a href="' ~ path('login') ~ '">', link_end: '</a>'})|raw }}</p>
+</div>
+<twig:Specimen plate="wormia-subsessilis"/>
+</div>
+{% endblock %}

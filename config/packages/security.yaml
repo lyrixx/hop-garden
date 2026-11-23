@@ -64,6 +64,8 @@ security:
         # The public page and the legal pages, by the name of their routes (home, legal_*), whatever their paths
         - { route: ^home$, roles: PUBLIC_ACCESS }
         - { route: ^legal_, roles: PUBLIC_ACCESS }
+        # The link of an invitation, and the registration it leads to; joining with an account (invitation_accept) needs one
+        - { route: ^invitation(_register)?$, roles: PUBLIC_ACCESS }
         - { path: ^/(login|register|reset-password|locale)(/|$), roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }
         # The gardens (/g/{garden}/...: the chat, the plants, the species, the spaces, the notifications, the live
