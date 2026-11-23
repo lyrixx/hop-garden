@@ -24,6 +24,11 @@ final class Version20261123100000 extends AbstractMigration
             'garden_id' => ['garden', 'FK_8A8E26E939F3B087', 'CASCADE'],
             'user_id' => ['app_user', 'FK_8A8E26E9A76ED395', 'CASCADE'],
         ],
+        // Its own id is a UUID already (Version20261122231654)
+        'invitation' => [
+            'garden_id' => ['garden', 'FK_F11D61A239F3B087', 'CASCADE'],
+            'invited_by_id' => ['app_user', 'FK_F11D61A2A7B4A7E3', 'CASCADE'],
+        ],
         'membership' => [
             'garden_id' => ['garden', 'FK_86FFD28539F3B087', 'CASCADE'],
             'user_id' => ['app_user', 'FK_86FFD285A76ED395', 'CASCADE'],

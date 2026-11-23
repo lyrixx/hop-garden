@@ -33,9 +33,10 @@ use Symfony\Component\Translation\TranslatableMessage;
 /**
  * The members of a garden, each of whom may leave it (GARDEN_VIEW), and its invitations: its owner invites by email,
  * sends an invitation again or shows a new link of it, revokes it, and removes a member (GARDEN_MANAGE). An invitation or
- * a member is found in the garden of the URL only (MapEntity): another one answers 404, as a garden of others does.
+ * a member is found by its UUID in the garden of the URL only (MapEntity): another one answers 404, as a garden of others
+ * does (App\Garden\GardenOfTheUrl).
  */
-#[Route('/gardens/{id}', requirements: ['id' => Requirement::DIGITS])]
+#[Route('/g/{garden}', requirements: ['garden' => Requirement::ASCII_SLUG])]
 final class GardenMembersController extends AbstractController
 {
     /**
@@ -89,14 +90,14 @@ final class GardenMembersController extends AbstractController
             // The same address invited twice at once (a double click): the first one sends it
             $this->logger->warning('The address was invited twice at once.', ['exception' => $e]);
 
-            return $this->redirectToRoute('garden_members', ['id' => $garden->getId()], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('garden_members', ['garden' => $garden->getSlug()], Response::HTTP_SEE_OTHER);
         }
 
         $this->invitations->sendEmail($link);
         $this->showLink($request, $link);
         $this->addFlash('success', new TranslatableMessage('flash.invitation.sent', ['email' => $link->invitation->getEmail()]));
 
-        return $this->redirectToRoute('garden_members', ['id' => $garden->getId()], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('garden_members', ['garden' => $garden->getSlug()], Response::HTTP_SEE_OTHER);
     }
 
     /**
@@ -108,7 +109,7 @@ final class GardenMembersController extends AbstractController
     public function resend(
         Request $request,
         Garden $garden,
-        #[MapEntity(mapping: ['invitationId' => 'id', 'id' => 'garden'])]
+        #[MapEntity(mapping: ['invitationId' => 'id', 'garden' => 'garden'])]
         Invitation $invitation,
     ): Response {
         if (!$this->gardenQuotas->consumeInvitation($garden)) {
@@ -122,7 +123,7 @@ final class GardenMembersController extends AbstractController
             $this->addFlash('success', new TranslatableMessage('flash.invitation.resent', ['email' => $invitation->getEmail()]));
         }
 
-        return $this->redirectToRoute('garden_members', ['id' => $garden->getId()], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('garden_members', ['garden' => $garden->getSlug()], Response::HTTP_SEE_OTHER);
     }
 
     /**
@@ -134,7 +135,7 @@ final class GardenMembersController extends AbstractController
     public function link(
         Request $request,
         Garden $garden,
-        #[MapEntity(mapping: ['invitationId' => 'id', 'id' => 'garden'])]
+        #[MapEntity(mapping: ['invitationId' => 'id', 'garden' => 'garden'])]
         Invitation $invitation,
     ): Response {
         $link = $this->whileOpen($invitation, fn (): InvitationLink => $this->invitations->renew($invitation));
@@ -143,7 +144,7 @@ final class GardenMembersController extends AbstractController
             $this->addFlash('success', new TranslatableMessage('flash.invitation.new_link', ['email' => $invitation->getEmail()]));
         }
 
-        return $this->redirectToRoute('garden_members', ['id' => $garden->getId()], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('garden_members', ['garden' => $garden->getSlug()], Response::HTTP_SEE_OTHER);
     }
 
     #[Route('/invitations/{invitationId}/revoke', name: 'garden_invitation_revoke', requirements: ['invitationId' => Requirement::UUID_V7], methods: ['POST'])]
@@ -151,7 +152,7 @@ final class GardenMembersController extends AbstractController
     #[IsCsrfTokenValid('garden_invitation', tokenKey: '_token')]
     public function revoke(
         Garden $garden,
-        #[MapEntity(mapping: ['invitationId' => 'id', 'id' => 'garden'])]
+        #[MapEntity(mapping: ['invitationId' => 'id', 'garden' => 'garden'])]
         Invitation $invitation,
     ): Response {
         $revoked = $this->whileOpen($invitation, function () use ($invitation): true {
@@ -163,18 +164,18 @@ final class GardenMembersController extends AbstractController
             $this->addFlash('success', new TranslatableMessage('flash.invitation.revoked', ['email' => $invitation->getEmail()]));
         }
 
-        return $this->redirectToRoute('garden_members', ['id' => $garden->getId()], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('garden_members', ['garden' => $garden->getSlug()], Response::HTTP_SEE_OTHER);
     }
 
     /**
      * By its owner, never themselves: they leave it.
      */
-    #[Route('/members/{membershipId}/remove', name: 'garden_member_remove', requirements: ['membershipId' => Requirement::DIGITS], methods: ['POST'])]
+    #[Route('/members/{membershipId}/remove', name: 'garden_member_remove', requirements: ['membershipId' => Requirement::UUID_V7], methods: ['POST'])]
     #[IsGranted(GardenVoter::MANAGE, 'garden', statusCode: Response::HTTP_NOT_FOUND)]
     #[IsCsrfTokenValid('garden_member', tokenKey: '_token')]
     public function remove(
         Garden $garden,
-        #[MapEntity(mapping: ['membershipId' => 'id', 'id' => 'garden'])]
+        #[MapEntity(mapping: ['membershipId' => 'id', 'garden' => 'garden'])]
         Membership $membership,
     ): Response {
         if ($membership->isOwner()) {
@@ -187,7 +188,7 @@ final class GardenMembersController extends AbstractController
 
         $this->addFlash('success', new TranslatableMessage('flash.member.removed', ['name' => $name, 'garden' => $garden->getName()]));
 
-        return $this->redirectToRoute('garden_members', ['id' => $garden->getId()], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('garden_members', ['garden' => $garden->getSlug()], Response::HTTP_SEE_OTHER);
     }
 
     /**
@@ -202,16 +203,16 @@ final class GardenMembersController extends AbstractController
         if ([$user] === $garden->getMembers()) {
             $this->addFlash('warning', new TranslatableMessage('flash.member.only_member', ['garden' => $garden->getName()]));
 
-            return $this->redirectToRoute('garden_members', ['id' => $garden->getId()], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('garden_members', ['garden' => $garden->getSlug()], Response::HTTP_SEE_OTHER);
         }
 
         $garden->leave($user);
         $this->entityManager->flush();
 
-        // Their current garden is another one now, or none: the wizard
+        // Out of it: their last garden, another one now, or the wizard
         $this->addFlash('success', new TranslatableMessage('flash.member.left', ['garden' => $garden->getName()]));
 
-        return $this->redirectToRoute('garden', status: Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('assistant', status: Response::HTTP_SEE_OTHER);
     }
 
     /**
@@ -237,7 +238,7 @@ final class GardenMembersController extends AbstractController
     private function invitationForm(Garden $garden, ?InvitationFormData $data = null): FormInterface
     {
         return $this->createForm(InvitationType::class, $data ?? new InvitationFormData($garden), [
-            'action' => $this->generateUrl('garden_invite', ['id' => $garden->getId()]),
+            'action' => $this->generateUrl('garden_invite', ['garden' => $garden->getSlug()]),
         ]);
     }
 
@@ -278,6 +279,6 @@ final class GardenMembersController extends AbstractController
     {
         $this->addFlash('warning', new TranslatableMessage('flash.quota.invitations'));
 
-        return $this->redirectToRoute('garden_members', ['id' => $garden->getId()], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('garden_members', ['garden' => $garden->getSlug()], Response::HTTP_SEE_OTHER);
     }
 }

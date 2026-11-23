@@ -28,14 +28,14 @@ final class MembersTest extends WebTestCase
     {
         $this->client = self::createClient();
         $this->gardens = TwoGardens::create(self::getContainer());
-        $this->members = '/gardens/' . $this->gardens->allotment->getId() . '/members';
+        $this->members = '/g/' . $this->gardens->allotment->getSlug() . '/members';
     }
 
     public function testTheMenuLeadsToTheMembers(): void
     {
         $this->logIn($this->client, $this->gardens->bob);
 
-        $crawler = $this->client->request('GET', '/garden');
+        $crawler = $this->client->request('GET', '/g/allotment-of-alice-and-bob/garden');
 
         self::assertSame($this->members, $crawler->filter('.account-menu a.garden-name')->attr('href'));
         $crawler = $this->client->click($crawler->filter('.account-menu a.garden-name')->link());
@@ -92,7 +92,7 @@ final class MembersTest extends WebTestCase
 
         $this->client->submit($form->form());
 
-        self::assertResponseRedirects('/garden', 303);
+        self::assertResponseRedirects('/assistant', 303, 'Out of it: his last garden.');
         $this->client->followRedirect();
         self::assertResponseRedirects('/gardens/new', 303, 'His only garden: the wizard.');
         $this->client->followRedirect();
@@ -109,11 +109,11 @@ final class MembersTest extends WebTestCase
 
         $this->client->submit($form->form());
 
-        self::assertResponseRedirects('/garden', 303);
+        self::assertResponseRedirects('/assistant', 303);
         self::assertSame(['Bob'], $this->memberNames());
         self::assertSame('Bob', $this->garden()->getOwner()->getDisplayName());
         $this->as($this->gardens->bob);
-        $this->client->request('GET', '/gardens/' . $this->gardens->allotment->getId() . '/settings');
+        $this->client->request('GET', '/g/' . $this->gardens->allotment->getSlug() . '/settings');
         self::assertResponseIsSuccessful('He manages it now.');
     }
 
@@ -124,7 +124,7 @@ final class MembersTest extends WebTestCase
         $balcony = $entityManager->find(Garden::class, $this->gardens->balcony->getId()) ?? self::fail();
         $balcony->join($dan, new \DateTimeImmutable('2026-11-02'));
         $entityManager->flush();
-        $members = '/gardens/' . $balcony->getId() . '/members';
+        $members = '/g/' . $balcony->getSlug() . '/members';
         $this->logIn($this->client, $this->gardens->carol);
         $form = self::rowOf($this->client->request('GET', $members), 'Carol')->selectButton('Leave the garden')->form();
 

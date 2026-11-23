@@ -112,6 +112,6 @@ final class InvitationTest extends TestCase
 
     private static function garden(): Garden
     {
-        return Garden::create('The allotment', new GardenLocation('Somewhere', 45.0, 4.0, 'Europe/Paris'), UserFactory::createOne(['email' => 'alice@example.com']), new \DateTimeImmutable('2026-10-01'));
+        return Garden::create('The allotment', 'the-allotment', new GardenLocation('Somewhere', 45.0, 4.0, 'Europe/Paris'), UserFactory::createOne(['email' => 'alice@example.com']), new \DateTimeImmutable('2026-10-01'));
     }
 }

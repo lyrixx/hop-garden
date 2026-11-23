@@ -40,8 +40,9 @@ final class GardenCitySearchTest extends WebTestCase
         $form['garden[placeId]']->select('2988475');
         $this->client->submit($form);
 
-        self::assertResponseRedirects('/assistant', 303);
-        $location = self::getContainer()->get(GardenRepository::class)->findOfMember($member)[0]->getLocation();
+        $garden = self::getContainer()->get(GardenRepository::class)->findOfMember($member)[0];
+        self::assertResponseRedirects('/g/' . $garden->getSlug() . '/assistant', 303);
+        $location = $garden->getLocation();
         self::assertSame(['Paron, Bourgogne-Franche-Comté, France', 48.17888, 3.25075, 'Europe/Paris'], [$location->getPlaceName(), $location->getLatitude(), $location->getLongitude(), $location->getTimezone()->getName()]);
     }
 
@@ -53,8 +54,9 @@ final class GardenCitySearchTest extends WebTestCase
 
             $this->client->submit($crawler->selectButton('Create the garden')->form(), ['garden[name]' => 'The orchard', 'garden[city]' => $city]);
 
-            self::assertResponseRedirects('/assistant', 303, $city . ': the one place of its postcode and its name, picked already.');
-            self::assertSame('Paron, Bourgogne-Franche-Comté, France', self::getContainer()->get(GardenRepository::class)->findOfMember($member)[0]->getLocation()->getPlaceName());
+            $garden = self::getContainer()->get(GardenRepository::class)->findOfMember($member)[0];
+            self::assertResponseRedirects('/g/' . $garden->getSlug() . '/assistant', 303, $city . ': the one place of its postcode and its name, picked already.');
+            self::assertSame('Paron, Bourgogne-Franche-Comté, France', $garden->getLocation()->getPlaceName());
         }
     }
 

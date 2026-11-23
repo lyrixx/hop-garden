@@ -32,12 +32,12 @@
                     {% if member == app.user and memberships|length > 1 %}
                         {# Its owner leaves it to the oldest of the others: Garden::leave() #}
                         {% set successor = (memberships|filter(other => other.user != app.user)|first).user %}
-                        <form method="post" action="{{ path('garden_leave', {id: garden.id}) }}" data-turbo-confirm="{{ (membership.owner ? 'garden.members.leave_confirm_owner' : 'garden.members.leave_confirm')|trans({garden: garden.name, name: successor.displayName}) }}">
+                        <form method="post" action="{{ path('garden_leave', {garden: garden.slug}) }}" data-turbo-confirm="{{ (membership.owner ? 'garden.members.leave_confirm_owner' : 'garden.members.leave_confirm')|trans({garden: garden.name, name: successor.displayName}) }}">
                             <input type="hidden" name="_token" value="{{ csrf_token('garden_leave') }}">
                             <twig:Button class="button-secondary">{{ 'garden.members.leave'|trans }}</twig:Button>
                         </form>
                     {% elseif form and not membership.owner %}
-                        <form method="post" action="{{ path('garden_member_remove', {id: garden.id, membershipId: membership.id}) }}" data-turbo-confirm="{{ 'garden.members.remove_confirm'|trans({name: member.displayName, garden: garden.name}) }}">
+                        <form method="post" action="{{ path('garden_member_remove', {garden: garden.slug, membershipId: membership.id}) }}" data-turbo-confirm="{{ 'garden.members.remove_confirm'|trans({name: member.displayName, garden: garden.name}) }}">
                             <input type="hidden" name="_token" value="{{ csrf_token('garden_member') }}">
                             <twig:Button class="button-secondary">{{ 'garden.members.remove'|trans }}</twig:Button>
                         </form>
@@ -93,15 +93,15 @@
                                 </div>
                             {% endif %}
                             <div class="actions">
-                                <form method="post" action="{{ path('garden_invitation_resend', {id: garden.id, invitationId: id}) }}">
+                                <form method="post" action="{{ path('garden_invitation_resend', {garden: garden.slug, invitationId: id}) }}">
                                     <input type="hidden" name="_token" value="{{ csrf_token('garden_invitation') }}">
                                     <twig:Button class="button-secondary" icon="mail" :iconSize="16">{{ 'garden.members.invitation.resend'|trans }}</twig:Button>
                                 </form>
-                                <form method="post" action="{{ path('garden_invitation_link', {id: garden.id, invitationId: id}) }}">
+                                <form method="post" action="{{ path('garden_invitation_link', {garden: garden.slug, invitationId: id}) }}">
                                     <input type="hidden" name="_token" value="{{ csrf_token('garden_invitation') }}">
                                     <twig:Button class="button-secondary" title="{{ 'garden.members.invitation.new_link_help'|trans }}">{{ 'garden.members.invitation.new_link'|trans }}</twig:Button>
                                 </form>
-                                <form method="post" action="{{ path('garden_invitation_revoke', {id: garden.id, invitationId: id}) }}" data-turbo-confirm="{{ 'garden.members.invitation.revoke_confirm'|trans({email: invitation.email}) }}">
+                                <form method="post" action="{{ path('garden_invitation_revoke', {garden: garden.slug, invitationId: id}) }}" data-turbo-confirm="{{ 'garden.members.invitation.revoke_confirm'|trans({email: invitation.email}) }}">
                                     <input type="hidden" name="_token" value="{{ csrf_token('garden_invitation') }}">
                                     <twig:Button class="button-secondary">{{ 'garden.members.invitation.revoke'|trans }}</twig:Button>
                                 </form>

@@ -15,10 +15,7 @@
         <span class="pict"><twig:Icon name="check" :size="18"/></span>
         <div>
             <p>{{ 'invitation.member.body'|trans({garden: garden.name}) }}</p>
-            <form method="post" action="{{ path('garden_switch', {id: garden.id}) }}">
-                <input type="hidden" name="_token" value="{{ csrf_token('garden_switch') }}">
-                <twig:Button class="button-next">{{ 'invitation.member.open'|trans({garden: garden.name}) }}</twig:Button>
-            </form>
+            <twig:Button href="{{ path('garden', {garden: garden.slug}) }}" class="button-next">{{ 'invitation.member.open'|trans({garden: garden.name}) }}</twig:Button>
         </div>
     </section>
 </div>

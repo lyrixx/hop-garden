@@ -100,7 +100,7 @@ final class SharedGardenTest extends WebTestCase
         self::assertCount(0, $crawler->filter('.account-menu a[href="' . $settings . '"]'));
 
         // Its members, he sees: no invitation, nobody to remove
-        $crawler = $this->client->request('GET', '/gardens/' . $this->gardens->allotment->getId() . '/members');
+        $crawler = $this->client->request('GET', '/g/' . $this->gardens->allotment->getSlug() . '/members');
         self::assertResponseIsSuccessful();
         self::assertSame(['Alice Propriétaire', 'Bob (vous) Membre'], $crawler->filter('.member .member-name')->each(static fn (Crawler $member): string => trim(preg_replace('/\s+depuis.*$/u', '', $member->text()) ?? '')));
         self::assertCount(0, $crawler->filter('form.invitation-form, form[action$="/remove"], .garden-invitations'));

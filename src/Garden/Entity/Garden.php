@@ -105,7 +105,7 @@ class Garden
     public function remove(Membership $membership): void
     {
         if ($membership->getGarden() !== $this || $membership->isOwner()) {
-            throw new \LogicException(\sprintf('Only a member of garden %d who is not its owner is removed from it.', $this->getId()));
+            throw new \LogicException(\sprintf('Only a member of garden %s who is not its owner is removed from it.', $this->getId()));
         }
 
         $this->leave($membership->getUser());

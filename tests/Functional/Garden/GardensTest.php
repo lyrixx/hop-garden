@@ -64,7 +64,7 @@ final class GardensTest extends WebTestCase
         self::assertCount(1, $gardens);
         self::assertSame('The orchard', $gardens[0]->getName());
         self::assertSame(['Paris, Texas, United States', 33.66094, -95.55551, 'America/Chicago'], [$gardens[0]->getLocation()->getPlaceName(), $gardens[0]->getLocation()->getLatitude(), $gardens[0]->getLocation()->getLongitude(), $gardens[0]->getLocation()->getTimezone()->getName()]);
-        self::assertSame([[$member->getId(), MembershipRole::Owner]], array_map(static fn ($membership): array => [$membership->getUser()->getId(), $membership->getRole()], $gardens[0]->getMemberships()));
+        self::assertSame([[$member->getId()->toRfc4122(), MembershipRole::Owner]], array_map(static fn ($membership): array => [$membership->getUser()->getId()->toRfc4122(), $membership->getRole()], $gardens[0]->getMemberships()));
 
         $this->client->followRedirect();
         self::assertResponseIsSuccessful();
@@ -154,7 +154,7 @@ final class GardensTest extends WebTestCase
      */
     private static function switcher(Crawler $crawler): array
     {
-        $links = $crawler->filter('.garden-switcher-list a')->reduce(static fn (Crawler $link): bool => '/gardens/new' !== $link->attr('href'));
+        $links = $crawler->filter('.garden-switcher-list li:not(.garden-switcher-members) a')->reduce(static fn (Crawler $link): bool => '/gardens/new' !== $link->attr('href'));
 
         return array_combine($links->each(static fn (Crawler $link): string => $link->text()), $links->each(static fn (Crawler $link): string => (string) $link->attr('href')));
     }

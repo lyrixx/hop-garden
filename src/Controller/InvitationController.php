@@ -7,7 +7,6 @@ use App\Account\Entity\User;
 use App\Account\Form\Model\RegistrationFormData;
 use App\Account\Form\RegistrationType;
 use App\Account\UserRepository;
-use App\Garden\CurrentGarden;
 use App\Garden\Entity\Invitation;
 use App\Garden\InvitationRepository;
 use App\Garden\Invitations;
@@ -47,7 +46,6 @@ final class InvitationController extends AbstractController
         private readonly InvitationRepository $invitationRepository,
         private readonly Invitations $invitations,
         private readonly EntityManagerInterface $entityManager,
-        private readonly CurrentGarden $currentGarden,
         private readonly ClockInterface $clock,
         private readonly LoggerInterface $logger,
     ) {
@@ -195,15 +193,14 @@ final class InvitationController extends AbstractController
     }
 
     /**
-     * In the garden they joined, the current one from now on.
+     * In the garden they joined, under its URL.
      */
     private function welcome(Invitation $invitation): Response
     {
         $garden = $invitation->getGarden();
-        $this->currentGarden->switchTo($garden);
         $this->addFlash('success', new TranslatableMessage('flash.invitation.joined', ['garden' => $garden->getName()]));
 
-        return $this->redirectToRoute('garden', status: Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('garden', ['garden' => $garden->getSlug()], Response::HTTP_SEE_OTHER);
     }
 
     /**

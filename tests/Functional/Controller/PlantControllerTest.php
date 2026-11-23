@@ -424,7 +424,7 @@ final class PlantControllerTest extends WebTestCase
         $this->client->submit($crawler->selectButton('Create the draft')->form(), ['new_plant[name]' => 'hortensia', 'new_plant[trefleId]' => '191052']);
 
         self::assertResponseRedirects(self::pathOf($existing), 303);
-        self::assertSame($existing->getId(), $this->lastPlant()->getId(), 'No second care sheet.');
+        self::assertSame($existing->getId()->toRfc4122(), $this->lastPlant()->getId()->toRfc4122(), 'No second care sheet.');
         $this->client->followRedirect();
         self::assertSelectorTextContains('.flash-success', $scientificName . ' has its care sheet already: here it is.');
     }

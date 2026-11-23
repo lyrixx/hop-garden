@@ -8,6 +8,7 @@ use App\Factory\PlantingFactory;
 use App\Garden\Entity\Garden;
 use App\Garden\Entity\Invitation;
 use App\Garden\Entity\Planting;
+use App\Garden\Entity\Space;
 use App\Garden\InvitationRepository;
 use App\Garden\PlantingRepository;
 use App\Plant\Entity\Plant;
@@ -65,7 +66,7 @@ final class GardenIsolationTest extends WebTestCase
     private const array PAGES_OF_A_GARDEN = [
         'garden_home' => '', 'chat' => '/assistant', 'garden' => '/garden', 'garden_new' => '/garden/new', 'plant_index' => '/species',
         'plant_new' => '/species/new', 'spaces' => '/spaces', 'space_new' => '/spaces/new', 'notifications' => '/notifications',
-        'garden_settings' => '/settings',
+        'garden_settings' => '/settings', 'garden_members' => '/members',
     ];
 
     /**
@@ -73,6 +74,7 @@ final class GardenIsolationTest extends WebTestCase
      */
     private const string GHOST_GARDEN = 'no-such-garden';
     private const string GHOST_SLUG = 'no-such-slug';
+    private const string GHOST_UUID = '0196a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b';
 
     private KernelBrowser $client;
     private TwoGardens $gardens;
@@ -134,10 +136,12 @@ final class GardenIsolationTest extends WebTestCase
      */
     public function testTheirResourcesInTheUrlOfHerGardenAnswer404AsIfTheyDidNotExist(): void
     {
-        $theirs = array_map(static fn (Plant|Planting|Space $resource): string => $resource->getSlug(), [$this->gardens->gate, $this->gardens->drafting, $this->gardens->rose, $this->gardens->draft, $this->gardens->terrace]);
+        // Their slugs and UUIDs, and what does not exist instead
+        $ghosts = array_fill_keys(array_map(static fn (Plant|Planting|Space $resource): string => $resource->getSlug(), [$this->gardens->gate, $this->gardens->drafting, $this->gardens->rose, $this->gardens->draft, $this->gardens->terrace]), self::GHOST_SLUG)
+            + [$this->gardens->invitation->getId()->toRfc4122() => self::GHOST_UUID, $this->bobsMembership() => self::GHOST_UUID];
         foreach ($this->resourcesOfTheirGarden() as $route => $requests) {
             foreach ($requests as [$method, $path, $parameters]) {
-                $ghost = str_replace($theirs, self::GHOST_SLUG, $path);
+                $ghost = strtr($path, $ghosts);
                 foreach (array_unique([$path, $ghost]) as $inHerGarden) {
                     $this->client->request($method, self::inGarden($inHerGarden, $this->gardens->balcony), $parameters);
                     self::assertResponseStatusCodeSame(404, \sprintf('%s %s (%s)', $method, self::inGarden($inHerGarden, $this->gardens->balcony), $route));
@@ -273,6 +277,8 @@ final class GardenIsolationTest extends WebTestCase
             'chat_send' => [['POST', '/chat', ['text' => 'Mine now']]],
             'chat_new' => [['POST', '/chat/new', []]],
             'ux_live_component' => [['GET', '/_components/SpeciesPicker', []]],
+            'garden_invite' => [['POST', '/invitations', ['invitation' => ['email' => 'mallory@example.com']]]],
+            'garden_leave' => [['POST', '/leave', []]],
         ];
     }
 
@@ -289,6 +295,8 @@ final class GardenIsolationTest extends WebTestCase
         $rose = $gardens->rose->getSlug();
         $draft = $gardens->draft->getSlug();
         $terrace = $gardens->terrace->getSlug();
+        $invitation = $gardens->invitation->getId()->toRfc4122();
+        $bob = $this->bobsMembership();
         $plantingCard = '/proposals/plantings/' . $gardens->proposedPlanting->getProposalId() . '?' . http_build_query(['plant_id' => $gardens->rose->getId()->toRfc4122(), 'space_id' => $gardens->terrace->getId()->toRfc4122(), 'name' => 'Rose of the card']);
         $spaceCard = '/proposals/spaces/' . $gardens->proposedSpace->getProposalId() . '?' . http_build_query(['name' => 'Space of the card']);
 
@@ -308,15 +316,16 @@ final class GardenIsolationTest extends WebTestCase
             'space_edit' => [['GET', "/spaces/{$terrace}/edit", []], ['POST', "/spaces/{$terrace}/edit", ['space' => ['name' => 'Taken']]]],
             'planting_proposal' => [['GET', $plantingCard, []], ['POST', $plantingCard, []]],
             'space_proposal' => [['GET', $spaceCard, []], ['POST', $spaceCard, []]],
+            'garden_invitation_resend' => [['POST', "/invitations/{$invitation}/resend", []]],
+            'garden_invitation_link' => [['POST', "/invitations/{$invitation}/link", []]],
+            'garden_invitation_revoke' => [['POST', "/invitations/{$invitation}/revoke", []]],
+            'garden_member_remove' => [['POST', "/members/{$bob}/remove", []]],
         ];
     }
 
-    /**
-     * @return list<array{string, string, array<string, mixed>}>
-     */
-    private static function throughBoth(string $path, int $theirs, int $hers): array
+    private function bobsMembership(): string
     {
-        return [['POST', "/gardens/{$theirs}{$path}", []], ['POST', "/gardens/{$hers}{$path}", []]];
+        return ($this->gardens->allotment->membershipOf($this->gardens->bob) ?? self::fail('Bob is a member.'))->getId()->toRfc4122();
     }
 
     private function assertTheirGardenIsUntouched(): void

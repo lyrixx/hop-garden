@@ -68,7 +68,7 @@ final class AcceptInvitationTest extends WebTestCase
         self::assertSame('erin@example.com', $crawler->filter('input[name="registration[email]"]')->attr('value'), 'The address invited.');
         $this->register($crawler, 'Erin');
 
-        self::assertResponseRedirects('/garden', 303);
+        self::assertResponseRedirects('/g/allotment-of-alice-and-bob/garden', 303);
         self::assertEmailCount(0, 'The invitation verified the address.');
         $erin = $this->user('erin@example.com');
         self::assertSame(AccessStatus::Approved, $erin->getAccessStatus(), 'No waiting list.');
@@ -112,7 +112,7 @@ final class AcceptInvitationTest extends WebTestCase
         self::assertSelectorTextContains('.flash-success', 'Your email is verified: log in.');
         $this->forgetTheFailedLogins();
         $this->logInWithTheForm($this->client, 'frank@example.com', self::PASSWORD);
-        $this->client->request('GET', '/garden');
+        $this->client->request('GET', '/g/allotment-of-alice-and-bob/garden');
         self::assertSelectorTextContains('main', 'Rose by the gate');
 
         $this->assertAliceIsTold('Frank joined Allotment of Alice and Bob, with the invitation sent to erin@example.com.');
@@ -134,7 +134,7 @@ final class AcceptInvitationTest extends WebTestCase
         self::assertSelectorNotExists('.invitation-card .warning', 'Her address.');
         $this->client->submit($crawler->selectButton('Join Allotment of Alice and Bob')->form());
 
-        self::assertResponseRedirects('/garden', 303);
+        self::assertResponseRedirects('/g/allotment-of-alice-and-bob/garden', 303);
         $this->client->followRedirect();
         self::assertSelectorTextContains('main', 'Rose by the gate', 'The garden she joined, not her balcony.');
         self::assertTrue($this->isMember($this->gardens->carol->getEmail()));
@@ -163,7 +163,7 @@ final class AcceptInvitationTest extends WebTestCase
         $this->logIn($this->client, $this->gardens->carol);
         $crawler = $this->client->request('GET', self::LINK);
         $this->client->submit($crawler->selectButton('Join with this account')->form());
-        self::assertResponseRedirects('/garden', 303);
+        self::assertResponseRedirects('/g/allotment-of-alice-and-bob/garden', 303);
         self::assertTrue($this->isMember($this->gardens->carol->getEmail()));
         $this->assertAliceIsTold('Carol joined Allotment of Alice and Bob, with the invitation sent to erin@example.com.');
     }
@@ -176,8 +176,7 @@ final class AcceptInvitationTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('main', 'Vous êtes déjà membre de Allotment of Alice and Bob.', 'In his language.');
-        $this->client->submit($crawler->selectButton('Ouvrir Allotment of Alice and Bob')->form());
-        self::assertResponseRedirects('/garden', 303);
+        self::assertSame('/g/allotment-of-alice-and-bob/garden', $crawler->selectLink('Ouvrir Allotment of Alice and Bob')->attr('href'), 'Its garden, under its URL.');
         self::assertSame(InvitationStatus::Pending, $this->invitation()->statusAt(new \DateTimeImmutable('2026-11-22 10:00')), 'Still for Erin.');
     }
 
@@ -322,14 +321,14 @@ final class AcceptInvitationTest extends WebTestCase
 
         $streams = TurboStream::parseAll(implode('', RecordingHub::published(self::getContainer()->get(Topics::class)->notifications($alice, $allotment))));
         self::assertSame($message, $streams[0]->content->filter('.toast-member p')->text(), 'Its toast.');
-        self::assertSame('/gardens/' . $allotment->getId() . '/members', $streams[0]->content->filter('.toast-member a')->attr('href'));
+        self::assertSame('/g/' . $allotment->getSlug() . '/members', $streams[0]->content->filter('.toast-member a')->attr('href'));
         self::assertSame([], $this->bobsNewMembers(), 'Bob invited nobody.');
 
         $this->client->getCookieJar()->clear();
         $this->logIn($this->client, $alice);
-        $crawler = $this->client->request('GET', '/notifications');
+        $crawler = $this->client->request('GET', '/g/' . $allotment->getSlug() . '/notifications');
         self::assertSame($message, $crawler->filter('.notification-member p')->first()->text());
-        $crawler = $this->client->request('GET', '/gardens/' . $allotment->getId() . '/members');
+        $crawler = $this->client->request('GET', '/g/' . $allotment->getSlug() . '/members');
         self::assertCount(3, $crawler->filter('.member'), 'A new member.');
     }
 

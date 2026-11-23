@@ -40,7 +40,7 @@ final class InvitationsTest extends WebTestCase
         self::getContainer()->get('garden_quota.cache')->clear();
         self::mockTime('2026-11-22 10:00');
         $this->gardens = TwoGardens::create(self::getContainer());
-        $this->members = '/gardens/' . $this->gardens->allotment->getId() . '/members';
+        $this->members = '/g/' . $this->gardens->allotment->getSlug() . '/members';
         $this->logIn($this->client, $this->gardens->alice);
     }
 
@@ -76,7 +76,7 @@ final class InvitationsTest extends WebTestCase
 
         $invitation = $this->invitation($link);
         self::assertSame('frank@example.com', $invitation->getEmail());
-        self::assertSame($this->gardens->allotment->getId(), $invitation->getGarden()->getId());
+        self::assertSame($this->gardens->allotment->getId()->toRfc4122(), $invitation->getGarden()->getId()->toRfc4122());
 
         $crawler = $this->client->request('GET', $this->members);
         self::assertCount(0, $crawler->filter('.invitation.is-shown, .invitation-link'), 'Shown once: its hash only is kept.');
@@ -99,7 +99,7 @@ final class InvitationsTest extends WebTestCase
         $orchard = GardenFactory::new()->ownedBy($owner)->create(['name' => 'Le verger']);
         $this->client->getCookieJar()->clear();
         $this->logIn($this->client, $owner);
-        $crawler = $this->client->request('GET', '/gardens/' . $orchard->getId() . '/members');
+        $crawler = $this->client->request('GET', '/g/' . $orchard->getSlug() . '/members');
         $this->client->submit($crawler->selectButton('Inviter')->form(), ['invitation[email]' => 'nobody@example.com']);
         self::assertEmailSubjectContains(self::lastEmail(), 'Jules vous invite dans Le verger sur Hop Garden', 'No account: the language of the owner.');
 
@@ -220,7 +220,7 @@ final class InvitationsTest extends WebTestCase
         // The others keep theirs
         $this->client->getCookieJar()->clear();
         $this->logIn($this->client, $this->gardens->carol);
-        $crawler = $this->client->request('GET', '/gardens/' . $this->gardens->balcony->getId() . '/members');
+        $crawler = $this->client->request('GET', '/g/' . $this->gardens->balcony->getSlug() . '/members');
         $this->client->submit($crawler->selectButton('Invite')->form(), ['invitation[email]' => 'frank@example.com']);
         self::assertEmailCount(1);
     }
@@ -235,7 +235,7 @@ final class InvitationsTest extends WebTestCase
         self::assertCount(0, $crawler->filter('form.invitation-form, .garden-invitations'));
         self::assertStringNotContainsString('erin@example.com', (string) $this->client->getResponse()->getContent());
 
-        $this->client->request('POST', '/gardens/' . $this->gardens->allotment->getId() . '/invitations', ['invitation' => ['email' => 'frank@example.com']]);
+        $this->client->request('POST', '/g/' . $this->gardens->allotment->getSlug() . '/invitations', ['invitation' => ['email' => 'frank@example.com']]);
         self::assertResponseStatusCodeSame(404);
         self::assertEmailCount(0);
     }

@@ -73,7 +73,7 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
 
         $planting = $this->plantingOf($hydrangea);
         self::assertSame('Hortensia', $planting->getName());
-        self::assertSame($terrace->getId(), $planting->getSpace()?->getId());
+        self::assertSame($terrace->getId()->toRfc4122(), $planting->getSpace()?->getId()->toRfc4122());
         self::assertSame('Added', $added->filter('.status')->text());
         self::assertSame(self::pathOf($planting), $added->filter('a.button-next')->attr('href'));
 
@@ -110,7 +110,7 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
 
         self::assertCount(0, $page->filter('.chat-choices button.chat-choice:not([disabled])'), 'Answered.');
         $this->tap($this->card($page, 'planting'), 'Add to my garden');
-        self::assertSame($terrace->getId(), $this->plantingOf($hydrangea)->getSpace()?->getId());
+        self::assertSame($terrace->getId()->toRfc4122(), $this->plantingOf($hydrangea)->getSpace()?->getId()->toRfc4122());
     }
 
     /**
@@ -139,7 +139,7 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
         self::assertSame('I created the space Balcon.', $page->filter('#chat-log .bubble-user')->last()->text());
         $this->tap($this->card($page, 'planting'), 'Add to my garden');
 
-        self::assertSame($balcony->getId(), $this->plantingOf($hydrangea)->getSpace()?->getId());
+        self::assertSame($balcony->getId()->toRfc4122(), $this->plantingOf($hydrangea)->getSpace()?->getId()->toRfc4122());
         self::assertSame('Created', $this->card($this->client->request('GET', self::inGarden('/assistant')), 'space')->filter('.status')->text(), 'Created, after a reload too.');
     }
 

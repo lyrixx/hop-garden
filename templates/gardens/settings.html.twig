@@ -13,6 +13,6 @@
     {{ include('gardens/_form.html.twig', {submit: 'action.save'|trans}) }}
 
     <p class="callout garden-settings-members">
-        <a href="{{ path('garden_members', {id: garden.id}) }}">{{ 'garden.settings.members'|trans({count: garden.memberships|length}) }}</a>
+        <a href="{{ path('garden_members', {garden: garden.slug}) }}">{{ 'garden.settings.members'|trans({count: garden.memberships|length}) }}</a>
     </p>
 {% endblock %}

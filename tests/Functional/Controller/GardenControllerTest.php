@@ -135,7 +135,7 @@ final class GardenControllerTest extends WebTestCase
         ]);
 
         $planting = $this->lastPlanting();
-        self::assertSame($hydrangea->getId(), $planting->getPlant()?->getId());
+        self::assertSame($hydrangea->getId()->toRfc4122(), $planting->getPlant()?->getId()->toRfc4122());
         self::assertSame([], $this->draftMessages());
 
         $this->client->followRedirect();
@@ -286,7 +286,7 @@ final class GardenControllerTest extends WebTestCase
         $this->client->submit($crawler->selectButton('Use the sheet of Bigleaf hydrangea')->form());
 
         self::assertResponseRedirects(self::pathOf($planting));
-        self::assertSame($hydrangea->getId(), $this->reload($planting)->getPlant()?->getId());
+        self::assertSame($hydrangea->getId()->toRfc4122(), $this->reload($planting)->getPlant()?->getId()->toRfc4122());
 
         $crawler = $this->client->followRedirect();
         self::assertSelectorNotExists('.garden-pending');
@@ -449,7 +449,7 @@ final class GardenControllerTest extends WebTestCase
         self::assertResponseRedirects(self::pathOf($planting), 303);
         self::assertSame('Hydrangea by the shed', $planting->getName());
         self::assertSame('North bed', $planting->getSpace()?->getName());
-        self::assertSame($plant->getId(), $planting->getPlant()?->getId(), 'It follows the care sheet of the species.');
+        self::assertSame($plant->getId()->toRfc4122(), $planting->getPlant()?->getId()->toRfc4122(), 'It follows the care sheet of the species.');
         self::assertSame('Hydrangea paniculata', $planting->getScientificName());
         self::assertSame(191052, $planting->getTrefleId());
         self::assertSame([], $this->draftMessages(), 'No agent: the care sheet is there.');
@@ -639,7 +639,7 @@ final class GardenControllerTest extends WebTestCase
 
         self::assertResponseRedirects(self::pathOf($planting));
         self::assertSame([], $this->draftMessages());
-        self::assertSame($plant->getId(), $this->reload($planting)->getPlant()?->getId());
+        self::assertSame($plant->getId()->toRfc4122(), $this->reload($planting)->getPlant()?->getId()->toRfc4122());
     }
 
     public function testRetryAndLinkRequireAValidCsrfToken(): void

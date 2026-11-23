@@ -70,7 +70,7 @@ class Invitation
     public static function send(Garden $garden, string $email, User $invitedBy, #[\SensitiveParameter] string $token, \DateTimeImmutable $sentAt): self
     {
         if (!$garden->isMember($invitedBy)) {
-            throw new \LogicException(\sprintf('User %d is no member of garden %d: they invite nobody into it.', $invitedBy->getId(), $garden->getId()));
+            throw new \LogicException(\sprintf('User %s is no member of garden %s: they invite nobody into it.', $invitedBy->getId(), $garden->getId()));
         }
 
         return new self($garden, $email, $invitedBy, $token, $sentAt);
