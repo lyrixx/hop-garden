@@ -1,0 +1,59 @@
+# The errors of the production and of the preproduction (README, "Errors (Sentry)"). They go through
+# Monolog (monolog.yaml): whatever is logged at the "error" level or above becomes an issue (an uncaught exception, a
+# failing command, `$logger->error()`...), except the HTTP 4xx (App\Monitoring\IgnoreClientErrors). The failures of the
+# worker go through the Messenger listener of the bundle.
+#
+# The bundle is loaded in every environment, so that dev and test compile and test the same wiring: without a DSN,
+# nothing leaves.
+sentry:
+    dsn: null
+    # A sending that fails (invalid DSN, quota, network) is logged on stderr instead of being ignored. This channel does
+    # not go to Sentry: no loop
+    logger: monolog.logger.sentry
+    messenger:
+        # The final failure of a message only, not each retry. async has none (a chat message must not be answered twice)
+        # and scheduler_default neither: each failure is the final one, gone to the "failed" transport for async
+        capture_soft_fails: false
+        # The breadcrumbs and the context of each message the worker handles, not of the ones before
+        isolate_context_by_message: true
+    options:
+        before_send: App\Monitoring\IgnoreClientErrors
+        # Personal data. The account of an issue is its id only (App\Monitoring\SentryUserListener): no email, no IP.
+        # No body of a request or a response: the messages of the chat, the forms, the requests to the LLM and their
+        # answers. No argument of the functions of a stack trace (the text of a chat message, the token of an agent run),
+        # no input nor output of an LLM call, no parameter of an SQL query, no query string (the addresses of the signed
+        # links, the searches of plants and places, the position of a garden), no option of a command (the email and the
+        # password of app:user:create, App\Monitoring\HideCommandOptions). The cookies and the headers go without their
+        # sensitive keys (session, token, auth...), and without the address of the client that a reverse proxy adds
+        data_collection:
+            database_query_data: false
+            gen_ai:
+                inputs: false
+                outputs: false
+            http_bodies: []
+            http_headers:
+                terms: [client-ip, connecting-ip, forwarded, real-ip]
+            stack_frame_variables: false
+            url_query_params:
+                mode: 'off'
+            user_info: false
+        # The probes of the orchestrator and of the image call /healthz every few seconds
+        ignore_transactions:
+            - GET healthz
+        # No trace header on any outgoing request: not to the LLM (Anthropic, OpenAI), Trefle nor Open-Meteo
+        trace_propagation_targets: []
+        # Performance: one request or command out of ten (not the worker, messenger:consume)
+        traces_sample_rate: 0.1
+    # No capture by the bundle nor by the error handler of the SDK: every exception would also come through Monolog, so
+    # twice, and the PHP warnings would become issues. The log levels of Symfony decide what an error is.
+    register_error_handler: false
+    register_error_listener: false
+
+when@prod:
+    sentry:
+        # Empty (.env): nothing leaves, e.g. for the image run locally (castor start -c prod)
+        dsn: '%env(SENTRY_DSN)%'
+        # The release is SENTRY_RELEASE, which the bundle reads by default: baked into the production image, the short
+        # commit sha, as its tag
+        options:
+            environment: '%env(SENTRY_ENVIRONMENT)%'

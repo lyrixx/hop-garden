@@ -58,6 +58,8 @@
         <h2>{{ 'legal.privacy.recipients.heading'|trans }}</h2>
         <p>{{ 'legal.privacy.recipients.members'|trans }}</p>
         <p>{{ 'legal.privacy.recipients.text'|trans }}</p>
+        {# config/packages/sentry.yaml, data_collection #}
+        <p>{{ 'legal.privacy.recipients.errors'|trans }}</p>
         <p><twig:Legal:ToComplete :what="'legal.privacy.recipients.to_complete'|trans"/></p>
         <p>{{ 'legal.privacy.recipients.transfers'|trans }}</p>
     </section>
