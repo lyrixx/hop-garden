@@ -21,15 +21,11 @@ sentry:
         # Personal data. The account of an issue is its id only (App\Monitoring\SentryUserListener): no email, no IP.
         # No body of a request or a response: the messages of the chat, the forms, the requests to the LLM and their
         # answers. No argument of the functions of a stack trace (the text of a chat message, the token of an agent run),
-        # no input nor output of an LLM call, no parameter of an SQL query, no query string (the addresses of the signed
-        # links, the searches of plants and places, the position of a garden), no option of a command (the email and the
-        # password of app:user:create, App\Monitoring\HideCommandOptions). The cookies and the headers go without their
-        # sensitive keys (session, token, auth...), and without the address of the client that a reverse proxy adds
+        # no query string (the addresses of the signed links, the searches of plants and places, the position of a
+        # garden), no option of a command (the email and the password of app:user:create,
+        # App\Monitoring\HideCommandOptions). The cookies and the headers go without their sensitive keys (session,
+        # token, auth...), and without the address of the client that a reverse proxy adds
         data_collection:
-            database_query_data: false
-            gen_ai:
-                inputs: false
-                outputs: false
             http_bodies: []
             http_headers:
                 terms: [client-ip, connecting-ip, forwarded, real-ip]
@@ -44,7 +40,9 @@ sentry:
     # The errors only, no performance. Without traces_sample_rate nor traces_sampler, the SDK samples no transaction;
     # disabled, the bundle registers nothing that starts one (the requests, the commands) nor measures (Doctrine, Twig,
     # the cache, the HTTP client). Its decorator of the HTTP client is also the only thing that would add a trace header
-    # (sentry-trace, baggage) to an outgoing request: none goes to the LLM, Trefle, Open-Meteo nor the API of Mailgun
+    # (sentry-trace, baggage) to an outgoing request: none goes to the LLM, Trefle, Open-Meteo nor the API of Mailgun.
+    # Turned back on, the spans of Doctrine would carry the parameters of the queries
+    # (data_collection.database_query_data, true by default)
     tracing:
         enabled: false
 
