@@ -46,6 +46,30 @@ class ConversationRepository extends ServiceEntityRepository
     }
 
     /**
+     * @return list<UuidV7>
+     */
+    public function findIdsOf(User $user, Garden $garden): array
+    {
+        return $this->ids(['user' => $user, 'garden' => $garden]);
+    }
+
+    /**
+     * Their rows only: the messages live in the table of the message store, under the same ids (findIdsOf()).
+     */
+    public function deleteOf(User $user, Garden $garden): void
+    {
+        $this->createQueryBuilder('conversation')
+            ->delete()
+            ->andWhere('conversation.user = :user')
+            ->andWhere('conversation.garden = :garden')
+            ->setParameter('user', $user)
+            ->setParameter('garden', $garden)
+            ->getQuery()
+            ->execute()
+        ;
+    }
+
+    /**
      * @param array<string, object> $criteria
      *
      * @return list<UuidV7>

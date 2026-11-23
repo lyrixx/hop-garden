@@ -64,6 +64,19 @@ class NotificationRepository extends ServiceEntityRepository
         ;
     }
 
+    public function deleteOf(User $recipient, Garden $garden): void
+    {
+        $this->createQueryBuilder('n')
+            ->delete()
+            ->andWhere('n.recipient = :recipient')
+            ->andWhere('n.garden = :garden')
+            ->setParameter('recipient', $recipient)
+            ->setParameter('garden', $garden)
+            ->getQuery()
+            ->execute()
+        ;
+    }
+
     /**
      * @return list<Notification>
      */

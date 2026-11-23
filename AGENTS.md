@@ -137,7 +137,9 @@ Without option, the `default` context applies.
 - Members and invitations: the routes of a garden are in `App\Controller\GardenMembersController`, under
   `/g/{garden}` (its members, `/members`, GARDEN_VIEW; its invitations and removing a member, GARDEN_MANAGE, its owner
   only), the invitation or the membership found by its UUID in the garden of the URL, a 404 otherwise. Each member leaves
-  it (`Garden::leave()`: the oldest of the others takes it over from its owner), its only member does not.
+  it (`Garden::leave()`: the oldest of the others takes it over from its owner), its only member does not. Who leaves
+  or is removed loses their conversations and notifications of it, their messages in the message store too
+  (`App\Garden\MemberDeparture`); what they added stays.
   `App\Garden\Entity\Invitation` (its token hashed, 14 days, one open per address and garden by a partial unique index,
   deleted 30 days after it ends by `App\Garden\Scheduler\PurgeEndedInvitations`)
   as a member only: a garden has one owner. Its token is the whole link, `/invitations/{token}`

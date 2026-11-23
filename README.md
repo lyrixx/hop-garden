@@ -132,7 +132,8 @@ Carol has "Carol's balcony".
   its settings.
 - Its name in the menu opens its members, <https://hop-garden.test/g/the-allotment/members>: each member may leave it
   (its owner leaves it to the oldest of the others, its only member does not), its owner removes a member and invites,
-  see [Invitations](#invitations).
+  see [Invitations](#invitations). Who goes loses their conversations with the assistant and their notifications of
+  it; what they added stays.
 - Every member gets the notifications of the garden, in their language, and the frost toast, live.
 - The assistant has a quota per garden and per day (its runs, and the Latin names of the species search): spent, the
   chat says so. So have the invitations it sends by email, 20 a day.
