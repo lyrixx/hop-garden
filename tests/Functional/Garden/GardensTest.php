@@ -69,7 +69,7 @@ final class GardensTest extends WebTestCase
         $this->client->followRedirect();
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('.flash-success', 'The orchard is ready.');
-        self::assertSelectorTextContains('.account-menu .garden-name', 'The orchard');
+        self::assertSelectorTextContains('.garden-switcher summary', 'The orchard');
     }
 
     public function testTheOnePlaceOfACityIsPickedAlready(): void
@@ -94,6 +94,24 @@ final class GardensTest extends WebTestCase
         $this->client->submit($crawler->selectButton('Create the garden')->form(), ['garden[name]' => 'Balcony', 'garden[city]' => '']);
         self::assertResponseStatusCodeSame(422);
         self::assertSelectorTextContains('.garden-city', 'Search the city of your garden first.');
+    }
+
+    public function testAMemberOfOneGardenMakesAnotherFromTheMenu(): void
+    {
+        $member = UserFactory::new()->approved()->create();
+        GardenFactory::new()->ownedBy($member)->create(['name' => 'The orchard']);
+        $this->logIn($this->client, $member);
+
+        $crawler = $this->client->request('GET', '/g/the-orchard/garden');
+
+        self::assertSelectorTextSame('.garden-switcher-current', 'The orchard');
+        self::assertSame([], self::switcher($crawler), 'No other.');
+        self::assertSame(['/g/the-orchard/members', '/gardens/new'], $crawler->filter('.garden-switcher-list a')->each(static fn (Crawler $link): ?string => $link->attr('href')));
+        self::assertSelectorExists('.account-menu a[href="/g/the-orchard/settings"]', 'Its owner.');
+
+        $crawler = $this->client->click($crawler->filter('.garden-switcher')->selectLink('New garden')->link());
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->selectButton('Create the garden'), 'The wizard of another one.');
     }
 
     public function testAMemberOfSeveralGardensSwitchesBetweenThem(): void

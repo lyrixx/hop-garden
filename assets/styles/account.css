@@ -29,7 +29,7 @@
 .account-menu-item:hover { background: rgb(255 255 255 / 12%); }
 .account-menu-item.active { background: var(--white); color: var(--forest-deep); }
 
-/* The current garden, which leads to its members, and the others of the member to switch to */
+/* The current garden: the others of the member to switch to, its members, a new one */
 .garden-switcher { position: relative; }
 .garden-switcher summary { list-style: none; }
 .garden-switcher summary::-webkit-details-marker { display: none; }

@@ -37,8 +37,8 @@ final class MembersTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/g/allotment-of-alice-and-bob/garden');
 
-        self::assertSame($this->members, $crawler->filter('.account-menu a.garden-name')->attr('href'));
-        $crawler = $this->client->click($crawler->filter('.account-menu a.garden-name')->link());
+        self::assertSame($this->members, $crawler->filter('.garden-switcher-members a')->attr('href'));
+        $crawler = $this->client->click($crawler->filter('.garden-switcher-members a')->link());
         self::assertResponseIsSuccessful();
         self::assertSame([['Alice', 'Propriétaire'], ['Bob (vous)', 'Membre']], self::membersOf($crawler));
     }
