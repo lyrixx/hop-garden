@@ -28,11 +28,12 @@ git clone https://github.com/lyrixx/hop-garden.git && cd hop-garden
 echo '127.0.0.1 hop-garden.test' | sudo tee -a /etc/hosts
 echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env.local
 castor start
-castor demo:reset   # the demo accounts and their two gardens: a rose and a lemon tree, with their reminders, in 3 spaces
+castor demo:reset   # the demo accounts and their three gardens: a rose and a lemon tree, with their reminders, in 3 spaces
 ```
 
 Open <https://hop-garden.test/assistant>, log in as `alice@hop-garden.test` (password `hop-garden-demo`) and type
-`hortensia`. Bob (`bob@hop-garden.test`) shares her garden, in French; Carol (`carol@hop-garden.test`) has her own.
+`hortensia`: the chat of her garden, <https://hop-garden.test/g/the-allotment/assistant>. Bob (`bob@hop-garden.test`)
+shares her garden, in French, and has another; Carol (`carol@hop-garden.test`) has her own.
 
 That's all: the demo mode is on by default, so Trefle and Open-Meteo answer from the responses
 stored in [`fixtures/http/`](fixtures/http/). Only the LLM key is needed. Hop Garden speaks English and French: see
@@ -56,7 +57,8 @@ OPENAI_API_KEY=sk-...
 4. Tap a space, then *Add to my garden* on the card that follows: the card says *Added*, and *See my plant* opens your
    hydrangea in *My garden*: the plant you grow (where it grows, the care it got, the recommendations), apart from
    its species (the care sheet and its reminders, on the page of the species). Each links to the other.
-5. *Species* (`/plants`): every care sheet, its plate and my plants of it; *New species* without the assistant.
+5. *Species* (`/g/the-allotment/species`): every care sheet, its plate and my plants of it; *New species* without the
+   assistant.
 6. *My spaces*: describe the spots of your garden (balcony, north bed…) with their exposure and soil; the plants of a
    space share them and are neighbours. The recommendations read the exposure of the space.
 7. Run `castor demo:frost`: the reminder check runs against the recorded cold snap, and a frost toast appears live,
@@ -104,18 +106,29 @@ hydrangea is hardy to about -25 °C, so the recorded cold snap (down to -12.4 °
 bar (the language, *Log in*, *Join the waiting list*, or *Open my garden* once logged in). The legal notice
 (`/legal-notice`), the terms of sale (`/terms`) and the privacy policy (`/privacy`) are linked from the footer of every
 page; their blanks, marked *To be completed*, wait for the information of the publisher. The application starts at
-`/assistant`, the chat.
+`/assistant`, the chat of the last garden of the member.
 
 ### Gardens
 
 Each garden has its members, who share its care sheets, its spaces, its plants and its reminders: nobody else sees any of
-them. In `castor demo:reset`, Alice and Bob share "The allotment" (Alice is its owner), and Carol has "Carol's balcony".
+them. In `castor demo:reset`, Alice and Bob share "The allotment" (Alice is its owner), Bob has "The orchard" too, and
+Carol has "Carol's balcony".
 
+- Every page of a garden is under its URL, by the slug of its name: `/g/the-allotment/assistant`, `/g/the-allotment/garden`,
+  `/g/the-allotment/species/rosa-canina`, `/g/the-allotment/garden/rose-by-the-gate`, `/g/the-allotment/spaces/terrace`,
+  `/g/the-allotment/notifications`, `/g/the-allotment/settings`. A garden takes its slug from its name, unique in the
+  whole site; a species from its Latin name, a plant and a space from their name, unique in their garden, suffixed when
+  taken (`rose-2`). Renaming keeps the URL. A garden of others answers 404, and so does a slug of another garden in the
+  URL of one's own.
+- Out of a garden (the account, the wizard), the menu leads to the last one; so do the links of before the gardens were
+  in the URLs (`/assistant`, `/garden`, `/plants`, `/spaces`, `/notifications`). Two tabs on two gardens each have their
+  live chat.
 - A new member makes their first garden in a small wizard, <https://hop-garden.test/gardens/new>: its name and its city,
   found by the [geocoding of Open-Meteo](https://open-meteo.com/en/docs/geocoding-api) (a city with homonyms offers them,
   one to pick). Its position gives the frost forecast, its timezone the hour of the reminders: every day from 7:00, its
   time.
-- With several gardens, the menu switches between them; the chat has a conversation per garden. Its owner renames or
+- With several gardens, the menu switches between them, to the same page of the other one when it has it (its plants,
+  its species...), else to its assistant; the chat has a conversation per garden. Its owner renames or
   moves a garden in its settings. Inviting members comes next: until then, `castor demo:reset` gives the demo theirs.
 - Every member gets the notifications of the garden, in their language, and the frost toast, live.
 - The assistant has a quota per garden and per day (its runs, and the Latin names of the species search): spent, the
@@ -124,11 +137,16 @@ them. In `castor demo:reset`, Alice and Bob share "The allotment" (Alice is its 
   shared garden stays with the others, the oldest of them its owner.
 
 Before the gardens, a database had none, and `castor migrate` refuses it: the migration that requires a garden for
-every row names the task that gives them one, and nothing is migrated. `castor app:garden:adopt-orphans
---email=you@example.com --name="My garden" --city=Lyon` runs the migrations up to the gardens, gives every row to a new
-garden of that member, then runs the others. The member is an approved account: from a database of before the accounts
-too, run the task once (it migrates, then asks for them), create them with `castor app:user:create ... --approved`, and
-run it again.
+every row (`Version20261123120000`, the last one) names the task that gives them one, and nothing is migrated. `castor
+app:garden:adopt-orphans --email=you@example.com --name="My garden" --city=Lyon` runs the migrations up to it (the
+gardens, the UUIDs, the slugs), gives every row to a new garden of that member, then runs it. The member is an approved
+account: from a database of before the accounts too, run the task once (it migrates, then asks for them), create them
+with `castor app:user:create ... --approved`, and run it again.
+
+The ids became UUIDs v7 (`Version20261123100000`): the migration gives each row one, in the order of the ids, and the
+foreign keys and the conversations of the chat follow. A member logged in before it is logged out once; a link of an
+email to verify an address, sent before, asks for a new password, which verifies it too; the URLs of before with an id
+(`/garden/12`) are gone, the ones without (`/garden`) lead to the last garden.
 
 ### Accounts and the waiting list
 
@@ -151,7 +169,7 @@ of `castor demo:reset`, all with the password `hop-garden-demo`:
 |---|---|
 | `admin@hop-garden.test` | The administrator, of the back-office too |
 | `alice@hop-garden.test` | A member, in English, owner of "The allotment" |
-| `bob@hop-garden.test` | A member, in French, who shares "The allotment" |
+| `bob@hop-garden.test` | A member, in French, who shares "The allotment" and owns "The orchard" |
 | `carol@hop-garden.test` | A member, in English, owner of "Carol's balcony" |
 | `dave@hop-garden.test` | On the waiting list, in French: approve him, then he makes his garden |
 
@@ -201,7 +219,7 @@ flowchart LR
   pushes Turbo Streams (the tokens, the tool calls, then the draft card as a frame the browser loads) through the
   Mercure hub embedded in FrankenPHP, rendered with Twig from the same components as the pages, without polling
   (same model as [lyrixx/async-messenger-mercure](https://github.com/lyrixx/async-messenger-mercure)). Every update is
-  private: the page of a member subscribes with a cookie that grants their topics, and those of their current garden.
+  private: the page of a member subscribes with a cookie that grants their topics, and those of each of their gardens.
 - The agent ([Symfony AI](https://symfony.com/doc/current/ai/index.html)) gets its tools from the
   [MCP bundle](https://symfony.com/doc/current/ai/bundles/mcp-bundle.html) client, connected to this application's
   own MCP server: no PHP service is called directly. Each request carries a token signed for the run: the tools answer
@@ -224,12 +242,13 @@ flowchart LR
 
 | Endpoint | For | Validates plants |
 |---|---|---|
-| STDIO with `castor mcp:stdio --user=<email>` | External clients, as a member, in their garden | Yes, with `confirm_plant` (the care sheet only) |
+| STDIO with `castor mcp:stdio --user=<email> [--garden=<slug>]` | External clients, as a member, in a garden of theirs | Yes, with `confirm_plant` (the care sheet only) |
 | `https://hop-garden.test/_mcp` | External clients: a 401 until OAuth comes | — |
 | `http://frontend/_mcp/agent` | The chat agent of the web UI, with the token of its run (401 without) | No |
 
-The tools see one garden: the one of the member over STDIO (`--garden=<id>` for another of theirs), the one of the
-message for the agent.
+The tools see one garden: the one of the member over STDIO (`--garden=<slug>` for another of theirs, as in its URLs), the
+one of the message for the agent. Their ids are UUIDs, in and out; their results give the readable URL of what they
+return too (`url`, `validation_url`: `https://hop-garden.test/g/the-allotment/species/rosa-canina`).
 
 ### Tools
 
@@ -239,7 +258,7 @@ message for the agent.
 | `get_frost_forecast(days = 3)` | Daily minimum temperatures at the garden, from Open-Meteo. |
 | `propose_plant(common_name, scientific_name, family, care_sheet, …)` | Creates a **draft** plant and returns its id and the URL of its card. The schema of `care_sheet` imposes every field, its confidence and its sources. |
 | `list_collection()` | The validated plants of the garden (one care sheet per species) and their enabled reminders. |
-| `get_plant(id)` | A plant, its care sheet, the confidence of each value, its sources. |
+| `get_plant(id)` | A plant (its UUID), its care sheet, the confidence of each value, its sources. |
 | `enable_reminder(plant_id, type)` / `disable_reminder(plant_id, type)` | `pruning`, `deadheading`, `cutting` or `frost`. Refused for a draft. |
 | `upcoming_reminders(days = 30)` | The calendar reminders due soon, and the known frost risk. |
 | `list_spaces()` | The spaces of the garden, with their exposure, their soil and their plants. |
@@ -352,7 +371,7 @@ photos of the plantings in `var/share/prod/uploads/plantings` (the share directo
 only). The first administrator, once the migrations ran:
 `bin/console app:user:create --email=... --name=... --password=... --admin`.
 
-From a database of before the gardens: `bin/console doctrine:migrations:migrate 'DoctrineMigrations\Version20261122212315'`,
+From a database of before the gardens: `bin/console doctrine:migrations:migrate 'DoctrineMigrations\Version20261123110000'`,
 `bin/console app:garden:adopt-orphans --email=... --name=... --city=...`, then `bin/console doctrine:migrations:migrate`.
 The photos used to be public, in a volume on `public/uploads/`: mount it there once more for the deployment that makes
 them private, run `bin/console app:plantings:move-photos`, then drop it.

@@ -85,8 +85,11 @@ jobs:
                   # The public page, in English until a language is chosen
                   curl --fail --insecure --silent -H "Host: hop-garden.test" https://127.0.0.1 | grep "Join the waiting list"
 
-                  # The pages of a garden need a member, the MCP servers a token: the login, and a 401 each
-                  curl --insecure --silent --output /dev/null --write-out '%{http_code} %{redirect_url}' -H "Host: hop-garden.test" https://127.0.0.1/garden | grep -E '^302 .*/login$'
+                  # The pages of a garden (/g/{garden}/...) and the paths of before them need a member, the MCP servers a
+                  # token: the login, and a 401 each
+                  for path in /g/a-garden/garden /assistant; do
+                      curl --insecure --silent --output /dev/null --write-out '%{http_code} %{redirect_url}' -H "Host: hop-garden.test" "https://127.0.0.1$path" | grep -E '^302 .*/login$'
+                  done
                   for path in /_mcp /_mcp/agent; do
                       curl --insecure --silent --include -X POST -H "Host: hop-garden.test" -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' "https://127.0.0.1$path" | grep -i "^www-authenticate: Bearer realm=\"Hop Garden\""
                   done

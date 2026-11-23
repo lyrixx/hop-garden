@@ -24,11 +24,11 @@ castor app:db:migrate                        # Doctrine migrations (alias: casto
 castor app:db:fixtures                       # the demo story, as demo:reset does (alias: castor fixtures)
 castor postgres                              # psql shell on the app database (alias: castor pg)
 castor postgres -- select 1 from foobar      # one-off command database query
-castor demo:reset                            # new database: 5 accounts (printed), Alice and Bob share a garden, Carol has hers
+castor demo:reset                            # new database: 5 accounts (printed), Alice and Bob share a garden, Bob has another, Carol hers
 castor app:garden:adopt-orphans --email=... --name=... --city=...   # the data of before the gardens, to a new garden of a member
 castor app:user:create --email=... --name=... --password=... [--admin|--approved]   # an account, e.g. the administrator
 castor demo:frost [--date=YYYY-MM-DD]        # reminder check with the recorded frost forecast
-castor mcp:stdio --user=alice@hop-garden.test   # MCP server over STDIO, as a member, in their garden (Claude Desktop, Claude Code...)
+castor mcp:stdio --user=alice@hop-garden.test [--garden=the-allotment]   # MCP server over STDIO, as a member, in a garden of theirs (Claude Desktop, Claude Code...)
 ```
 
 Docker / workers:
@@ -59,7 +59,8 @@ Without option, the `default` context applies.
 - FrankenPHP (service `frontend`), embeds the Mercure hub at `/.well-known/mercure`: every update private, no anonymous
   subscriber. The topics are URLs under `DEFAULT_URI` (`App\Mercure\Topics`): a conversation and the notifications of a
   member, the drafting of a care sheet of a garden. Every page of a member sets the subscriber cookie
-  `mercure_access_token` (`grant_mercure_topics()`), for their topics and those of their current garden (URL patterns);
+  `mercure_access_token` (`grant_mercure_topics()`), for their topics and those of each of their gardens (URL patterns:
+  two tabs on two gardens both listen);
   the streams are `turbo_stream_from(topic, private: true)`. The cookie lasts an hour: a page left open renews it
   (`mercure_cookie_controller.js`). The subscriber key is its own (`MERCURE_SUBSCRIBER_JWT_KEY`)
 - Symfony Messenger: `async` transport (Doctrine, `use_notify: true`, no retry: a chat message must not be
@@ -76,7 +77,7 @@ Without option, the `default` context applies.
   signed with a key derived from `APP_SECRET`), issued when the request dispatches `RunAgent` or `DraftCareSheet`, sent by
   `App\Mcp\Agent\AgentRunHttpClient` (the `http_client` of the client, decorating `psr18.http_client`; in the tests,
   `KernelHttpClient`)
-- MCP bundle: server `default` (`/_mcp` and STDIO: `app:mcp:stdio --user=<email> [--garden=<id>]`, as a member) and
+- MCP bundle: server `default` (`/_mcp` and STDIO: `app:mcp:stdio --user=<email> [--garden=<slug>]`, as a member) and
   server `agent` (`/_mcp/agent`). Both stateless firewalls answer 401 without token (`App\Mcp\Security\McpEntryPoint`):
   `mcp_agent` takes the token of a run (`App\Mcp\Agent\Security\AgentRunAuthenticator`), `mcp` none until OAuth
   (phase 3, see `.claude/tmp/mcp-oauth-study.md`), whose authenticator will bind its token to the garden chosen, as
@@ -96,15 +97,16 @@ Without option, the `default` context applies.
   waiting list* to `/register`; for a member, *Open my garden* instead: `Public:JoinButton`), without the navigation of
   the application or the notification stream. A blank of the publisher on a legal page is a `Legal:ToComplete`, never a
   made-up value. The footer of `base.html.twig` links the legal pages on every page (`Legal:Links`, at the foot of the
-  back-office too: `templates/admin/layout.html.twig`). The application starts at `/assistant` (route `chat`), where a
-  login leads, and `/?message=` redirects there. The privacy policy lists every cookie, all strictly necessary (no
+  back-office too: `templates/admin/layout.html.twig`). The application starts at `/assistant` (route `assistant`,
+  `LastGardenController`), where a login leads: the chat of the last garden, `/g/{garden}/assistant` (route `chat`), or
+  the wizard of a first one. `/?message=` redirects there. The privacy policy lists every cookie, all strictly necessary (no
   banner): the session, `REMEMBERME`, `locale` and the double-submit one of the CSRF tokens.
   `LegalPagesTest::testThePrivacyPolicyListsTheRealCookies()` checks the first three against what a visitor and a member
   get: a new cookie goes in the policy.
   The captures of `assets/images/home/` (a draft care sheet, the reminder board) exist in each language: retake both
   when the card or the board changes
-- Species: `/plants` lists every species (validated first) with my plants of each, in one query
-  (`PlantRepository::findAllWithPlantings()`); `/plants/new` creates a draft by hand with `SpeciesPicker` (any form
+- Species: `/g/{garden}/species` lists every species (validated first) with my plants of each, in one query
+  (`PlantRepository::findAllWithPlantings()`); `/g/{garden}/species/new` creates a draft by hand with `SpeciesPicker` (any form
   whose data implements `SpeciesPickerData`), re-checked against Trefle (`PickedSpecies`), with a `CareSheet::blank()`
   of low confidence; a species with a care sheet already redirects to it
 - Gardens, the tenant: `App\Garden\Entity\Garden` (its name, its `GardenLocation`: a place found by the geocoding of
@@ -112,16 +114,28 @@ Without option, the `default` context applies.
   `Membership` (`owner` or `member`, the oldest first). Every space, care sheet (`Plant`), plant (`Planting`), reminder (by
   its care sheet) and notification (one per member) belongs to one; a conversation of the chat to a member in one
   (`App\Chat\Entity\Conversation`, next to the table of the bundle). `App\Garden\CurrentGarden` is the only way to read
-  it (`UserCurrentGarden`): the one bound to the token (an agent run, STDIO, OAuth later), else the one of the session,
-  chosen in the menu (`GardenSwitcher`), else the one they joined first; none in the worker, whose messages carry it. A
-  member without garden is sent to the wizard (`/gardens/new`, `NoGardenListener`). Its owner manages it
-  (`/gardens/{id}/settings`); its members come with the invitations (phase 2). Deleting an account deletes its gardens
+  it (`UserCurrentGarden`): the one bound to the token (an agent run, STDIO, OAuth later), else the one of the URL; none
+  on a page out of a garden, nor in the worker, whose messages carry it.
+  - Every page of a garden is under its URL, `/g/{garden}/...` (the slug of the garden): `App\Garden\GardenOfTheUrl`
+    finds it, answers 404 to whoever is no member of it (`GARDEN_VIEW`), puts the entity in place of the slug in the
+    attributes (`Garden $garden` in a controller), and gives it to the URLs the request generates without one. A
+    species, a plant or a space of the URL is found by its slug in that garden only: `#[ValueResolver('in_garden')]`
+    (`InGardenValueResolver`), a 404 otherwise.
+  - The session only remembers the last garden (`App\Garden\LastGarden`), for the pages out of a garden (the account,
+    the wizard: `nav_garden()` in the templates) and the paths of before the gardens were in the URLs (`/assistant`,
+    `/garden`, `/plants`, `/spaces`, `/notifications`, `/collection`: `LastGardenController`, `config/routes.yaml`). A
+    member without garden is sent to the wizard (`/gardens/new`) from there.
+  - The switcher of the menu (`GardenSwitcher`, `garden_switch_path()`) leads to the same page in another garden when it
+    is a page of the garden as a whole, else to its assistant. Its owner manages a garden (`/g/{garden}/settings`); its
+    members come with the invitations (phase 2).
+  - What the worker renders (the cards of the chat, the toasts) and what the MCP tools return have no URL to take a
+    garden from: they name it, `{garden: plant.garden.slug, ...}`. A component does the same with the resource it has. Deleting an account deletes its gardens
   of its own, with their photos and conversations, and leaves the shared ones to the oldest other member
   (`App\Account\AccountDeletion`). The quotas of the LLM count per garden (`App\Garden\GardenQuotas`, rate limiters
   `garden_agent_runs` and `garden_latin_names`)
 - Spaces: `App\Garden\Entity\Space` carries the exposure and the soil; a `Planting` has an optional space (`SET NULL`),
-  and its neighbours are the other plantings of its space. Pages `/spaces`, `/spaces/new`, `/spaces/{id}` and
-  `/spaces/{id}/edit` (`SpaceController`); `RecommendationEngine` reads the exposure of the space
+  and its neighbours are the other plantings of its space. Pages `/g/{garden}/spaces`, `/spaces/new`, `/spaces/{space}`
+  and `/spaces/{space}/edit` (`SpaceController`); `RecommendationEngine` reads the exposure of the space
 - Languages: English (default) and French (`App\Locale\Model\SupportedLocale`), a setting, never in the URL.
   `App\Locale\PreferredLocale` (`get()`, `of($member)`, `set()`, `isChosen()`) is the only way to read or change it,
   while the messages a request dispatches (`RunAgent`, `DraftCareSheet`) carry the locale captured when sent, which their
@@ -203,7 +217,7 @@ After any PHP/Twig code change: `castor qa:cs --dry-run`,
    a draft care sheet: each shows a card, and only a tap of the user writes.
    - Validating a species validates its care sheet, nothing more: the card (`PlantController::validate()`), or an
      external MCP client after an explicit confirmation (`confirm_plant`), both through `App\Garden\PlantValidation`.
-   - A plant of the garden (`/garden`, the only list of them; the species are listed on `/plants`) is created only by
+   - A plant of the garden (`/g/{garden}/garden`, the only list of them; the species are listed on `/g/{garden}/species`) is created only by
      a tap on its "Add to my garden" card, or by the garden form (also from "Add to my garden" on the page of a
      species). A space likewise: its card, or the space form. The cards live in `App\Controller\ProposalController`.
    - A card is keyed by its `proposal_id`, a unique column of `Space` and `Planting`: once tapped it says "Added" or
@@ -232,7 +246,7 @@ After any PHP/Twig code change: `castor qa:cs --dry-run`,
     the demo mode.
 12. A piece of interface shown in two places, or rendered both by a page and by the worker, is a Twig Component, so
     that a page, a frame and a stream render the same markup.
-13. `/garden/new?plant={id}` fixes the species of a new planting to a validated care sheet (no agent).
+13. `/g/{garden}/garden/new?plant={slug}` fixes the species of a new planting to a validated care sheet (no agent).
 14. Every text of the interface goes through the translator, under a stable key, in every language of `translations/`
     (`tests/Unit/Translation/CatalogsTest.php` checks they have the same keys). What comes from the user, the agent or
     Trefle is not translated. The MCP tools and resources stay in English: they speak to a model. The messages the cards
@@ -254,17 +268,34 @@ After any PHP/Twig code change: `castor qa:cs --dry-run`,
     component with `actingAs()`. A page about an address (registration, password reset, email change) answers the same
     whether it has an account or not.
 18. Nobody sees the garden of another (the tenancy):
-    - A repository takes the garden explicitly (`findAllByName(Garden)`, `findOneInGarden(Garden, id)`...): no Doctrine
-      filter, a forgotten garden shows in the code. The garden comes from `CurrentGarden` in a request or a tool, from the
-      message in the worker.
+    - A repository takes the garden explicitly (`findAllByName(Garden)`, `findOneInGarden(Garden, id)`,
+      `findOneBySlug(Garden, slug)`...): no Doctrine filter, a forgotten garden shows in the code. The garden comes from
+      `CurrentGarden` in a request (the one of its URL) or a tool, from the message in the worker.
+    - A garden of another in the URL answers 404 (`GardenOfTheUrl`), the same as a garden that does not exist; a slug
+      of another garden in the URL of one's own, the same as a slug that does not exist (`InGardenValueResolver`).
     - A resource of a garden reached by id goes through a voter (`GardenResourceVoter`, `GardenVoter`,
       `PlantValidationVoter`: "the human validates"), refused by default, and answers 404 when refused, the same as a
       resource that does not exist: `#[IsGranted(..., statusCode: Response::HTTP_NOT_FOUND)]`, declared before
-      `#[IsCsrfTokenValid]` so that a form sent to it says nothing either. A tool answers the error of an id that does not
-      exist.
+      `#[IsCsrfTokenValid]` so that a form sent to it says nothing either. A tool answers the error of a UUID that does
+      not exist.
     - The messages of the worker carry the user and the garden (and the token of their run); their handler checks the
       user is still a member. The scheduler checks each garden at its position and in its timezone.
-    - `tests/Functional/Security/GardenIsolationTest.php` lists every route, `tests/Integration/Mcp/GardenIsolationMcpTest.php`
-      every MCP tool: a new one fails them until it says what a member of another garden gets. Their data comes from
+    - `tests/Functional/Security/GardenIsolationTest.php` lists every route (in their garden, their slugs in hers),
+      `tests/Integration/Mcp/GardenIsolationMcpTest.php` every MCP tool (their UUIDs): a new one fails them until it says
+      what a member of another garden gets. Their data comes from
       `App\Tests\Utils\Garden\TwoGardens`; the factories put what they make in the garden of the test
       (`App\Story\DefaultGardenStory`) unless told.
+19. The ids are UUIDs, the URLs slugs:
+    - Every entity has a UUID v7 for id, `#[ORM\Id] #[ORM\Column(type: UuidType::NAME)]`, generated in its constructor
+      (`Uuid::v7()`), never by the database: an entity has its id before any flush. The settings keep one row under a
+      fixed one (`Settings::ID`). The messages of Messenger, the token of an agent run, the Mercure topics and the MCP
+      tools carry them as strings (RFC 4122); an argument of a tool is a UUID of `format: 'uuid'` in its schema, which
+      refuses a malformed one.
+    - A garden, a species, a plant and a space have a slug, the name of their URL: from the name (the Latin one for a
+      species), in the language of the request, unique in the whole site for a garden, in its garden for the others,
+      suffixed when taken or reserved (`rose-2`, `new-2`). Fixed at creation: a renaming keeps the URL. `App\Garden\Slugs`
+      picks it within the transaction that inserts the row (`EntityManager::wrapInTransaction()`), under an advisory
+      lock of PostgreSQL: two creations at once wait for each other instead of failing on the unique key. The factories
+      give a free one unless told (`App\Factory\FreeSlug`).
+    - The MCP tools keep the UUIDs in and out, and give the readable URL too (`url`, `validation_url`).
+    - Comparing ids: `$a->getId()->equals($b->getId())`, or the entities themselves; never `===` on two `Uuid`.

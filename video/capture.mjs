@@ -8,7 +8,8 @@
 // and the text of the chat, when the agent goes another way (run it again).
 //
 // Environment:
-//   BASE_URL        https://hop-garden.test (the chat is on /assistant)
+//   BASE_URL        https://hop-garden.test (the chat of a garden is on /g/{garden}/assistant)
+//   GARDEN          the-allotment, the slug of the garden of the demo in its URLs
 //   RESET_COMMAND   castor demo:reset
 //   FROST_COMMAND   castor demo:frost
 //   LOGIN_EMAIL     alice@hop-garden.test, of the demo: the owner of "The allotment", which Bob shares
@@ -27,6 +28,8 @@ const FROST_COMMAND = process.env.FROST_COMMAND ?? 'castor demo:frost';
 // Keep in sync with src/Story/DemoStory.php and App\Factory\UserFactory::PASSWORD
 const LOGIN_EMAIL = process.env.LOGIN_EMAIL ?? 'alice@hop-garden.test';
 const LOGIN_PASSWORD = process.env.LOGIN_PASSWORD ?? 'hop-garden-demo';
+// The URLs of a garden are under its slug: "The allotment" of the demo
+const GARDEN = process.env.GARDEN ?? 'the-allotment';
 const ROOT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = join(ROOT_DIR, 'video', 'public', 'capture');
 const FRAMES_DIR = join(OUT_DIR, 'frames');
@@ -97,7 +100,7 @@ await page.goto(`${BASE_URL}/login`);
 await page.fill('input[name="_username"]', LOGIN_EMAIL);
 await page.fill('input[name="_password"]', LOGIN_PASSWORD);
 await Promise.all([page.waitForURL((url) => !url.pathname.startsWith('/login')), page.click('form[action$="/login"] button[type="submit"]')]);
-await page.goto(`${BASE_URL}/assistant`);
+await page.goto(`${BASE_URL}/g/${GARDEN}/assistant`);
 await page.click('button:has-text("New conversation")');
 await page.waitForSelector('.chat-empty');
 
