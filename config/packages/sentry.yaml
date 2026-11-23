@@ -37,25 +37,16 @@ sentry:
             url_query_params:
                 mode: 'off'
             user_info: false
-        # The probes of the orchestrator and of the image call /healthz every few seconds. The link of an invitation and
-        # of a password reset carry their token in their path, which a transaction would keep (its URL, the Location of
-        # a redirection)
-        ignore_transactions:
-            - GET healthz
-            - GET invitation
-            - GET invitation_register
-            - GET reset_password_token
-            - POST invitation_accept
-            - POST invitation_register
-        # No trace header on any outgoing request: not to the LLM (Anthropic, OpenAI), Trefle, Open-Meteo nor the API of
-        # Mailgun
-        trace_propagation_targets: []
-        # Performance: one request or command out of ten (not the worker, messenger:consume)
-        traces_sample_rate: 0.1
     # No capture by the bundle nor by the error handler of the SDK: every exception would also come through Monolog, so
     # twice, and the PHP warnings would become issues. The log levels of Symfony decide what an error is.
     register_error_handler: false
     register_error_listener: false
+    # The errors only, no performance. Without traces_sample_rate nor traces_sampler, the SDK samples no transaction;
+    # disabled, the bundle registers nothing that starts one (the requests, the commands) nor measures (Doctrine, Twig,
+    # the cache, the HTTP client). Its decorator of the HTTP client is also the only thing that would add a trace header
+    # (sentry-trace, baggage) to an outgoing request: none goes to the LLM, Trefle, Open-Meteo nor the API of Mailgun
+    tracing:
+        enabled: false
 
 when@prod:
     sentry:

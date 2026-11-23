@@ -13,9 +13,9 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 /**
  * A command reaches the logs and Sentry by its name only, without its arguments nor its options: app:user:create takes
  * the email and the password of the account, app:garden:adopt-orphans and app:mcp:stdio an email. The bundle puts the
- * whole command line on the scope of every issue and transaction of the command ("Full command", the value of a
- * --password filtered, not the email), and Symfony logs it as is with the failure of a command
- * (Console\EventListener\ErrorListener, in the context of the log, which the issue carries).
+ * whole command line on the scope of every issue of the command ("Full command", the value of a --password filtered,
+ * not the email), and Symfony logs it as is with the failure of a command (Console\EventListener\ErrorListener, in the
+ * context of the log, which the issue carries).
  */
 // After the ConsoleListener of the bundle (128), which sets "Full command"
 #[AsEventListener(event: ConsoleEvents::COMMAND, method: 'onCommand', priority: 64)]

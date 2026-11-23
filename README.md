@@ -422,8 +422,8 @@ URLs, emails or tokens (`http_client`, `request`, `security`, `mcp`), and the id
 (`user:<uuid>`), never its email nor its IP. No body of a request or a response (the messages of the chat, the
 requests to the LLM and its answers), no query string, no argument of the functions of a stack trace, and a command
 by its name only, without its options (`app:user:create --email --password`). The URL keeps its path: an error on the
-link of an invitation or of a password reset carries its token. One request or command out of ten is measured too
-(performance), but for these links. Configuration: `config/packages/sentry.yaml` and `monolog.yaml`.
+link of an invitation or of a password reset carries its token. The errors only: no performance (no transaction, no
+trace header on the outgoing requests). Configuration: `config/packages/sentry.yaml` and `monolog.yaml`.
 
 ## Credits and licenses
 
