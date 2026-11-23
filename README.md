@@ -384,18 +384,20 @@ castor stop -c prod
 castor docker:push -c prod --tag="$(git rev-parse --short=7 HEAD)" --tag=latest   # by hand, after a docker login to ghcr.io
 ```
 
-Besides the variables of [Configuration](#configuration), the image needs `APP_SECRET` (it signs the tokens of the
-agent runs too), `DATABASE_URL`, `DEFAULT_URI` (the Mercure topics live under it), the Mercure ones (`MERCURE_URL`,
+Besides the variables of [Configuration](#configuration), the image needs `APP_SECRET` (it signs the tokens of the agent
+runs too), `DATABASE_URL`, `DEFAULT_URI` (the Mercure topics live under it), the Mercure ones (`MERCURE_URL`,
 `MERCURE_PUBLIC_URL`, its audience too, `MERCURE_JWT_ISSUER`, `MERCURE_PUBLISHER_JWT_KEY`, and
 `MERCURE_SUBSCRIBER_JWT_KEY`, another key: the hub has no anonymous subscriber), `MCP_AGENT_URL`, `MCP_ALLOWED_HOSTS`
-(the hosts of the MCP server: its domain, and the one the worker reaches it by), the mailer ones (`MAILER_DSN`,
-`MAILER_FROM`), and those of the errors (`SENTRY_DSN`, `SENTRY_ENVIRONMENT`, see [Errors (Sentry)](#errors-sentry)).
-One volume, shared by the web and the worker: `var/share/` (`APP_SHARE_DIR`: the sessions, so the conversation
-of the chat survives a deployment, the `cache.app` pool with the quotas and the login throttling, and the
-photos of the plantings in `var/share/prod/uploads/plantings` (the share directory of the environment), served by the application to the members of their garden
-only). The probes (the readiness and liveness of an orchestrator, the `HEALTHCHECK` of the image) go to `/healthz`: a 200
-in `text/plain` as long as PHP answers, without session, cookie nor database, where a page would leave a session file
-in `var/share/` at every probe. The first administrator, once the migrations ran:
+(the hosts of the MCP server: its domain, and the one the worker reaches it by), the mailer ones (`MAILER_DSN`: in
+production, Mailgun, `mailgun+api://KEY:DOMAIN@default?region=eu`, `region` being that of the sending domain in Mailgun,
+whose SPF and DKIM are declared in its DNS; `MAILER_FROM`, an address of that domain), and those of the errors
+(`SENTRY_DSN`, `SENTRY_ENVIRONMENT`, see [Errors (Sentry)](#errors-sentry)). One volume, shared by the web and the
+worker: `var/share/` (`APP_SHARE_DIR`: the sessions, so the conversation of the chat survives a deployment, the
+`cache.app` pool with the quotas and the login throttling, and the photos of the plantings in
+`var/share/prod/uploads/plantings` (the share directory of the environment), served by the application to the members of
+their garden only). The probes (the readiness and liveness of an orchestrator, the `HEALTHCHECK` of the image) go to
+`/healthz`: a 200 in `text/plain` as long as PHP answers, without session, cookie nor database, where a page would leave
+a session file in `var/share/` at every probe. The first administrator, once the migrations ran:
 `bin/console app:user:create --email=... --name=... --password=... --admin`.
 
 From a database of before the gardens: `bin/console doctrine:migrations:migrate 'DoctrineMigrations\Version20261123110000'`,

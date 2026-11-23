@@ -40,7 +40,8 @@ sentry:
         # The probes of the orchestrator and of the image call /healthz every few seconds
         ignore_transactions:
             - GET healthz
-        # No trace header on any outgoing request: not to the LLM (Anthropic, OpenAI), Trefle nor Open-Meteo
+        # No trace header on any outgoing request: not to the LLM (Anthropic, OpenAI), Trefle, Open-Meteo nor the API of
+        # Mailgun
         trace_propagation_targets: []
         # Performance: one request or command out of ten (not the worker, messenger:consume)
         traces_sample_rate: 0.1
