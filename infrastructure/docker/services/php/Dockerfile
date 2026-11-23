@@ -147,6 +147,12 @@ RUN groupadd -g 1000 app \
 
 COPY --from=app-build --chown=app:app /var/www /var/www
 
+# The release of the errors sent to Sentry: the short commit sha, as the tag of the image
+# (.github/workflows/build-push.yml). Empty otherwise: no release. Declared last, it changes with every commit without
+# invalidating the cache of the steps before.
+ARG SENTRY_RELEASE=""
+ENV SENTRY_RELEASE=${SENTRY_RELEASE}
+
 USER 1000:1000
 
 EXPOSE 8080

@@ -41,9 +41,11 @@ jobs:
                   persist-credentials: false
 
             # main: the short commit sha, what a deployment references, and "latest". Another branch:
-            # "pr-<branch>-<sha>" and "pr-<branch>", never "latest"
+            # "pr-<branch>-<sha>" and "pr-<branch>", never "latest". In both, the short sha is the release of
+            # the errors sent to Sentry (SENTRY_RELEASE)
             - name: Build and push the image
               run: |
+                  export SENTRY_RELEASE="${GITHUB_SHA::7}"
                   if [ "$GITHUB_REF_NAME" = main ]; then
                       castor docker:push --tag="${GITHUB_SHA::7}" --tag=latest
                   else

@@ -389,23 +389,41 @@ castor stop -c prod
 castor docker:push -c prod --tag="$(git rev-parse --short=7 HEAD)" --tag=latest   # by hand, after a docker login to ghcr.io
 ```
 
-Besides the variables of [Configuration](#configuration), the image needs `APP_SECRET` (it signs the tokens of the
-agent runs too), `DATABASE_URL`, `DEFAULT_URI` (the Mercure topics live under it), the Mercure ones (`MERCURE_URL`,
+Besides the variables of [Configuration](#configuration), the image needs `APP_SECRET` (it signs the tokens of the agent
+runs too), `DATABASE_URL`, `DEFAULT_URI` (the Mercure topics live under it), the Mercure ones (`MERCURE_URL`,
 `MERCURE_PUBLIC_URL`, its audience too, `MERCURE_JWT_ISSUER`, `MERCURE_PUBLISHER_JWT_KEY`, and
 `MERCURE_SUBSCRIBER_JWT_KEY`, another key: the hub has no anonymous subscriber), `MCP_AGENT_URL`, `MCP_ALLOWED_HOSTS`
-(the hosts of the MCP server: its domain, and the one the worker reaches it by), and the mailer ones (`MAILER_DSN`,
-`MAILER_FROM`). One volume, shared by the web and the worker: `var/share/` (`APP_SHARE_DIR`: the sessions, so the
-conversation of the chat survives a deployment, the `cache.app` pool with the quotas and the login throttling, and the
-photos of the plantings in `var/share/prod/uploads/plantings` (the share directory of the environment), served by the application to the members of their garden
-only). The probes (the readiness and liveness of an orchestrator, the `HEALTHCHECK` of the image) go to `/healthz`: a 200
-in `text/plain` as long as PHP answers, without session, cookie nor database, where a page would leave a session file
-in `var/share/` at every probe. The first administrator, once the migrations ran:
+(the hosts of the MCP server: its domain, and the one the worker reaches it by), the mailer ones (`MAILER_DSN`: in
+production, Mailgun, `mailgun+api://KEY:DOMAIN@default?region=eu`, `region` being that of the sending domain in Mailgun,
+whose SPF and DKIM are declared in its DNS; `MAILER_FROM`, an address of that domain), and those of the errors
+(`SENTRY_DSN`, `SENTRY_ENVIRONMENT`, see [Errors (Sentry)](#errors-sentry)). One volume, shared by the web and the
+worker: `var/share/` (`APP_SHARE_DIR`: the sessions, so the conversation of the chat survives a deployment, the
+`cache.app` pool with the quotas and the login throttling, and the photos of the plantings in
+`var/share/prod/uploads/plantings` (the share directory of the environment), served by the application to the members of
+their garden only). The probes (the readiness and liveness of an orchestrator, the `HEALTHCHECK` of the image) go to
+`/healthz`: a 200 in `text/plain` as long as PHP answers, without session, cookie nor database, where a page would leave
+a session file in `var/share/` at every probe. The first administrator, once the migrations ran:
 `bin/console app:user:create --email=... --name=... --password=... --admin`.
 
 From a database of before the gardens: `bin/console doctrine:migrations:migrate 'DoctrineMigrations\Version20261123110000'`,
 `bin/console app:garden:adopt-orphans --email=... --name=... --city=...`, then `bin/console doctrine:migrations:migrate`.
 The photos used to be public, in a volume on `public/uploads/`: mount it there once more for the deployment that makes
 them private, run `bin/console app:plantings:move-photos`, then drop it.
+
+### Errors (Sentry)
+
+The errors of the production and of the preproduction go to Sentry once `SENTRY_DSN` is given (empty, the default:
+nothing leaves), with `SENTRY_ENVIRONMENT=preprod` on the preproduction (`prod` by default). The release is the short
+commit sha, baked into the image (`SENTRY_RELEASE`). An issue is whatever is logged at the `error` level or above (an
+uncaught exception, a failing command, `$logger->error()`), without the HTTP 4xx nor the unknown commands (logged as
+`notice`, even `bin/console messenger`, which lists the namespace), and each message of the worker that fails (once:
+there is no retry). It carries the logs from the `info` level that came before it, without the channels that quote
+URLs, emails or tokens (`http_client`, `request`, `security`, `mcp`), and the id of the account logged in
+(`user:<uuid>`), never its email nor its IP. No body of a request or a response (the messages of the chat, the
+requests to the LLM and its answers), no query string, no argument of the functions of a stack trace, and a command
+by its name only, without its options (`app:user:create --email --password`). The URL keeps its path: an error on the
+link of an invitation or of a password reset carries its token. One request or command out of ten is measured too
+(performance), but for these links. Configuration: `config/packages/sentry.yaml` and `monolog.yaml`.
 
 ## Credits and licenses
 

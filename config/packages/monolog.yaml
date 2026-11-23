@@ -1,6 +1,7 @@
 monolog:
     channels:
         - deprecation # Deprecations are logged in the dedicated "deprecation" channel when it exists
+        - sentry # The logs of the Sentry SDK (sentry.yaml)
 
 when@dev:
     monolog:
@@ -44,6 +45,27 @@ when@prod:
                 path: php://stderr
                 level: debug
                 formatter: monolog.formatter.json
+            # The issues of Sentry: what is logged at the error level and above (sentry.yaml). Without the "messenger"
+            # channel (the failures of the messages, which the Messenger listener of the bundle reports) and the "sentry"
+            # one (a sending that fails must not be sent to Sentry)
+            sentry_exceptions:
+                type: service
+                id: Sentry\Monolog\ExceptionToSentryIssueHandler
+                channels: ["!messenger", "!sentry"]
+            sentry_messages:
+                type: service
+                id: Sentry\Monolog\LogToSentryIssueHandler
+                channels: ["!messenger", "!sentry"]
+            # What came before the error: the logs from the info level become the breadcrumbs of the issues. After the
+            # handlers of the issues: an error is not its own breadcrumb. Without the channels whose logs carry personal
+            # data or secrets: "http_client" (the URLs, with the token of Trefle, the searches of plants and places, the
+            # position of a garden), "request" (the URL and the parameters of the route: the addresses of the signed
+            # links, the token of an invitation or of a password reset), "security" (the email, as the identifier of an
+            # account) and "mcp" (the error responses of the MCP server, which may quote a garden)
+            sentry_breadcrumbs:
+                type: service
+                id: Sentry\Monolog\BreadcrumbHandler
+                channels: ["!deprecation", "!doctrine", "!event", "!http_client", "!mcp", "!request", "!security", "!sentry"]
             console:
                 type: console
                 process_psr_3_messages: false
@@ -53,3 +75,20 @@ when@prod:
                 channels: [deprecation]
                 path: php://stderr
                 formatter: monolog.formatter.json
+
+    services:
+        Sentry\Monolog\BreadcrumbHandler:
+            arguments:
+                $hub: '@Sentry\State\HubInterface'
+                $level: info
+        # Messages not interpolated (no PsrLogMessageProcessor on a "service" handler): the same log gives a single
+        # issue, its values are in the context
+        Sentry\Monolog\ExceptionToSentryIssueHandler:
+            arguments:
+                $hub: '@Sentry\State\HubInterface'
+                $level: error
+        Sentry\Monolog\LogToSentryIssueHandler:
+            arguments:
+                $hub: '@Sentry\State\HubInterface'
+                $level: error
+                $fillExtraContext: true

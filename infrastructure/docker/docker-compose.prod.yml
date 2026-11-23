@@ -17,10 +17,11 @@ x-app-env: &app-env
     MERCURE_PUBLISHER_JWT_KEY: not-a-secret-but-at-least-256-bits
     MERCURE_SUBSCRIBER_JWT_KEY: another-not-a-secret-of-256-bits
     MERCURE_URL: http://app:8080/.well-known/mercure
-    # From the environment of castor: the LLM key, and APP_DEMO=0 with TREFLE_TOKEN for the real
-    # services
+    # From the environment of castor: the LLM key, APP_DEMO=0 with TREFLE_TOKEN for the real
+    # services, and SENTRY_DSN to send the errors
     ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
     APP_DEMO: "${APP_DEMO:-1}"
+    SENTRY_DSN: "${SENTRY_DSN:-}"
     TREFLE_TOKEN: "${TREFLE_TOKEN:-}"
 
 volumes:
@@ -49,6 +50,9 @@ services:
             target: app
             additional_contexts:
                 source: ../..
+            # The release of the errors sent to Sentry, from the environment of castor (the CI sets it)
+            args:
+                SENTRY_RELEASE: "${SENTRY_RELEASE:-}"
             cache_from:
                 - "type=registry,ref=${REGISTRY}/app:cache"
         image: "${REGISTRY}/app:latest"

@@ -494,10 +494,12 @@ legal:
             security: "Le bon fonctionnement et la sécurité du service, avec les journaux du serveur : l’intérêt légitime de l’éditeur (article 6.1.f du RGPD)."
             service: "Fournir le service auquel vous vous êtes inscrit (votre compte, votre jardin, les rappels, les alertes gel, l’assistant, les emails sur votre compte) : l’exécution du contrat (article 6.1.b du RGPD)."
         recipients:
+            emails: "Mailgun envoie les emails de Hop Garden, sur votre compte et les invitations : il reçoit l’adresse et le contenu de chaque email."
+            errors: "Sentry reçoit les erreurs de Hop Garden, pour les corriger, et les durées d’une requête sur dix : l’erreur et son contexte technique (la page ou la tâche, ce qui l’a précédée) et, si vous êtes connecté, l’identifiant de votre compte. Ni votre adresse email, ni votre adresse IP, ni le contenu de vos messages."
             heading: "Qui reçoit vos données"
             members: "Les membres d’un jardin partagé voient et modifient tout ce qu’il contient : fiches, plantes, photos, espaces, soins, notes et rappels. Sur la page des membres, chacun voit le nom affiché des autres, leur rôle et la date à laquelle ils ont rejoint le jardin, pas leur adresse email. Le propriétaire voit aussi les adresses des invitations en attente. La personne invitée, et quiconque a le lien, voit le nom affiché de celui qui l’invite, le nom du jardin et sa ville. Vos conversations avec l’assistant et vos notifications ne sont qu’à vous."
             text: "Au-delà, vos données ne vont qu’aux sous-traitants dont Hop Garden a besoin pour fonctionner, et à Trefle et Open-Meteo comme décrit plus haut."
-            to_complete: "la liste des sous-traitants, leur pays, et les garanties pour un transfert hors de l’Union européenne. Par exemple : l’hébergeur de l’application et de sa base de données ; le fournisseur du modèle de langage (Anthropic ou OpenAI, selon la configuration) ; le service d’envoi des emails."
+            to_complete: "la liste des autres sous-traitants, le pays de chacun (Mailgun et Sentry compris), et les garanties pour un transfert hors de l’Union européenne. Par exemple : l’hébergeur de l’application et de sa base de données ; le fournisseur du modèle de langage (Anthropic ou OpenAI, selon la configuration)."
             transfers: "Le fournisseur du modèle de langage peut traiter les conversations hors de l’Union européenne."
         retention:
             account:
