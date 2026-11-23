@@ -37,9 +37,16 @@ sentry:
             url_query_params:
                 mode: 'off'
             user_info: false
-        # The probes of the orchestrator and of the image call /healthz every few seconds
+        # The probes of the orchestrator and of the image call /healthz every few seconds. The link of an invitation and
+        # of a password reset carry their token in their path, which a transaction would keep (its URL, the Location of
+        # a redirection)
         ignore_transactions:
             - GET healthz
+            - GET invitation
+            - GET invitation_register
+            - GET reset_password_token
+            - POST invitation_accept
+            - POST invitation_register
         # No trace header on any outgoing request: not to the LLM (Anthropic, OpenAI), Trefle, Open-Meteo nor the API of
         # Mailgun
         trace_propagation_targets: []

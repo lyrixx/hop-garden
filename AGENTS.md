@@ -320,4 +320,5 @@ After any PHP/Twig code change: `castor qa:cs --dry-run`,
 20. Log at the `error` level what must reach Sentry (an issue each time), at `warning` what the code handles; a 4xx
     never does (`App\Monitoring\IgnoreClientErrors`). The logs from `info` are the breadcrumbs of the issues: never
     put in a log message or its context the text of a chat message, an answer of the agent, an email address, a token
-    or a URL with its query string. A channel that does is left out of the breadcrumbs, in `monolog.yaml`.
+    or a URL with its query string. A channel that does is left out of the breadcrumbs, in `monolog.yaml`. A route with
+    a token in its path (an invitation, a password reset) goes in the `ignore_transactions` of `sentry.yaml`.
