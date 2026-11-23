@@ -196,7 +196,9 @@ Without option, the `default` context applies.
 - Production: one image, `app` (the "Production stages" of the Dockerfile, `.dockerignore` at the root). A new
   environment variable read in production goes in the "Production image" section of `README.md`. The photos of the
   plantings are private, in `%kernel.share_dir%/uploads/plantings` (`var/share/<env>/`, `PlantingPhotoStorage`), served by
-  `GardenController::photo()`
+  `GardenController::photo()`. Every probe goes to `/healthz` (`HealthController`): out of every firewall, a stateless
+  route, so no session, no cookie and no query; a listener of `kernel.request` that reads the session or the database
+  skips the stateless routes, as `RequestLocaleListener` does
 - AssetMapper/importmap only, no Node/yarn tooling in the application. The demo video (`video/`, Remotion and
   Playwright) is a host tool apart: `castor video:install`, `video:capture`, `video:render`
 

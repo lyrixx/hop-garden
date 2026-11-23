@@ -14,6 +14,11 @@ security:
             # Ensure dev tools and static assets are always allowed
             pattern: ^/(_profiler|_wdt|assets|build|bundles)/
             security: false
+        # The probe (App\Controller\HealthController): nothing to authenticate, so no firewall at all, not even a
+        # stateless one, which would need its own access_control rule
+        healthz:
+            pattern: ^/healthz$
+            security: false
         # The MCP server of the chat agent, called by the worker: the token of each run (App\Mcp\Agent\AgentRunTokens)
         # logs in whoever sent the message, bound to its garden. Before "mcp", whose pattern covers it
         mcp_agent:

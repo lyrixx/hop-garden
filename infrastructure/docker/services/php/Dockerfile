@@ -151,4 +151,8 @@ USER 1000:1000
 
 EXPOSE 8080
 
+# PHP answers, not only Caddy (the /metrics of its admin API, inherited from the FrankenPHP image): the probe of the
+# application, without session nor database (App\Controller\HealthController)
+HEALTHCHECK CMD curl --fail --silent --output /dev/null http://localhost:8080/healthz || exit 1
+
 CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

@@ -392,7 +392,9 @@ agent runs too), `DATABASE_URL`, `DEFAULT_URI` (the Mercure topics live under it
 `MAILER_FROM`). One volume, shared by the web and the worker: `var/share/` (`APP_SHARE_DIR`: the sessions, so the
 conversation of the chat survives a deployment, the `cache.app` pool with the quotas and the login throttling, and the
 photos of the plantings in `var/share/prod/uploads/plantings` (the share directory of the environment), served by the application to the members of their garden
-only). The first administrator, once the migrations ran:
+only). The probes (the readiness and liveness of an orchestrator, the `HEALTHCHECK` of the image) go to `/healthz`: a 200
+in `text/plain` as long as PHP answers, without session, cookie nor database, where a page would leave a session file
+in `var/share/` at every probe. The first administrator, once the migrations ran:
 `bin/console app:user:create --email=... --name=... --password=... --admin`.
 
 From a database of before the gardens: `bin/console doctrine:migrations:migrate 'DoctrineMigrations\Version20261123110000'`,

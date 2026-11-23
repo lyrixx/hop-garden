@@ -42,6 +42,8 @@ final class GardenIsolationTest extends WebTestCase
      */
     private const array WITHOUT_GARDEN = [
         'home', 'legal_notice', 'legal_privacy', 'legal_terms', 'locale',
+        // The probe, out of every firewall: "OK", nothing else (HealthControllerTest)
+        'healthz',
         'login', '_logout_main', 'register', 'register_check_email', 'register_verify', 'register_waiting_list',
         'reset_password_request', 'reset_password_check_email', 'reset_password_token', 'reset_password',
         // The account of Carol, and the signed link of a new email: no resource of a garden
