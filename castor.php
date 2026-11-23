@@ -163,7 +163,7 @@ function plantings_move_photos(): int
     return docker_exit_code(['bin/console', 'app:plantings:move-photos']);
 }
 
-#[AsTask(description: 'Resets the demo data: 5 accounts, 2 gardens (one shared by Alice and Bob), their plants, spaces and reminders, no notification', namespace: 'demo', name: 'reset')]
+#[AsTask(description: 'Resets the demo data: 5 accounts, 3 gardens (one shared by Alice and Bob, one more of Bob), their plants, spaces and reminders, no notification', namespace: 'demo', name: 'reset')]
 function demo_reset(): void
 {
     io()->title('Resetting the demo data');
@@ -177,7 +177,7 @@ function demo_reset(): void
     io()->table(['Email', 'Password', 'Account', 'Garden'], [
         ['admin@hop-garden.test', 'hop-garden-demo', 'the administrator, of the back-office too (/admin)', 'none: the wizard makes one'],
         ['alice@hop-garden.test', 'hop-garden-demo', 'a member, in English', 'The allotment, its owner'],
-        ['bob@hop-garden.test', 'hop-garden-demo', 'a member, in French', 'The allotment, a member'],
+        ['bob@hop-garden.test', 'hop-garden-demo', 'a member, in French', 'The allotment, a member; The orchard, its owner'],
         ['carol@hop-garden.test', 'hop-garden-demo', 'a member, in English', 'Carol\'s balcony, its owner'],
         ['dave@hop-garden.test', 'hop-garden-demo', 'on the waiting list: approve him in the back-office', 'none yet'],
     ]);

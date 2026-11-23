@@ -64,6 +64,8 @@ final class DemoStoryTest extends KernelTestCase
             ['The allotment' => ['Alice owner', 'Bob member'], "Carol's balcony" => ['Carol owner']],
             array_merge(...array_map($membersOf, [...$gardens->findOfMember($alice), ...$gardens->findOfMember($carol)])),
         );
+        self::assertSame(['the-allotment', 'the-orchard'], array_map(static fn (Garden $garden): string => $garden->getSlug(), $gardens->findOfMember($bob)), 'Bob goes from one garden to the other.');
+        self::assertSame(['Malus domestica'], array_map(static fn (Plant $plant): string => $plant->getScientificName(), self::getContainer()->get(PlantRepository::class)->findValidated($gardens->findOfMember($bob)[1])));
         self::assertSame([], $gardens->findOfMember($users->findOneByEmail('admin@hop-garden.test') ?? self::fail()), 'The wizard makes the first one.');
         $allotment = $gardens->findOfMember($bob)[0];
         $balcony = $gardens->findOfMember($carol)[0];

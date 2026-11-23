@@ -25,8 +25,9 @@ use Zenstruck\Foundry\Story;
 
 /**
  * "castor demo:reset": the administrator, three members and an account on the waiting list. Alice and Bob share "The
- * allotment" (Alice its owner): two validated plants with their reminders, their plantings in three spaces. Carol has
- * "Carol's balcony", a lavender on it: she sees nothing of theirs. No conversation, no notification.
+ * allotment" (Alice its owner): two validated plants with their reminders, their plantings in three spaces. Bob has "The
+ * orchard" too, an apple tree in it: he goes from one garden to the other. Carol has "Carol's balcony", a lavender on
+ * it: she sees nothing of theirs. No conversation, no notification.
  */
 #[AsFixture(name: 'demo')]
 final class DemoStory extends Story
@@ -52,6 +53,7 @@ final class DemoStory extends Story
         // Bob joins the day after (GardenFactory::withMembers()); the places of fixtures/http/open-meteo/geocoding/
         $allotment = GardenFactory::new()->ownedBy($alice)->withMembers($bob)->at(new GardenLocation('Lyon, Auvergne-Rhône-Alpes, France', 45.74846, 4.84671, 'Europe/Paris'))->create(['name' => 'The allotment', 'createdAt' => $now->modify('-30 days')]);
         $balcony = GardenFactory::new()->ownedBy($carol)->at(new GardenLocation('Lille, Hauts-de-France, France', 50.63297, 3.05858, 'Europe/Paris'))->create(['name' => "Carol's balcony", 'createdAt' => $now->modify('-14 days')]);
+        $orchard = GardenFactory::new()->ownedBy($bob)->at(new GardenLocation('Nantes, Pays de la Loire, France', 47.21725, -1.55336, 'Europe/Paris'))->create(['name' => 'The orchard', 'createdAt' => $now->modify('-12 days')]);
 
         $rose = PlantFactory::new()
             ->validated($now->modify('-30 days'))
@@ -161,6 +163,37 @@ final class DemoStory extends Story
             ->withCareRecord(CareTask::Watering, $now->modify('-5 days'))
             ->linkedTo($lavender)
             ->create(['name' => 'Lavender of the window box', 'createdAt' => $now->modify('-13 days'), 'trefleId' => 155623, 'scientificName' => 'Lavandula angustifolia'])
+        ;
+
+        // Bob's own: an apple tree at the end of his orchard, pruned in winter
+        $appleTree = PlantFactory::new()
+            ->validated($now->modify('-11 days'))
+            ->withEnabledReminders(ReminderType::Pruning)
+            ->create([
+                'garden' => $orchard,
+                'commonName' => 'Apple tree',
+                'scientificName' => 'Malus domestica',
+                'family' => 'Rosaceae',
+                'careSheet' => CareSheetFactory::new()->withConfidence(Confidence::High)->with([
+                    'minTemperatureC' => -30,
+                    'frostSensitive' => false,
+                    'exposure' => Exposure::Sun,
+                    'watering' => Watering::Medium,
+                    'pruningMonths' => [1, 2],
+                    'deadheadingMonths' => [],
+                    'cuttingMonths' => [],
+                    'pruningAdvice' => 'Thin out the crossing branches in winter, out of frost, and shorten the long shoots by a third.',
+                    'cuttingAdvice' => 'Grafted rather than taken from cuttings: ask a nursery for a scion on a rootstock.',
+                    'sources' => [new Source(Source::LLM_KNOWLEDGE)],
+                ]),
+                'createdAt' => $now->modify('-12 days'),
+            ])
+        ;
+        $hedge = SpaceFactory::createOne(['garden' => $orchard, 'name' => 'By the hedge', 'exposure' => Exposure::Sun, 'soil' => Soil::Loamy, 'createdAt' => $now->modify('-12 days')]);
+        PlantingFactory::new()
+            ->inSpace($hedge)
+            ->linkedTo($appleTree)
+            ->create(['name' => 'Old apple tree', 'createdAt' => $now->modify('-11 days'), 'scientificName' => 'Malus domestica'])
         ;
 
         // Conversations are no Doctrine entities: the demo starts without any, even loaded over the current data
