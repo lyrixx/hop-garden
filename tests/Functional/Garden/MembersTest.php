@@ -100,6 +100,22 @@ final class MembersTest extends WebTestCase
         self::assertSame(['Alice'], $this->memberNames());
     }
 
+    public function testAMemberWhoLeavesTheGardenHeWasInGoesToAnotherOfHis(): void
+    {
+        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+        $balcony = $entityManager->find(Garden::class, $this->gardens->balcony->getId()) ?? self::fail();
+        $balcony->join($entityManager->find(User::class, $this->gardens->bob->getId()) ?? self::fail(), new \DateTimeImmutable('2026-11-02'));
+        $entityManager->flush();
+        $this->logIn($this->client, $this->gardens->bob);
+        $crawler = $this->client->request('GET', $this->members);
+
+        $this->client->submit(self::rowOf($crawler, 'Bob')->filter('form')->form());
+
+        self::assertResponseRedirects('/assistant', 303);
+        $this->client->followRedirect();
+        self::assertResponseRedirects('/g/' . $balcony->getSlug() . '/assistant', 302, 'The one he was in is no longer his: his other one.');
+    }
+
     public function testTheOwnerLeavesItToTheOldestOfTheOthers(): void
     {
         $this->logIn($this->client, $this->gardens->alice);
