@@ -25,9 +25,4 @@ final class FixedCurrentGarden implements CurrentGarden
     {
         return $this->garden;
     }
-
-    public function switchTo(Garden $garden): void
-    {
-        $this->garden = $garden;
-    }
 }

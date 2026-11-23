@@ -50,7 +50,7 @@ final class RunAgentHandlerTest extends KernelTestCase
             [ChatEntry::USER, ChatEntry::TOOL_CALL, ChatEntry::ASSISTANT, ChatEntry::USER, ChatEntry::TOOL_CALL, ChatEntry::DRAFT_CARD, ChatEntry::ASSISTANT],
             array_map(static fn (ChatEntry $entry): string => $entry->kind, $history),
         );
-        self::assertSame($plant->getId(), $history[5]->plantId);
+        self::assertTrue($plant->getId()->equals($history[5]->plantId));
     }
 
     public function testAStreamedAnswerIsPushedInBatches(): void

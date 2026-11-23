@@ -98,6 +98,6 @@ final class GardenTest extends TestCase
 
     private static function garden(User $owner, string $timezone = 'Europe/Paris'): Garden
     {
-        return Garden::create('The allotment', new GardenLocation('Somewhere', 45.0, 4.0, $timezone), $owner, new \DateTimeImmutable('2026-10-01'));
+        return Garden::create('The allotment', 'the-allotment', new GardenLocation('Somewhere', 45.0, 4.0, $timezone), $owner, new \DateTimeImmutable('2026-10-01'));
     }
 }

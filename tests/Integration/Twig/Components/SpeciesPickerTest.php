@@ -3,6 +3,7 @@
 namespace App\Tests\Integration\Twig\Components;
 
 use App\Factory\UserFactory;
+use App\Garden\Entity\Garden;
 use App\Garden\Form\Model\PlantingFormData;
 use App\Garden\Form\PlantingType;
 use App\Plant\Form\Model\NewPlantFormData;
@@ -15,6 +16,8 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormView;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\UX\LiveComponent\Test\InteractsWithLiveComponents;
 use Symfony\UX\LiveComponent\Test\TestLiveComponent;
 use Symfony\UX\TwigComponent\Test\InteractsWithTwigComponents;
@@ -99,6 +102,7 @@ final class SpeciesPickerTest extends KernelTestCase
         $data->trefleId = 191052;
         $data->scientificName = 'Hydrangea paniculata';
 
+        self::getContainer()->get('router')->getContext()->setParameter('garden', 'the-garden-of-the-tests');
         $crawler = $this->renderTwigComponent('SpeciesPicker', ['form' => $this->formView($data)])->crawler();
 
         self::assertSame('Hortensia du portail', $crawler->filter('[data-live-ignore] input[name="planting[name]"][data-model="debounce(300)|name"]')->attr('value'));
@@ -114,15 +118,24 @@ final class SpeciesPickerTest extends KernelTestCase
     {
         $data = new NewPlantFormData();
         $data->name = 'unknown shrub';
-        $picker = $this->createLiveComponent('SpeciesPicker', ['form' => self::getContainer()->get(FormFactoryInterface::class)->create(NewPlantType::class, $data)->createView(), 'required' => true])->actingAs(UserFactory::new()->approved()->create());
+        $picker = $this->inTheGarden(['form' => self::getContainer()->get(FormFactoryInterface::class)->create(NewPlantType::class, $data)->createView(), 'required' => true]);
 
         $crawler = $picker->render()->crawler();
         self::assertSame('Trefle does not know this name: try its Latin name.', $crawler->filter('.garden-species-candidates .hint')->text());
-        self::assertSame('/assistant?message=' . rawurlencode('Draft the care sheet of unknown shrub'), $crawler->filter('.garden-species-assistant a')->attr('href'), 'The assistant, with the name as typed.');
+        self::assertSame('/g/the-garden-of-the-tests/assistant?message=' . rawurlencode('Draft the care sheet of unknown shrub'), $crawler->filter('.garden-species-assistant a')->attr('href'), 'The assistant of the garden, with the name as typed.');
 
         $crawler = $picker->set('name', 'hortensia')->render()->crawler();
         self::assertSame('Which species is it?', $crawler->filter('.garden-species-label')->text(), 'Not optional.');
-        self::assertSame('/assistant?message=' . rawurlencode('Draft the care sheet of Hydrangea paniculata'), $picker->set('trefleId', '191052')->render()->crawler()->filter('.garden-species-assistant a')->attr('href'));
+        self::assertSame('/g/the-garden-of-the-tests/assistant?message=' . rawurlencode('Draft the care sheet of Hydrangea paniculata'), $picker->set('trefleId', '191052')->render()->crawler()->filter('.garden-species-assistant a')->attr('href'));
+    }
+
+    public function testItIsReachedInTheGardenOfThePageByItsMembersOnly(): void
+    {
+        $picker = $this->inTheGarden(['form' => $this->formView(new PlantingFormData())]);
+        self::assertStringStartsWith('/g/the-garden-of-the-tests/_components/SpeciesPicker', $picker->render()->crawler()->filter('[data-controller~="live"]')->attr('data-live-url-value') ?? '');
+
+        $this->expectException(NotFoundHttpException::class);
+        $picker->actingAs(UserFactory::new()->approved()->create())->set('name', 'hortensia');
     }
 
     private function picker(string $name = ''): TestLiveComponent
@@ -130,8 +143,28 @@ final class SpeciesPickerTest extends KernelTestCase
         $data = new PlantingFormData();
         $data->name = $name;
 
-        // Its requests go through the firewall: /_components needs a member
-        return $this->createLiveComponent('SpeciesPicker', ['form' => $this->formView($data)])->actingAs(UserFactory::new()->approved()->create());
+        return $this->inTheGarden(['form' => $this->formView($data)]);
+    }
+
+    /**
+     * Its requests go through the firewall and the garden of their URL, /g/{garden}/_components, as from its page: of the
+     * garden of the test, by its owner. The URLs of the component come from the router of the test, which the request of
+     * a page gives the garden (App\Garden\GardenOfTheUrl): one kernel for all its requests, and the garden given back
+     * after each.
+     *
+     * @param array<string, mixed> $props
+     */
+    private function inTheGarden(array $props): TestLiveComponent
+    {
+        $garden = DefaultGardenStory::get('garden');
+        self::assertInstanceOf(Garden::class, $garden);
+        $context = self::getContainer()->get('router')->getContext();
+        $context->setParameter('garden', $garden->getSlug());
+        self::getContainer()->get('event_dispatcher')->addListener(KernelEvents::FINISH_REQUEST, static fn () => $context->setParameter('garden', $garden->getSlug()), -1000);
+        $client = self::getContainer()->get('test.client');
+        $client->disableReboot();
+
+        return $this->createLiveComponent('SpeciesPicker', $props, $client)->actingAs($garden->getOwner());
     }
 
     private function formView(PlantingFormData $data): FormView

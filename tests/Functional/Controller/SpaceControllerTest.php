@@ -2,14 +2,17 @@
 
 namespace App\Tests\Functional\Controller;
 
+use App\Factory\GardenFactory;
 use App\Factory\PlantingFactory;
 use App\Factory\SpaceFactory;
 use App\Garden\Entity\Space;
 use App\Garden\Model\Soil;
 use App\Garden\SpaceRepository;
 use App\Plant\Model\Exposure;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\TestWith;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
@@ -17,6 +20,7 @@ use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 final class SpaceControllerTest extends WebTestCase
 {
     use ClockSensitiveTrait;
+    use GardenPathsTrait;
     use LogInTrait;
 
     private KernelBrowser $client;
@@ -34,7 +38,7 @@ final class SpaceControllerTest extends WebTestCase
         PlantingFactory::new()->inSpace($northBed)->create(['name' => 'Hosta']);
         PlantingFactory::new()->inSpace($northBed)->create(['name' => 'Fern']);
 
-        $crawler = $this->client->request('GET', '/spaces');
+        $crawler = $this->client->request('GET', self::inGarden('/spaces'));
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextSame('.nav a.active', 'My spaces');
@@ -45,12 +49,12 @@ final class SpaceControllerTest extends WebTestCase
             ],
             $crawler->filter('.space-tile')->each(static fn ($tile): array => [$tile->filter('strong')->text(), $tile->filter('.tags')->text(), $tile->filter('.space-tile-plants')->text()]),
         );
-        self::assertSame('/spaces/' . $northBed->getId(), $crawler->filter('.space-tile')->last()->attr('href'));
+        self::assertSame(self::pathOf($northBed), $crawler->filter('.space-tile')->last()->attr('href'));
     }
 
     public function testNoSpaceYet(): void
     {
-        $this->client->request('GET', '/spaces');
+        $this->client->request('GET', self::inGarden('/spaces'));
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('.callout', 'No space yet.');
@@ -61,17 +65,17 @@ final class SpaceControllerTest extends WebTestCase
         $northBed = SpaceFactory::createOne(['name' => 'North bed', 'exposure' => Exposure::Shade]);
         $hosta = PlantingFactory::new()->inSpace($northBed)->create(['name' => 'Hosta']);
 
-        $crawler = $this->client->request('GET', '/spaces/' . $northBed->getId());
+        $crawler = $this->client->request('GET', self::pathOf($northBed));
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextSame('h3', 'North bed');
         self::assertSame(['Shade', 'Not recorded'], $crawler->filter('.care-sheet td')->each(static fn ($cell): string => $cell->text()));
-        self::assertSame(['/garden/' . $hosta->getId()], $crawler->filter('.space-plants .plant-tile')->each(static fn ($tile): ?string => $tile->attr('href')));
+        self::assertSame([self::pathOf($hosta)], $crawler->filter('.space-plants .plant-tile')->each(static fn ($tile): ?string => $tile->attr('href')));
     }
 
     public function testAnUnknownSpaceIsNotFound(): void
     {
-        $this->client->request('GET', '/spaces/999999');
+        $this->client->request('GET', self::inGarden('/spaces/no-such-space'));
 
         self::assertResponseStatusCodeSame(404);
     }
@@ -79,7 +83,7 @@ final class SpaceControllerTest extends WebTestCase
     public function testAddASpace(): void
     {
         self::mockTime('2026-11-22 10:00');
-        $crawler = $this->client->request('GET', '/spaces/new');
+        $crawler = $this->client->request('GET', self::inGarden('/spaces/new'));
         self::assertResponseIsSuccessful();
 
         $this->client->submit($crawler->selectButton('Add the space')->form(), [
@@ -89,7 +93,7 @@ final class SpaceControllerTest extends WebTestCase
         ]);
 
         $space = $this->lastSpace();
-        self::assertResponseRedirects('/spaces/' . $space->getId(), 303);
+        self::assertResponseRedirects(self::pathOf($space), 303);
         self::assertSame('Balcony', $space->getName());
         self::assertSame(Exposure::Sun, $space->getExposure());
         self::assertSame(Soil::Loamy, $space->getSoil());
@@ -99,9 +103,28 @@ final class SpaceControllerTest extends WebTestCase
         self::assertSelectorTextContains('.flash-success', 'Balcony is one of your spaces.');
     }
 
+    /**
+     * From its name, in its garden: suffixed when taken, or when a page of the spaces has it; without a letter, "space".
+     */
+    #[TestWith(['Balcony!', 'balcony-2'])]
+    #[TestWith(['New', 'new-2'])]
+    #[TestWith(['Été', 'ete'])]
+    #[TestWith(['🌹', 'space'])]
+    public function testTheSlugOfANewSpace(string $name, string $slug): void
+    {
+        SpaceFactory::createOne(['name' => 'balcony']);
+        SpaceFactory::createOne(['garden' => GardenFactory::createOne(), 'name' => 'Été']);
+        $crawler = $this->client->request('GET', self::inGarden('/spaces/new'));
+
+        $this->client->submit($crawler->selectButton('Add the space')->form(), ['space[name]' => $name]);
+
+        self::assertSame($slug, $this->lastSpace()->getSlug(), 'Unique in its garden only.');
+        self::assertResponseRedirects(self::inGarden('/spaces/' . $slug), 303);
+    }
+
     public function testASpaceNeedsAName(): void
     {
-        $crawler = $this->client->request('GET', '/spaces/new');
+        $crawler = $this->client->request('GET', self::inGarden('/spaces/new'));
 
         $this->client->submit($crawler->selectButton('Add the space')->form(), ['space[name]' => '  ']);
 
@@ -114,7 +137,7 @@ final class SpaceControllerTest extends WebTestCase
     {
         $balcony = SpaceFactory::createOne(['name' => 'Balcony', 'exposure' => Exposure::Sun]);
 
-        $crawler = $this->client->request('GET', '/spaces/' . $balcony->getId());
+        $crawler = $this->client->request('GET', self::pathOf($balcony));
         $crawler = $this->client->click($crawler->selectLink('Edit the space')->link());
         self::assertResponseIsSuccessful();
         self::assertSame('Balcony', $crawler->filter('[name="space[name]"]')->attr('value'));
@@ -126,7 +149,7 @@ final class SpaceControllerTest extends WebTestCase
             'space[soil]' => 'sandy',
         ]);
 
-        self::assertResponseRedirects('/spaces/' . $balcony->getId(), 303);
+        self::assertResponseRedirects(self::pathOf($balcony), 303);
         $balcony = $this->lastSpace();
         self::assertSame('South balcony', $balcony->getName());
         self::assertNull($balcony->getExposure(), 'Not sure any more.');
@@ -136,7 +159,7 @@ final class SpaceControllerTest extends WebTestCase
     public function testAnInvalidEditIsRefused(): void
     {
         $balcony = SpaceFactory::createOne(['name' => 'Balcony', 'exposure' => Exposure::Sun]);
-        $crawler = $this->client->request('GET', '/spaces/' . $balcony->getId() . '/edit');
+        $crawler = $this->client->request('GET', self::pathOf($balcony) . '/edit');
 
         $this->client->submit($crawler->selectButton('Save')->form(), ['space[name]' => str_repeat('a', 101)]);
 

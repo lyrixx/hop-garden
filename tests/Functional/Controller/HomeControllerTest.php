@@ -134,6 +134,8 @@ final class HomeControllerTest extends WebTestCase
         $this->client->request('GET', '/?message=' . rawurlencode('Draft the care sheet of a new species'));
 
         self::assertResponseRedirects('/assistant?message=' . rawurlencode('Draft the care sheet of a new species'), 301);
+        $this->client->followRedirect();
+        self::assertResponseRedirects('/g/the-garden-of-the-tests/assistant?message=' . rawurlencode('Draft the care sheet of a new species'), 302, 'The assistant of the last garden.');
         $crawler = $this->client->followRedirect();
         self::assertSame('Draft the care sheet of a new species', $crawler->filter('form.chat-form input[name="text"]')->attr('value'));
     }

@@ -4,6 +4,7 @@ namespace App\Tests\Functional\Controller;
 
 use App\Factory\UserFactory;
 use App\Locale\UserPreferredLocale;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use App\Tests\Utils\Security\LogInTrait;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -18,6 +19,7 @@ use Symfony\Component\DomCrawler\Crawler;
  */
 final class LegalPagesTest extends WebTestCase
 {
+    use GardenPathsTrait;
     use LogInTrait;
 
     private KernelBrowser $client;
@@ -64,9 +66,9 @@ final class LegalPagesTest extends WebTestCase
     #[TestWith(['/register', false])]
     #[TestWith(['/reset-password', false])]
     #[TestWith(['/', true])]
-    #[TestWith(['/assistant', true])]
-    #[TestWith(['/garden', true])]
-    #[TestWith(['/notifications', true])]
+    #[TestWith(['/g/the-garden-of-the-tests/assistant', true])]
+    #[TestWith(['/g/the-garden-of-the-tests/garden', true])]
+    #[TestWith(['/g/the-garden-of-the-tests/notifications', true])]
     #[TestWith(['/account', true])]
     public function testTheFooterLinksToThemOnEveryPage(string $url, bool $member): void
     {
@@ -117,6 +119,8 @@ final class LegalPagesTest extends WebTestCase
         self::assertResponseRedirects('/assistant');
         self::assertSame([$session => null], $this->cookies(), 'Logged in.');
         $this->client->followRedirect();
+        self::assertResponseRedirects(self::inGarden('/assistant'), 302, 'Of the last garden.');
+        $this->client->followRedirect();
         self::assertSame([$session => null, 'mercure_access_token' => null], $this->cookies(), 'A page of the garden: its live updates, until the browser closes.');
 
         $this->client->restart();
@@ -124,7 +128,7 @@ final class LegalPagesTest extends WebTestCase
         self::assertResponseRedirects('/assistant');
         self::assertSame([$session => null, 'REMEMBERME' => 30], $this->cookies(), 'Remembered.');
 
-        $crawler = $this->client->request('GET', '/garden');
+        $crawler = $this->client->request('GET', self::inGarden('/garden'));
         self::assertSame([$session => null, 'REMEMBERME' => 30, 'mercure_access_token' => null], $this->cookies());
         $this->client->submit($crawler->filter('.account-menu form')->form());
         self::assertSame([$session => null], $this->cookies(), 'Logged out: forgotten.');

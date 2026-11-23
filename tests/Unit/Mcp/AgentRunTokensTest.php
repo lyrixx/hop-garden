@@ -6,7 +6,6 @@ use App\Factory\GardenFactory;
 use App\Factory\UserFactory;
 use App\Mcp\Agent\AgentRunTokens;
 use App\Mcp\Agent\Exception\InvalidAgentRunTokenException;
-use App\Tests\Utils\Factory\EntityId;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Uid\UuidV7;
@@ -19,9 +18,11 @@ final class AgentRunTokensTest extends TestCase
         $tokens = new AgentRunTokens('the secret', $clock);
         $conversationId = new UuidV7();
 
-        $claims = $tokens->verify($tokens->issue(EntityId::assign(UserFactory::createOne(), 12), EntityId::assign(GardenFactory::createOne(), 34), $conversationId));
+        $user = UserFactory::createOne();
+        $garden = GardenFactory::createOne(['owner' => $user]);
+        $claims = $tokens->verify($tokens->issue($user, $garden, $conversationId));
 
-        self::assertSame([12, 34, $conversationId->toRfc4122()], [$claims->userId, $claims->gardenId, $claims->conversationId]);
+        self::assertSame([$user->getId()->toRfc4122(), $garden->getId()->toRfc4122(), $conversationId->toRfc4122()], [$claims->userId, $claims->gardenId, $claims->conversationId]);
         self::assertSame('2026-11-22 10:15', $claims->expiresAt->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i'), 'A quarter of an hour: the queue and a run.');
     }
 
@@ -54,7 +55,7 @@ final class AgentRunTokensTest extends TestCase
         [$payload, $signature] = explode('.', self::token($tokens));
         $claims = json_decode((string) base64_decode(strtr($payload, '-_', '+/'), true), true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($claims);
-        $claims['garden'] = 35;
+        $claims['garden'] = (new UuidV7())->toRfc4122();
 
         $this->expectException(InvalidAgentRunTokenException::class);
         $this->expectExceptionMessage('not signed by Hop Garden');
@@ -71,6 +72,8 @@ final class AgentRunTokensTest extends TestCase
 
     private static function token(AgentRunTokens $tokens): string
     {
-        return $tokens->issue(EntityId::assign(UserFactory::createOne(), 12), EntityId::assign(GardenFactory::createOne(), 34), new UuidV7());
+        $user = UserFactory::createOne();
+
+        return $tokens->issue($user, GardenFactory::createOne(['owner' => $user]), new UuidV7());
     }
 }

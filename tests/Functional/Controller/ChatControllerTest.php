@@ -6,6 +6,7 @@ use App\Plant\PlantRepository;
 use App\Tests\Utils\Chat\ScriptedGardener;
 use App\Tests\Utils\Chat\WorkerTrait;
 use App\Tests\Utils\Env\EnvVarsTrait;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -16,6 +17,7 @@ use Symfony\Component\DomCrawler\Crawler;
 final class ChatControllerTest extends WebTestCase
 {
     use EnvVarsTrait;
+    use GardenPathsTrait;
     use LogInTrait;
     use WorkerTrait;
 
@@ -29,12 +31,12 @@ final class ChatControllerTest extends WebTestCase
 
     public function testAnEmptyConversation(): void
     {
-        $crawler = $this->client->request('GET', '/assistant');
+        $crawler = $this->client->request('GET', self::inGarden('/assistant'));
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('#chat-log .chat-empty#chat-empty');
         self::assertSelectorNotExists('#chat-log .bubble');
-        self::assertMatchesRegularExpression('#=' . preg_quote(rawurlencode(\sprintf('https://hop-garden.test/users/%d/conversations/', $this->gardenOfTheTest()->getOwner()->getId())), '#') . '[0-9a-f-]{36}$#', $this->streamSource($crawler), 'The page listens to its conversation, of its member.');
+        self::assertMatchesRegularExpression('#=' . preg_quote(rawurlencode(\sprintf('https://hop-garden.test/users/%s/conversations/', $this->gardenOfTheTest()->getOwner()->getId())), '#') . '[0-9a-f-]{36}$#', $this->streamSource($crawler), 'The page listens to its conversation, of its member.');
         self::assertNotNull($crawler->filter('.chat turbo-mercure-stream-source')->attr('private'), 'With the subscriber cookie.');
         self::assertSelectorExists('#chat-run[data-busy="false"]');
         self::assertSelectorTextSame('.nav a.active', 'Assistant');
@@ -42,7 +44,7 @@ final class ChatControllerTest extends WebTestCase
 
     public function testALinkPrefillsTheMessage(): void
     {
-        $crawler = $this->client->request('GET', '/plants/new');
+        $crawler = $this->client->request('GET', self::inGarden('/species/new'));
         $crawler = $this->client->click($crawler->selectLink('Ask the assistant to draft it')->link());
 
         self::assertResponseIsSuccessful();
@@ -51,18 +53,18 @@ final class ChatControllerTest extends WebTestCase
 
     public function testTheMessageIsEmptyWithoutLink(): void
     {
-        $crawler = $this->client->request('GET', '/assistant');
+        $crawler = $this->client->request('GET', self::inGarden('/assistant'));
 
         self::assertSame('', $crawler->filter('form.chat-form input[name="text"]')->attr('value'));
     }
 
     public function testAMessageIsQueuedForTheWorker(): void
     {
-        $crawler = $this->client->request('GET', '/assistant');
+        $crawler = $this->client->request('GET', self::inGarden('/assistant'));
 
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => '  hortensia ']);
 
-        self::assertResponseRedirects('/assistant', 303);
+        self::assertResponseRedirects(self::inGarden('/assistant'), 303);
         $messages = $this->runAgentMessages();
         self::assertCount(1, $messages);
         self::assertSame('hortensia', $messages[0]->text, 'Trimmed.');
@@ -71,7 +73,7 @@ final class ChatControllerTest extends WebTestCase
 
     public function testTurboSendsTheMessage(): void
     {
-        $crawler = $this->client->request('GET', '/assistant');
+        $crawler = $this->client->request('GET', self::inGarden('/assistant'));
 
         // As Turbo submits a form
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => 'hortensia'], ['HTTP_ACCEPT' => 'text/vnd.turbo-stream.html, text/html, application/xhtml+xml']);
@@ -85,7 +87,7 @@ final class ChatControllerTest extends WebTestCase
     #[TestWith(['   '])]
     public function testABlankMessageIsRefused(string $text): void
     {
-        $crawler = $this->client->request('GET', '/assistant');
+        $crawler = $this->client->request('GET', self::inGarden('/assistant'));
 
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => $text]);
 
@@ -95,7 +97,7 @@ final class ChatControllerTest extends WebTestCase
 
     public function testATooLongMessageIsRefused(): void
     {
-        $crawler = $this->client->request('GET', '/assistant');
+        $crawler = $this->client->request('GET', self::inGarden('/assistant'));
 
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => str_repeat('a', 501)]);
 
@@ -105,7 +107,7 @@ final class ChatControllerTest extends WebTestCase
 
     public function testAMessageRequiresAValidCsrfToken(): void
     {
-        $this->client->request('POST', '/chat', ['text' => 'hortensia', '_token' => 'forged']);
+        $this->client->request('POST', self::inGarden('/chat'), ['text' => 'hortensia', '_token' => 'forged']);
 
         self::assertResponseRedirects('/login');
         self::assertSame([], $this->runAgentMessages());
@@ -113,14 +115,14 @@ final class ChatControllerTest extends WebTestCase
 
     public function testTheConversationIsReplayedFromItsHistory(): void
     {
-        $crawler = $this->client->request('GET', '/assistant');
+        $crawler = $this->client->request('GET', self::inGarden('/assistant'));
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => 'hortensia']);
         $this->runTheWorker();
-        $crawler = $this->client->request('GET', '/assistant');
+        $crawler = $this->client->request('GET', self::inGarden('/assistant'));
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => 'paniculata']);
         $this->runTheWorker();
 
-        $crawler = $this->client->request('GET', '/assistant');
+        $crawler = $this->client->request('GET', self::inGarden('/assistant'));
 
         self::assertSelectorNotExists('.chat-empty');
         self::assertSame(['hortensia', 'paniculata'], $crawler->filter('#chat-log .bubble-user')->each(static fn ($bubble): string => $bubble->text()));
@@ -137,11 +139,11 @@ final class ChatControllerTest extends WebTestCase
         self::ensureKernelShutdown();
         $this->client = self::createClient();
         $this->logIn($this->client);
-        $crawler = $this->client->request('GET', '/assistant');
+        $crawler = $this->client->request('GET', self::inGarden('/assistant'));
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => 'paniculata']);
         $this->runTheWorker();
 
-        $this->client->request('GET', '/assistant');
+        $this->client->request('GET', self::inGarden('/assistant'));
 
         self::assertSelectorNotExists('.tool-call');
         self::assertSelectorTextSame('#chat-log .bubble-user', 'paniculata');
@@ -151,7 +153,7 @@ final class ChatControllerTest extends WebTestCase
 
     public function testADeletedDraftIsSaidSo(): void
     {
-        $crawler = $this->client->request('GET', '/assistant');
+        $crawler = $this->client->request('GET', self::inGarden('/assistant'));
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => 'paniculata']);
         $this->runTheWorker();
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
@@ -160,7 +162,7 @@ final class ChatControllerTest extends WebTestCase
         }
         $entityManager->flush();
 
-        $this->client->request('GET', '/assistant');
+        $this->client->request('GET', self::inGarden('/assistant'));
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('.chat-card .callout', 'This draft no longer exists.');
@@ -168,15 +170,15 @@ final class ChatControllerTest extends WebTestCase
 
     public function testANewConversation(): void
     {
-        $crawler = $this->client->request('GET', '/assistant');
+        $crawler = $this->client->request('GET', self::inGarden('/assistant'));
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => 'hortensia']);
         $this->runTheWorker();
-        $crawler = $this->client->request('GET', '/assistant');
+        $crawler = $this->client->request('GET', self::inGarden('/assistant'));
         $topic = $this->streamSource($crawler);
 
         $this->client->submit($crawler->selectButton('New conversation')->form());
 
-        self::assertResponseRedirects('/assistant', 303);
+        self::assertResponseRedirects(self::inGarden('/assistant'), 303);
         $crawler = $this->client->followRedirect();
         self::assertNotSame($topic, $this->streamSource($crawler));
         self::assertSelectorExists('.chat-empty');
@@ -184,13 +186,13 @@ final class ChatControllerTest extends WebTestCase
 
     public function testANewConversationRequiresAValidCsrfToken(): void
     {
-        $crawler = $this->client->request('GET', '/assistant');
+        $crawler = $this->client->request('GET', self::inGarden('/assistant'));
         $topic = $this->streamSource($crawler);
 
-        $this->client->request('POST', '/chat/new', ['_token' => 'forged']);
+        $this->client->request('POST', self::inGarden('/chat/new'), ['_token' => 'forged']);
 
         self::assertResponseRedirects('/login');
-        $crawler = $this->client->request('GET', '/assistant');
+        $crawler = $this->client->request('GET', self::inGarden('/assistant'));
         self::assertSame($topic, $this->streamSource($crawler), 'The same conversation.');
     }
 

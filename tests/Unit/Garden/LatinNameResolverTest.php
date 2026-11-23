@@ -8,7 +8,6 @@ use App\Factory\GardenFactory;
 use App\Garden\Exception\QuotaReachedException;
 use App\Garden\GardenQuotas;
 use App\Garden\LatinNameResolver;
-use App\Tests\Utils\Factory\EntityId;
 use App\Tests\Utils\Garden\FixedCurrentGarden;
 use App\Tests\Utils\Garden\InMemoryQuotas;
 use PHPUnit\Framework\TestCase;
@@ -141,6 +140,6 @@ final class LatinNameResolverTest extends TestCase
             }
         };
 
-        return new LatinNameResolver($platform, 'claude-sonnet-5-5', new RecordedLatinNames(\dirname(__DIR__, 3) . '/fixtures/llm/latin-names.json'), new DataSourceCache(new ArrayAdapter(), $demo), $logger, $demo, $this->quotas ?? InMemoryQuotas::create(), new FixedCurrentGarden(EntityId::assign(GardenFactory::createOne(), 1)));
+        return new LatinNameResolver($platform, 'claude-sonnet-5-5', new RecordedLatinNames(\dirname(__DIR__, 3) . '/fixtures/llm/latin-names.json'), new DataSourceCache(new ArrayAdapter(), $demo), $logger, $demo, $this->quotas ?? InMemoryQuotas::create(), new FixedCurrentGarden(GardenFactory::createOne()));
     }
 }

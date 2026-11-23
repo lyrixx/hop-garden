@@ -4,8 +4,6 @@ namespace App\Tests\Unit\Chat;
 
 use App\Chat\ChatSession;
 use App\Factory\GardenFactory;
-use App\Garden\Entity\Garden;
-use App\Tests\Utils\Factory\EntityId;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -17,19 +15,19 @@ final class ChatSessionTest extends TestCase
     public function testOneConversationPerSessionAndGarden(): void
     {
         [$chatSession, $session] = self::chatSession();
-        $garden = self::garden(7);
+        $garden = GardenFactory::createOne();
 
         $conversationId = $chatSession->getConversationId($garden);
 
         self::assertTrue($conversationId->equals($chatSession->getConversationId($garden)));
-        self::assertSame($conversationId->toRfc4122(), $session->get('chat_conversation_id.7'));
-        self::assertFalse($conversationId->equals($chatSession->getConversationId(self::garden(8))), 'Another garden, another conversation.');
+        self::assertSame($conversationId->toRfc4122(), $session->get('chat_conversation_id.' . $garden->getId()));
+        self::assertFalse($conversationId->equals($chatSession->getConversationId(GardenFactory::createOne())), 'Another garden, another conversation.');
     }
 
     public function testANewConversation(): void
     {
         [$chatSession] = self::chatSession();
-        $garden = self::garden(7);
+        $garden = GardenFactory::createOne();
         $first = $chatSession->getConversationId($garden);
 
         $second = $chatSession->startNewConversation($garden);
@@ -41,16 +39,12 @@ final class ChatSessionTest extends TestCase
     public function testAnInvalidIdInTheSessionStartsANewConversation(): void
     {
         [$chatSession, $session] = self::chatSession();
-        $session->set('chat_conversation_id.7', '../../etc/passwd');
+        $garden = GardenFactory::createOne();
+        $session->set('chat_conversation_id.' . $garden->getId(), '../../etc/passwd');
 
-        $conversationId = $chatSession->getConversationId(self::garden(7));
+        $conversationId = $chatSession->getConversationId($garden);
 
-        self::assertSame($conversationId->toRfc4122(), $session->get('chat_conversation_id.7'));
-    }
-
-    private static function garden(int $id): Garden
-    {
-        return EntityId::assign(GardenFactory::createOne(), $id);
+        self::assertSame($conversationId->toRfc4122(), $session->get('chat_conversation_id.' . $garden->getId()));
     }
 
     /**

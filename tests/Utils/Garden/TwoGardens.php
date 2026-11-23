@@ -73,8 +73,8 @@ final readonly class TwoGardens
         $drafting = PlantingFactory::new()->drafting()->create(['garden' => $allotment, 'name' => 'Lemon tree drafting', 'scientificName' => 'Rosa moschata']);
 
         $entityManager = $container->get(EntityManagerInterface::class);
-        $proposedPlanting = Planting::proposed((new UuidV7())->toRfc4122(), 'Rose of the card', $rose, $terrace, new \DateTimeImmutable('2026-11-01'));
-        $proposedSpace = Space::proposed($allotment, (new UuidV7())->toRfc4122(), 'Space of the card', null, null, new \DateTimeImmutable('2026-11-01'));
+        $proposedPlanting = Planting::proposed(new UuidV7(), 'Rose of the card', 'rose-of-the-card', $rose, $terrace, new \DateTimeImmutable('2026-11-01'));
+        $proposedSpace = Space::proposed($allotment, new UuidV7(), 'Space of the card', 'space-of-the-card', null, null, new \DateTimeImmutable('2026-11-01'));
         $entityManager->persist($proposedPlanting);
         $entityManager->persist($proposedSpace);
 
@@ -87,7 +87,8 @@ final readonly class TwoGardens
         $container->get(ConversationRepository::class)->add(Conversation::start($bobsConversation, $bob, $allotment, new \DateTimeImmutable('2026-11-01')));
         $container->get('ai.message_store.doctrine.dbal.chat')->save(MessageBag::forId($bobsConversation, Message::ofUser('Où tailler Climbing rose ?')));
 
-        $lavender = PlantFactory::new()->validated()->create(['garden' => $balcony, 'commonName' => 'Lavender of Carol']);
+        // Of slugs of their own: the URLs of her garden with their slugs find nothing of hers
+        $lavender = PlantFactory::new()->validated()->create(['garden' => $balcony, 'commonName' => 'Lavender of Carol', 'scientificName' => 'Lavandula angustifolia']);
         $windowBox = SpaceFactory::createOne(['garden' => $balcony, 'name' => 'Window box of Carol']);
         PlantingFactory::new()->inSpace($windowBox)->linkedTo($lavender)->create(['name' => 'Lavender in the window box']);
         $entityManager->flush();

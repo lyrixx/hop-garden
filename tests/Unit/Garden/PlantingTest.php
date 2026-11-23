@@ -12,8 +12,8 @@ use App\Garden\Model\CareTask;
 use App\Garden\Model\Soil;
 use App\Plant\Model\Exposure;
 use App\Story\DefaultGardenStory;
-use App\Tests\Utils\Factory\EntityId;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Uid\UuidV7;
 
 final class PlantingTest extends TestCase
@@ -70,10 +70,11 @@ final class PlantingTest extends TestCase
         $plant = PlantFactory::new()->validated()->create(['scientificName' => 'Hydrangea paniculata', 'trefleId' => 191052]);
         $terrace = self::space('Terrace');
 
-        $planting = Planting::proposed('0196a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b', 'Hortensia', $plant, $terrace, new \DateTimeImmutable('2026-11-22 09:00'));
+        $planting = Planting::proposed(Uuid::fromString('0196a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b'), 'Hortensia', 'hortensia', $plant, $terrace, new \DateTimeImmutable('2026-11-22 09:00'));
 
-        self::assertSame('0196a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b', $planting->getProposalId());
+        self::assertSame('0196a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b', $planting->getProposalId()?->toRfc4122());
         self::assertSame('Hortensia', $planting->getName());
+        self::assertSame('hortensia', $planting->getSlug());
         self::assertSame('Hydrangea paniculata', $planting->getScientificName());
         self::assertSame(191052, $planting->getTrefleId());
         self::assertSame($plant, $planting->getPlant());
@@ -88,7 +89,7 @@ final class PlantingTest extends TestCase
     {
         $this->expectException(\LogicException::class);
 
-        Planting::proposed('0196a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b', 'Hortensia', EntityId::assign(PlantFactory::createOne(), 3), null, new \DateTimeImmutable('2026-11-22'));
+        Planting::proposed(new UuidV7(), 'Hortensia', 'hortensia', PlantFactory::createOne(), null, new \DateTimeImmutable('2026-11-22'));
     }
 
     public function testTheSameCareOnTheSameDayIsRecordedOnce(): void
@@ -122,9 +123,9 @@ final class PlantingTest extends TestCase
         $rose->startDrafting($conversationId);
 
         self::assertTrue($rose->isDrafting());
-        self::assertSame($conversationId->toRfc4122(), $rose->getConversationId());
-        self::assertTrue($rose->isDraftedIn($conversationId->toRfc4122()));
-        self::assertFalse($rose->isDraftedIn((new UuidV7())->toRfc4122()));
+        self::assertSame($conversationId, $rose->getConversationId());
+        self::assertTrue($rose->isDraftedIn($conversationId));
+        self::assertFalse($rose->isDraftedIn(new UuidV7()));
     }
 
     public function testAFailedAttemptIsReplacedByARetry(): void
@@ -136,15 +137,15 @@ final class PlantingTest extends TestCase
 
         self::assertFalse($rose->isDrafting());
         self::assertTrue($rose->hasDraftingFailed());
-        self::assertFalse($rose->isDraftedIn($failed->toRfc4122()), 'A failed attempt is over.');
+        self::assertFalse($rose->isDraftedIn($failed), 'A failed attempt is over.');
 
         $retry = new UuidV7();
         $rose->startDrafting($retry);
 
         self::assertTrue($rose->isDrafting());
         self::assertFalse($rose->hasDraftingFailed());
-        self::assertFalse($rose->isDraftedIn($failed->toRfc4122()), 'The previous attempt is stale.');
-        self::assertTrue($rose->isDraftedIn($retry->toRfc4122()));
+        self::assertFalse($rose->isDraftedIn($failed), 'The previous attempt is stale.');
+        self::assertTrue($rose->isDraftedIn($retry));
     }
 
     public function testALinkedCareSheetEndsTheDrafting(): void
@@ -160,23 +161,23 @@ final class PlantingTest extends TestCase
         self::assertSame($plant, $rose->getPlant());
         self::assertFalse($rose->isDrafting());
         self::assertFalse($rose->hasDraftingFailed(), 'Linked: nothing failed any more.');
-        self::assertFalse($rose->isDraftedIn($conversationId->toRfc4122()));
+        self::assertFalse($rose->isDraftedIn($conversationId));
     }
 
     public function testAPlantingWithItsCareSheetIsNotDraftedAgain(): void
     {
-        $rose = EntityId::assign(self::planting('Rose'), 12);
+        $rose = self::planting('Rose');
         $rose->linkTo(PlantFactory::new()->validated()->create());
 
         $this->expectException(CareSheetAlreadyLinkedException::class);
-        $this->expectExceptionMessageIs('Planting 12 already has its care sheet.');
+        $this->expectExceptionMessageIs(\sprintf('Planting %s already has its care sheet.', $rose->getId()));
 
         $rose->startDrafting(new UuidV7());
     }
 
     public function testTheGardenInfoIsRevisedButNotTheSpecies(): void
     {
-        $planting = new Planting(self::garden(), 'Hydrangea', null, null, new \DateTimeImmutable('2026-11-01'), 191047, 'Hydrangea macrophylla', 'old.png');
+        $planting = new Planting(self::garden(), 'Hydrangea', 'hydrangea', null, null, new \DateTimeImmutable('2026-11-01'), 191047, 'Hydrangea macrophylla', 'old.png');
 
         $shed = self::space('By the shed');
 
@@ -198,7 +199,7 @@ final class PlantingTest extends TestCase
         $elsewhere = GardenFactory::createOne();
 
         try {
-            $planting->revise('Rose', new Space($elsewhere, 'Balcony', null, null, new \DateTimeImmutable('2026-11-01')), null);
+            $planting->revise('Rose', new Space($elsewhere, 'Balcony', 'balcony', null, null, new \DateTimeImmutable('2026-11-01')), null);
             self::fail('A space of another garden.');
         } catch (\LogicException $e) {
             self::assertSame('A planting cannot grow in a space of another garden.', $e->getMessage());
@@ -222,12 +223,12 @@ final class PlantingTest extends TestCase
 
     private static function planting(string $name, ?Space $space = null): Planting
     {
-        return new Planting(self::garden(), $name, $space, null, new \DateTimeImmutable('2026-11-01'));
+        return new Planting(self::garden(), $name, strtolower($name), $space, null, new \DateTimeImmutable('2026-11-01'));
     }
 
     private static function space(string $name): Space
     {
-        return new Space(self::garden(), $name, Exposure::Shade, Soil::Clay, new \DateTimeImmutable('2026-11-01'));
+        return new Space(self::garden(), $name, strtolower($name), Exposure::Shade, Soil::Clay, new \DateTimeImmutable('2026-11-01'));
     }
 
     /**

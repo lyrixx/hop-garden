@@ -43,8 +43,8 @@ final class PlantRepositoryTest extends KernelTestCase
 
         self::assertNull($this->plantRepository->findOneInGarden(self::garden(), $plant->getId()));
         $this->expectException(PlantNotFoundException::class);
-        $this->expectExceptionMessageIs(\sprintf('No plant with id %d.', $plant->getId()));
-        $this->plantRepository->get(self::garden(), $plant->getId());
+        $this->expectExceptionMessageIs(\sprintf('No plant with id %s.', $plant->getId()));
+        $this->plantRepository->get(self::garden(), $plant->getId()->toRfc4122());
     }
 
     public function testTheDraftsOfTheChatNewestFirst(): void

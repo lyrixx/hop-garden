@@ -25,7 +25,7 @@ trait AgentRunsTrait
         $member ??= $garden->getOwner();
         $id = $conversationId instanceof UuidV7 ? $conversationId : UuidV7::fromString($conversationId);
 
-        return new RunAgent($member->getId(), $garden->getId(), $id->toRfc4122(), $text, $locale, self::getContainer()->get(AgentRunTokens::class)->issue($member, $garden, $id));
+        return new RunAgent($member->getId()->toRfc4122(), $garden->getId()->toRfc4122(), $id->toRfc4122(), $text, $locale, self::getContainer()->get(AgentRunTokens::class)->issue($member, $garden, $id));
     }
 
     /**
@@ -35,9 +35,9 @@ trait AgentRunsTrait
     {
         $garden = $planting->getGarden();
         $member ??= $garden->getOwner();
-        $conversationId ??= $planting->getConversationId() ?? self::fail('The planting is not drafted.');
+        $conversationId ??= ($planting->getConversationId() ?? self::fail('The planting is not drafted.'))->toRfc4122();
 
-        return new DraftCareSheet($planting->getId(), $member->getId(), $garden->getId(), $conversationId, $locale, self::getContainer()->get(AgentRunTokens::class)->issue($member, $garden, UuidV7::fromString($conversationId)));
+        return new DraftCareSheet($planting->getId()->toRfc4122(), $member->getId()->toRfc4122(), $garden->getId()->toRfc4122(), $conversationId, $locale, self::getContainer()->get(AgentRunTokens::class)->issue($member, $garden, UuidV7::fromString($conversationId)));
     }
 
     private function conversationTopic(UuidV7|string $conversationId, ?User $member = null): string
@@ -55,7 +55,7 @@ trait AgentRunsTrait
 
     private function draftingTopic(Planting $planting, ?string $conversationId = null): string
     {
-        return self::getContainer()->get(Topics::class)->drafting($planting->getGarden(), $conversationId ?? $planting->getConversationId() ?? self::fail('The planting is not drafted.'));
+        return self::getContainer()->get(Topics::class)->drafting($planting->getGarden(), $conversationId ?? ($planting->getConversationId() ?? self::fail('The planting is not drafted.'))->toRfc4122());
     }
 
     /**

@@ -23,7 +23,7 @@ final class PlantToolsTest extends McpTestCase
         $result = $this->callTool('propose_plant', self::proposal());
 
         self::assertSame('draft', $result['status']);
-        self::assertStringEndsWith('/plants/' . $result['plant_id'], $result['validation_url']);
+        self::assertSame('https://hop-garden.test/g/the-garden-of-the-tests/species/hydrangea-paniculata', $result['validation_url'], 'Readable: its slugs, not its UUID.');
 
         $plant = $this->plants()->get(self::gardenOfTheTest(), $result['plant_id']);
         self::assertSame(PlantStatus::Draft, $plant->getStatus());
@@ -48,7 +48,7 @@ final class PlantToolsTest extends McpTestCase
     {
         $plant = PlantFactory::createOne();
 
-        $result = $this->callTool('get_plant', ['id' => $plant->getId()]);
+        $result = $this->callTool('get_plant', ['id' => $plant->getId()->toRfc4122()]);
 
         self::assertSame('Bigleaf hydrangea', $result['common_name']);
         self::assertSame('draft', $result['status']);
@@ -58,7 +58,7 @@ final class PlantToolsTest extends McpTestCase
 
     public function testGetPlantFailsForAnUnknownPlant(): void
     {
-        self::assertStringContainsString('No plant with id 999999', $this->callToolExpectingError('get_plant', ['id' => 999999]));
+        self::assertStringContainsString('No plant with id 01a205b0-0000-7000-8000-000000000000', $this->callToolExpectingError('get_plant', ['id' => '01a205b0-0000-7000-8000-000000000000']));
     }
 
     public function testListCollectionOnlyListsValidatedPlants(): void
@@ -76,13 +76,13 @@ final class PlantToolsTest extends McpTestCase
     {
         $plant = PlantFactory::new()->validated()->create();
 
-        $result = $this->callTool('enable_reminder', ['plant_id' => $plant->getId(), 'type' => 'frost']);
+        $result = $this->callTool('enable_reminder', ['plant_id' => $plant->getId()->toRfc4122(), 'type' => 'frost']);
         self::assertSame(['frost'], $result['enabled_reminders']);
 
-        $result = $this->callTool('enable_reminder', ['plant_id' => $plant->getId(), 'type' => 'pruning']);
+        $result = $this->callTool('enable_reminder', ['plant_id' => $plant->getId()->toRfc4122(), 'type' => 'pruning']);
         self::assertSame(['pruning', 'frost'], $result['enabled_reminders']);
 
-        $result = $this->callTool('disable_reminder', ['plant_id' => $plant->getId(), 'type' => 'frost']);
+        $result = $this->callTool('disable_reminder', ['plant_id' => $plant->getId()->toRfc4122(), 'type' => 'frost']);
         self::assertSame(['pruning'], $result['enabled_reminders']);
     }
 
@@ -90,8 +90,8 @@ final class PlantToolsTest extends McpTestCase
     {
         $plant = PlantFactory::createOne();
 
-        self::assertStringContainsString('must validate it', $this->callToolExpectingError('enable_reminder', ['plant_id' => $plant->getId(), 'type' => 'pruning']));
-        self::assertStringContainsString('must validate it', $this->callToolExpectingError('disable_reminder', ['plant_id' => $plant->getId(), 'type' => 'pruning']));
+        self::assertStringContainsString('must validate it', $this->callToolExpectingError('enable_reminder', ['plant_id' => $plant->getId()->toRfc4122(), 'type' => 'pruning']));
+        self::assertStringContainsString('must validate it', $this->callToolExpectingError('disable_reminder', ['plant_id' => $plant->getId()->toRfc4122(), 'type' => 'pruning']));
     }
 
     public function testUpcomingReminders(): void
@@ -101,7 +101,7 @@ final class PlantToolsTest extends McpTestCase
 
         $result = $this->callTool('upcoming_reminders', ['days' => 30]);
 
-        self::assertSame([['plant_id' => $plant->getId(), 'plant' => 'Bigleaf hydrangea', 'type' => 'pruning', 'starts_on' => '2026-03-01']], $result['calendar']);
+        self::assertSame([['plant_id' => $plant->getId()->toRfc4122(), 'plant' => 'Bigleaf hydrangea', 'type' => 'pruning', 'starts_on' => '2026-03-01']], $result['calendar']);
         // -10 °C + 2 °C of margin: the last two days of the recorded cold snap (-8.5 °C and -12.4 °C)
         self::assertSame(['2026-02-11', '2026-02-12'], array_column($result['frost']['plants_at_risk'][0]['frost_days'], 'date'));
         self::assertEqualsWithDelta(-8.0, $result['frost']['plants_at_risk'][0]['threshold_c'], 0.001);
@@ -111,13 +111,13 @@ final class PlantToolsTest extends McpTestCase
     {
         $plant = PlantFactory::createOne();
 
-        $result = $this->callTool('confirm_plant', ['id' => $plant->getId()]);
+        $result = $this->callTool('confirm_plant', ['id' => $plant->getId()->toRfc4122()]);
 
         self::assertSame('validated', $result['status']);
-        self::assertTrue($this->plants()->get(self::gardenOfTheTest(), $plant->getId())->isValidated());
-        self::assertStringContainsString('already validated', $this->callToolExpectingError('confirm_plant', ['id' => $plant->getId()]));
+        self::assertTrue($this->plants()->get(self::gardenOfTheTest(), $plant->getId()->toRfc4122())->isValidated());
+        self::assertStringContainsString('already validated', $this->callToolExpectingError('confirm_plant', ['id' => $plant->getId()->toRfc4122()]));
 
-        self::assertSame([], self::getContainer()->get(PlantingRepository::class)->findBy(['plant' => $plant->getId()]), 'Validated only: propose_planting adds a plant, once the user taps its card.');
+        self::assertSame([], self::getContainer()->get(PlantingRepository::class)->findBy(['plant' => $plant->getId()->toRfc4122()]), 'Validated only: propose_planting adds a plant, once the user taps its card.');
     }
 
     public function testProposePlantTrimsTheNamesAndKeepsTheNotes(): void
@@ -184,8 +184,8 @@ final class PlantToolsTest extends McpTestCase
 
     public function testRemindersOfAnUnknownPlant(): void
     {
-        self::assertSame('No plant with id 999999.', $this->callToolExpectingError('enable_reminder', ['plant_id' => 999999, 'type' => 'pruning']));
-        self::assertSame('No plant with id 999999.', $this->callToolExpectingError('disable_reminder', ['plant_id' => 999999, 'type' => 'pruning']));
+        self::assertSame('No plant with id 01a205b0-0000-7000-8000-000000000000.', $this->callToolExpectingError('enable_reminder', ['plant_id' => '01a205b0-0000-7000-8000-000000000000', 'type' => 'pruning']));
+        self::assertSame('No plant with id 01a205b0-0000-7000-8000-000000000000.', $this->callToolExpectingError('disable_reminder', ['plant_id' => '01a205b0-0000-7000-8000-000000000000', 'type' => 'pruning']));
     }
 
     public function testAnUnknownReminderType(): void
@@ -194,7 +194,7 @@ final class PlantToolsTest extends McpTestCase
 
         $this->expectException(RequestException::class);
 
-        $this->mcp()->callTool('enable_reminder', ['plant_id' => $plant->getId(), 'type' => 'watering']);
+        $this->mcp()->callTool('enable_reminder', ['plant_id' => $plant->getId()->toRfc4122(), 'type' => 'watering']);
     }
 
     public function testNoUpcomingReminder(): void
@@ -219,7 +219,7 @@ final class PlantToolsTest extends McpTestCase
 
     public function testConfirmPlantFailsForAnUnknownPlant(): void
     {
-        self::assertSame('No plant with id 999999.', $this->callToolExpectingError('confirm_plant', ['id' => 999999]));
+        self::assertSame('No plant with id 01a205b0-0000-7000-8000-000000000000.', $this->callToolExpectingError('confirm_plant', ['id' => '01a205b0-0000-7000-8000-000000000000']));
     }
 
     /**

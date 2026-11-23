@@ -29,7 +29,7 @@ final class ChatPublisherTest extends KernelTestCase
 
         $publisher->publish($topic, ChatEvent::ToolCall, ['summary' => 'search_plant(query: "hortensia")']);
 
-        self::assertSame(\sprintf('https://hop-garden.test/users/%d/conversations/0193a5a0-0000-7000-8000-000000000000', self::defaultGarden()->getOwner()->getId()), $topic, 'Under the URL of the application, by its member.');
+        self::assertSame(\sprintf('https://hop-garden.test/users/%s/conversations/0193a5a0-0000-7000-8000-000000000000', self::defaultGarden()->getOwner()->getId()), $topic, 'Under the URL of the application, by its member, of its UUID.');
         self::assertSame([['type' => 'tool_call', 'summary' => 'search_plant(query: "hortensia")']], ChatStreams::of($topic));
         self::assertTrue(RecordingHub::updates($topic)[0]->isPrivate(), 'To the subscribers it is granted to only.');
     }

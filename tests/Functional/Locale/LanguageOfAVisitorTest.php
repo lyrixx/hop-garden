@@ -7,6 +7,7 @@ use App\Locale\Model\SupportedLocale;
 use App\Locale\UserPreferredLocale;
 use App\Settings\Entity\Settings;
 use App\Settings\SettingsRepository;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -19,6 +20,7 @@ use Symfony\Component\BrowserKit\Cookie;
  */
 final class LanguageOfAVisitorTest extends WebTestCase
 {
+    use GardenPathsTrait;
     use LogInTrait;
 
     private KernelBrowser $client;
@@ -96,7 +98,7 @@ final class LanguageOfAVisitorTest extends WebTestCase
         $this->client->getCookieJar()->set(new Cookie(UserPreferredLocale::COOKIE, 'fr'));
         $this->logIn($this->client, UserFactory::new()->approved()->create(['preferredLocale' => SupportedLocale::English]));
 
-        $crawler = $this->client->request('GET', '/spaces');
+        $crawler = $this->client->request('GET', self::inGarden('/spaces'));
         self::assertSame('en', $crawler->filter('html')->attr('lang'), 'The account first.');
 
         $this->client->submit($crawler->filter('.locale-switch')->selectButton('Français')->form());

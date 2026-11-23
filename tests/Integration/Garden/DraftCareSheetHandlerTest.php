@@ -45,7 +45,7 @@ final class DraftCareSheetHandlerTest extends KernelTestCase
         $planting = $this->reload($planting);
         $plant = $planting->getPlant() ?? self::fail('The planting is linked to the draft.');
         $cards = array_values(array_filter($events, static fn (array $event): bool => 'draft_card' === $event['type']));
-        self::assertSame($cards[0]['plant_id'], $plant->getId());
+        self::assertSame($cards[0]['plant_id'], $plant->getId()->toRfc4122());
         self::assertSame('Hydrangea paniculata', $plant->getScientificName());
         self::assertSame(191052, $plant->getTrefleId());
         self::assertFalse($plant->isValidated(), 'The agent never validates a plant.');
@@ -141,7 +141,7 @@ final class DraftCareSheetHandlerTest extends KernelTestCase
         $this->handle($planting);
 
         self::assertSame([], $this->events($planting));
-        self::assertSame($plant->getId(), $this->reload($planting)->getPlant()?->getId());
+        self::assertTrue($plant->getId()->equals($this->reload($planting)->getPlant()?->getId()));
     }
 
     /**

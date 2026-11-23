@@ -14,11 +14,12 @@ use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * In the tests only, on the firewall of /_mcp (config/packages/security.yaml, when@test): stands for the OAuth
  * authenticator of phase 3, which will log in the user of an access token, bound to the garden they chose. Its token
- * says it plainly: "Bearer test-client:<user id>:<garden id>". The binding is the production one
+ * says it plainly: "Bearer test-client:<user id>:<garden id>", both UUIDs. The binding is the production one
  * (CurrentGarden::TOKEN_ATTRIBUTE), and so are the voters and the tools behind it.
  */
 final class McpClientAuthenticator extends AbstractAuthenticator
@@ -30,9 +31,9 @@ final class McpClientAuthenticator extends AbstractAuthenticator
     ) {
     }
 
-    public static function header(int $userId, int $gardenId): string
+    public static function header(Uuid $userId, Uuid $gardenId): string
     {
-        return \sprintf('%s%d:%d', self::PREFIX, $userId, $gardenId);
+        return \sprintf('%s%s:%s', self::PREFIX, $userId->toRfc4122(), $gardenId->toRfc4122());
     }
 
     public function supports(Request $request): bool
@@ -42,8 +43,8 @@ final class McpClientAuthenticator extends AbstractAuthenticator
 
     public function authenticate(Request $request): Passport
     {
-        [$userId, $gardenId] = array_map(intval(...), explode(':', substr($request->headers->get('Authorization', ''), \strlen(self::PREFIX)), 2) + [1 => '0']);
-        $user = $this->userRepository->find($userId) ?? throw new CustomUserMessageAuthenticationException('No such user.');
+        [$userId, $gardenId] = explode(':', substr($request->headers->get('Authorization', ''), \strlen(self::PREFIX)), 2) + [1 => ''];
+        $user = (Uuid::isValid($userId) ? $this->userRepository->find(Uuid::fromString($userId)) : null) ?? throw new CustomUserMessageAuthenticationException('No such user.');
 
         $passport = new SelfValidatingPassport(new UserBadge($user->getUserIdentifier(), static fn () => $user));
         $passport->setAttribute(CurrentGarden::TOKEN_ATTRIBUTE, $gardenId);

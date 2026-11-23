@@ -13,6 +13,7 @@ use App\Mcp\Agent\AgentRunTokens;
 use App\Mcp\Security\McpEntryPoint;
 use App\Plant\PlantRepository;
 use App\Tests\Integration\Mcp\PlantToolsTest;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use App\Tests\Utils\Mcp\McpClientAuthenticator;
 use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
@@ -30,6 +31,7 @@ use Symfony\Component\Uid\UuidV7;
 final class McpEndpointTest extends WebTestCase
 {
     use ClockSensitiveTrait;
+    use GardenPathsTrait;
     use LogInTrait;
 
     private const string PROTOCOL_VERSION = '2025-06-18';
@@ -68,7 +70,7 @@ final class McpEndpointTest extends WebTestCase
         // Then the plant itself: the user adds it on the page of its card
         $proposed = $this->rpc('/_mcp', 'tools/call', ['name' => 'propose_planting', 'arguments' => ['plant_id' => $plantId, 'name' => 'Hortensia']], $session);
         $url = $proposed['result']['structuredContent']['validation_url'];
-        self::assertStringStartsWith('https://hop-garden.test/proposals/plantings/', $url);
+        self::assertStringStartsWith('https://hop-garden.test/g/the-garden-of-the-tests/proposals/plantings/', $url, 'In the garden of its token.');
         self::assertSame([], self::getContainer()->get(PlantingRepository::class)->findBy(['plant' => $plantId]), 'Nothing until the user taps the card.');
 
         // Opened in Hop Garden, by a member
@@ -115,7 +117,7 @@ final class McpEndpointTest extends WebTestCase
     public function testTheServerOfTheExternalClientsRefusesWhoeverHasNoToken(): void
     {
         $this->logIn($this->client);
-        $this->client->request('GET', '/garden');
+        $this->client->request('GET', self::inGarden('/garden'));
         self::assertResponseIsSuccessful();
 
         $this->client->request('POST', 'http://localhost/_mcp', server: self::withoutToken(), content: self::json(self::initialize()));

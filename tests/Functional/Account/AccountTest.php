@@ -7,6 +7,7 @@ use App\Account\UserRepository;
 use App\Factory\UserFactory;
 use App\Locale\Model\SupportedLocale;
 use App\Locale\UserPreferredLocale;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use App\Tests\Utils\Mailer\SentEmailsTrait;
 use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
@@ -18,6 +19,7 @@ use Symfony\Component\DomCrawler\Crawler;
 final class AccountTest extends WebTestCase
 {
     use ClockSensitiveTrait;
+    use GardenPathsTrait;
     use LogInTrait;
     use SentEmailsTrait;
 
@@ -151,7 +153,7 @@ final class AccountTest extends WebTestCase
         self::assertResponseRedirects('/');
         self::getContainer()->get(EntityManagerInterface::class)->clear();
         self::assertNull(self::getContainer()->get(UserRepository::class)->find($id));
-        $this->client->request('GET', '/garden');
+        $this->client->request('GET', self::inGarden('/garden'));
         self::assertResponseRedirects('/login', 302, 'Logged out.');
         $this->client->followRedirect();
         self::assertSelectorTextContains('.flash-success', 'Your account is deleted.');

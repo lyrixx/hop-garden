@@ -15,6 +15,9 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
+use Symfony\Component\HttpFoundation\UriSigner;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Uid\UuidV7;
 
 /**
  * The waiting list: register, verify the email, wait. The administrator decides: see WaitingListTest.
@@ -138,9 +141,23 @@ final class RegistrationTest extends WebTestCase
         $link = self::linkOf(self::lastEmail());
         $id = $this->user('alice@example.com')->getId();
 
-        $this->client->request('GET', str_replace('id=' . $id, 'id=' . ($id + 1), $link));
+        $this->client->request('GET', str_replace('id=' . $id, 'id=' . new UuidV7(), $link));
 
         self::assertResponseStatusCodeSame(404);
+        self::assertFalse($this->user('alice@example.com')->isEmailVerified());
+    }
+
+    /**
+     * Sent before the ids were UUIDs: signed, but of an id that no longer is one. As an expired one.
+     */
+    public function testALinkOfBeforeTheUuidsIsAsAnExpiredOne(): void
+    {
+        $this->register('alice@example.com');
+        $link = self::getContainer()->get(UriSigner::class)->sign(self::getContainer()->get(UrlGeneratorInterface::class)->generate('register_verify', ['id' => 12], UrlGeneratorInterface::ABSOLUTE_URL), new \DateInterval('P2D'));
+
+        $this->client->request('GET', $link);
+
+        self::assertResponseRedirects('/reset-password', 303);
         self::assertFalse($this->user('alice@example.com')->isEmailVerified());
     }
 

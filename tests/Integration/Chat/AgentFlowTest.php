@@ -48,7 +48,7 @@ final class AgentFlowTest extends KernelTestCase
         $cards = array_values(array_filter($history, static fn (ChatEntry $entry): bool => \in_array($entry->kind, [ChatEntry::SPACE_CARD, ChatEntry::PLANTING_CARD], true)));
         self::assertSame([ChatEntry::SPACE_CARD, ChatEntry::PLANTING_CARD], array_map(static fn (ChatEntry $entry): string => $entry->kind, $cards));
         self::assertSame('Balcon', $cards[0]->spaceProposal?->name);
-        self::assertSame($plant->getId(), $cards[1]->plantingProposal?->plantId);
+        self::assertTrue($plant->getId()->equals($cards[1]->plantingProposal?->plantId));
         self::assertSame('1' === $demo, \in_array(ChatEntry::TOOL_CALL, array_map(static fn (ChatEntry $entry): string => $entry->kind, $history), true), 'The MCP lines in demo mode only.');
     }
 

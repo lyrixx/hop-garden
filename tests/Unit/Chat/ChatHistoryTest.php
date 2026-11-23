@@ -28,7 +28,7 @@ final class ChatHistoryTest extends TestCase
             [ChatEntry::USER, 'paniculata', null],
             [ChatEntry::TOOL_CALL, 'propose_plant(common_name: "Panicled hydrangea")', null],
             [ChatEntry::TOOL_CALL, 'propose_plant(common_name: "Panicled hydrangea")', null],
-            [ChatEntry::DRAFT_CARD, '', 42],
+            [ChatEntry::DRAFT_CARD, '', '0196a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b'],
         ], self::rows($entries), 'No system prompt, no blank answer, a card for a draft only.');
     }
 
@@ -42,7 +42,7 @@ final class ChatHistoryTest extends TestCase
             [ChatEntry::USER, 'hortensia', null],
             [ChatEntry::ASSISTANT, 'Which one do you have?', null],
             [ChatEntry::USER, 'paniculata', null],
-            [ChatEntry::DRAFT_CARD, '', 42],
+            [ChatEntry::DRAFT_CARD, '', '0196a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b'],
         ], self::rows($entries), 'The card of the draft stays.');
     }
 
@@ -71,7 +71,7 @@ final class ChatHistoryTest extends TestCase
             Message::ofAssistant('Which one do you have?'),
             Message::ofUser('paniculata'),
             Message::ofAssistant(new ToolCallResult([$propose, $proposeAgain])),
-            Message::ofToolCall($propose, '{"plant_id":42,"status":"draft"}'),
+            Message::ofToolCall($propose, '{"plant_id":"0196a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b","status":"draft"}'),
             Message::ofToolCall($proposeAgain, 'Invalid parameters for tool \'propose_plant\''),
         ));
 
@@ -85,6 +85,6 @@ final class ChatHistoryTest extends TestCase
      */
     private static function rows(array $entries): array
     {
-        return array_map(static fn (ChatEntry $entry): array => [$entry->kind, $entry->text, $entry->plantId], $entries);
+        return array_map(static fn (ChatEntry $entry): array => [$entry->kind, $entry->text, $entry->plantId?->toRfc4122()], $entries);
     }
 }

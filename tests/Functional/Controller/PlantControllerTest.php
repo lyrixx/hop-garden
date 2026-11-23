@@ -16,6 +16,7 @@ use App\Plant\Model\Exposure;
 use App\Plant\Model\Source;
 use App\Plant\PlantRepository;
 use App\Reminder\Model\ReminderType;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use App\Tests\Utils\Http\UnavailableDataSources;
 use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\Bundle\DoctrineBundle\DataCollector\DoctrineDataCollector;
@@ -28,6 +29,7 @@ use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 final class PlantControllerTest extends WebTestCase
 {
     use ClockSensitiveTrait;
+    use GardenPathsTrait;
     use LogInTrait;
 
     private KernelBrowser $client;
@@ -42,7 +44,7 @@ final class PlantControllerTest extends WebTestCase
     {
         $plant = PlantFactory::createOne();
 
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/card');
+        $crawler = $this->client->request('GET', self::pathOf($plant) . '/card');
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('.status', 'Draft');
@@ -53,11 +55,11 @@ final class PlantControllerTest extends WebTestCase
     public function testValidate(): void
     {
         $plant = PlantFactory::createOne();
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId());
+        $crawler = $this->client->request('GET', self::pathOf($plant));
 
         $this->client->submit($crawler->filter('form[action$="/validate"]')->form());
 
-        self::assertResponseRedirects('/plants/' . $plant->getId(), 303);
+        self::assertResponseRedirects(self::pathOf($plant), 303);
         self::assertTrue($this->reload($plant)->isValidated());
 
         $this->client->followRedirect();
@@ -71,7 +73,7 @@ final class PlantControllerTest extends WebTestCase
     {
         self::mockTime('2026-11-21 10:00');
         $plant = PlantFactory::createOne(['commonName' => 'Panicled hydrangea', 'scientificName' => 'Hydrangea paniculata', 'createdAt' => new \DateTimeImmutable('2026-11-21 09:55'), 'trefleId' => 191052]);
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId());
+        $crawler = $this->client->request('GET', self::pathOf($plant));
 
         $this->client->submit($crawler->filter('form[action$="/validate"]')->form());
 
@@ -83,7 +85,7 @@ final class PlantControllerTest extends WebTestCase
     {
         $plant = PlantFactory::createOne();
         PlantingFactory::new()->linkedTo($plant)->create(['name' => 'Hydrangea by the shed', 'trefleId' => 191047, 'scientificName' => 'Hydrangea macrophylla']);
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/card');
+        $crawler = $this->client->request('GET', self::pathOf($plant) . '/card');
 
         $this->client->submit($crawler->filter('form[action$="/validate"]')->form(), [], ['HTTP_TURBO_FRAME' => 'plant-card-' . $plant->getId() . '-frame']);
 
@@ -95,8 +97,7 @@ final class PlantControllerTest extends WebTestCase
     {
         $this->client->request('GET', '/collection');
 
-        self::assertResponseStatusCodeSame(301);
-        self::assertResponseRedirects('/garden');
+        self::assertResponseRedirects(self::inGarden('/garden'), 302, 'To the last garden: not the same page for every member.');
     }
 
     public function testTheCardIsValidatedInPlaceWherever(): void
@@ -104,7 +105,7 @@ final class PlantControllerTest extends WebTestCase
         $plant = PlantFactory::createOne();
         $frame = 'plant-card-' . $plant->getId() . '-frame';
 
-        foreach (['/plants/' . $plant->getId() . '/card', '/plants/' . $plant->getId()] as $url) {
+        foreach ([self::pathOf($plant) . '/card', self::pathOf($plant)] as $url) {
             $this->client->request('GET', $url);
             self::assertSelectorExists('turbo-frame#' . $frame . ':not([target]) form[action$="/validate"]:not([data-turbo-frame])', 'In the chat as on the page of the species.');
             self::assertSelectorExists('turbo-frame#' . $frame . ' .card-head h3 a[data-turbo-frame="_top"]', 'Only the links that navigate leave the frame.');
@@ -115,12 +116,12 @@ final class PlantControllerTest extends WebTestCase
     {
         $plant = PlantFactory::createOne();
         $frame = 'plant-card-' . $plant->getId() . '-frame';
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/card');
+        $crawler = $this->client->request('GET', self::pathOf($plant) . '/card');
 
         // As Turbo submits a form of a frame
         $this->client->submit($crawler->filter('form[action$="/validate"]')->form(), [], ['HTTP_TURBO_FRAME' => $frame]);
 
-        self::assertResponseRedirects('/plants/' . $plant->getId() . '/card', 303);
+        self::assertResponseRedirects(self::pathOf($plant) . '/card', 303);
         $this->client->followRedirect();
         self::assertSelectorExists('turbo-frame#' . $frame . ' article.plant-card.is-validated');
         self::assertSelectorNotExists('form[action$="/validate"]');
@@ -131,7 +132,7 @@ final class PlantControllerTest extends WebTestCase
         }
         self::assertSelectorNotExists('a.button-next', 'No plant of the garden to see yet.');
 
-        $this->client->request('GET', '/garden');
+        $this->client->request('GET', self::inGarden('/garden'));
         self::assertSelectorNotExists('.flash', 'No message for later: the card said it.');
     }
 
@@ -139,7 +140,7 @@ final class PlantControllerTest extends WebTestCase
     {
         $plant = PlantFactory::createOne();
 
-        $this->client->request('POST', '/plants/' . $plant->getId() . '/validate', ['_token' => 'forged']);
+        $this->client->request('POST', self::pathOf($plant) . '/validate', ['_token' => 'forged']);
 
         // The firewall turns an invalid token into a login
         self::assertResponseRedirects('/login');
@@ -149,27 +150,27 @@ final class PlantControllerTest extends WebTestCase
     public function testValidatingTwiceIsHarmless(): void
     {
         $plant = PlantFactory::createOne();
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId());
+        $crawler = $this->client->request('GET', self::pathOf($plant));
         $form = $crawler->filter('form[action$="/validate"]')->form();
 
         // Validated meanwhile, in another tab
         $this->client->submit($form);
         $this->client->submit($form);
 
-        self::assertResponseRedirects('/plants/' . $plant->getId());
+        self::assertResponseRedirects(self::pathOf($plant));
         self::assertTrue($this->reload($plant)->isValidated());
     }
 
     public function testEditingADraftMarksTheChangedValuesAsVerified(): void
     {
         $plant = PlantFactory::createOne();
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/edit');
+        $crawler = $this->client->request('GET', self::pathOf($plant) . '/edit');
 
         $this->client->submit($crawler->selectButton('Save the draft')->form(), [
             'care_sheet[minTemperatureC]' => '-20',
         ]);
 
-        self::assertResponseRedirects('/plants/' . $plant->getId());
+        self::assertResponseRedirects(self::pathOf($plant));
         $careSheet = $this->reload($plant)->getCareSheet();
         self::assertSame(-20, $careSheet->getMinTemperatureC());
         self::assertSame(Confidence::High, $careSheet->getConfidenceOf(CareSheetField::MinTemperatureC));
@@ -181,24 +182,24 @@ final class PlantControllerTest extends WebTestCase
     {
         $plant = PlantFactory::new()->validated()->create();
 
-        $this->client->request('GET', '/plants/' . $plant->getId() . '/card');
-        self::assertSelectorExists('a[href$="/plants/' . $plant->getId() . '/edit"]');
+        $this->client->request('GET', self::pathOf($plant) . '/card');
+        self::assertSelectorExists('a[href$="/species/' . $plant->getSlug() . '/edit"]');
 
-        $this->client->request('GET', '/plants/' . $plant->getId());
-        self::assertSelectorExists('a[href$="/plants/' . $plant->getId() . '/edit"]');
+        $this->client->request('GET', self::pathOf($plant));
+        self::assertSelectorExists('a[href$="/species/' . $plant->getSlug() . '/edit"]');
     }
 
     public function testEditingAValidatedPlantKeepsItValidated(): void
     {
         $plant = PlantFactory::new()->validated()->create();
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/edit');
+        $crawler = $this->client->request('GET', self::pathOf($plant) . '/edit');
 
         self::assertResponseIsSuccessful();
         $this->client->submit($crawler->selectButton('Save')->form(), [
             'care_sheet[minTemperatureC]' => '-20',
         ]);
 
-        self::assertResponseRedirects('/plants/' . $plant->getId());
+        self::assertResponseRedirects(self::pathOf($plant));
         $plant = $this->reload($plant);
         $careSheet = $plant->getCareSheet();
         self::assertSame(-20, $careSheet->getMinTemperatureC());
@@ -213,11 +214,11 @@ final class PlantControllerTest extends WebTestCase
     public function testRemindersOfAValidatedPlant(): void
     {
         $plant = PlantFactory::new()->validated()->create();
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId());
+        $crawler = $this->client->request('GET', self::pathOf($plant));
 
         $this->client->submit($crawler->filter('form[action$="/reminders/frost"]')->form(), [], ['HTTP_TURBO_FRAME' => 'plant-' . $plant->getId() . '-reminder-frost']);
 
-        self::assertResponseRedirects('/plants/' . $plant->getId() . '/card', 303);
+        self::assertResponseRedirects(self::pathOf($plant) . '/card', 303);
         self::assertSame([ReminderType::Frost], $this->reload($plant)->getEnabledReminderTypes());
 
         // Turbo takes the frame of the switch from the card
@@ -231,11 +232,11 @@ final class PlantControllerTest extends WebTestCase
         $plant = PlantFactory::new()->validated()->create();
         $frame = 'plant-' . $plant->getId() . '-reminder-pruning';
         // As the chat loads the card
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/card');
+        $crawler = $this->client->request('GET', self::pathOf($plant) . '/card');
 
         $this->client->submit($crawler->filter('turbo-frame#' . $frame . ' form')->form(), [], ['HTTP_TURBO_FRAME' => $frame]);
 
-        self::assertResponseRedirects('/plants/' . $plant->getId() . '/card', 303);
+        self::assertResponseRedirects(self::pathOf($plant) . '/card', 303);
         self::assertSame([ReminderType::Pruning], $this->reload($plant)->getEnabledReminderTypes());
         $this->client->followRedirect();
         self::assertSelectorExists('turbo-frame#' . $frame . ' form.plate-reminder.is-enabled button.toggle[aria-checked="true"]');
@@ -245,22 +246,22 @@ final class PlantControllerTest extends WebTestCase
     {
         $plant = PlantFactory::createOne();
         $frame = 'plant-card-' . $plant->getId() . '-frame';
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/edit', server: ['HTTP_TURBO_FRAME' => $frame]);
+        $crawler = $this->client->request('GET', self::pathOf($plant) . '/edit', server: ['HTTP_TURBO_FRAME' => $frame]);
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorExists('turbo-frame#' . $frame . ' form.care-sheet-form[action="/plants/' . $plant->getId() . '/edit"]', 'Its action says where it goes, whatever the page around the frame.');
-        self::assertSelectorExists('turbo-frame#' . $frame . ' a.button[href="/plants/' . $plant->getId() . '/card"]', 'Cancel brings the card back.');
+        self::assertSelectorExists('turbo-frame#' . $frame . ' form.care-sheet-form[action="' . self::pathOf($plant) . '/edit"]', 'Its action says where it goes, whatever the page around the frame.');
+        self::assertSelectorExists('turbo-frame#' . $frame . ' a.button[href="' . self::pathOf($plant) . '/card"]', 'Cancel brings the card back.');
         self::assertSelectorNotExists('.topbar', 'The frame only, not a page.');
 
         $this->client->submit($crawler->selectButton('Save the draft')->form(), ['care_sheet[minTemperatureC]' => '-20'], ['HTTP_TURBO_FRAME' => $frame]);
 
-        self::assertResponseRedirects('/plants/' . $plant->getId() . '/card', 303);
+        self::assertResponseRedirects(self::pathOf($plant) . '/card', 303);
         self::assertSame(-20, $this->reload($plant)->getCareSheet()->getMinTemperatureC());
         $this->client->followRedirect();
         self::assertSelectorExists('turbo-frame#' . $frame . ' article.plant-card.is-draft');
         self::assertSelectorTextContains('turbo-frame#' . $frame . ' .hardiness-coldest', '−20 °C');
 
-        $this->client->request('GET', '/garden');
+        $this->client->request('GET', self::inGarden('/garden'));
         self::assertSelectorNotExists('.flash', 'No message for later: the card said it.');
     }
 
@@ -268,7 +269,7 @@ final class PlantControllerTest extends WebTestCase
     {
         $plant = PlantFactory::new()->validated()->create();
         $frame = 'plant-card-' . $plant->getId() . '-frame';
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/edit', server: ['HTTP_TURBO_FRAME' => $frame]);
+        $crawler = $this->client->request('GET', self::pathOf($plant) . '/edit', server: ['HTTP_TURBO_FRAME' => $frame]);
 
         $this->client->submit($crawler->selectButton('Save')->form()->disableValidation(), ['care_sheet[minTemperatureC]' => '-61'], ['HTTP_TURBO_FRAME' => $frame]);
 
@@ -287,7 +288,7 @@ final class PlantControllerTest extends WebTestCase
         $shed = PlantingFactory::new()->inSpace($northBed)->linkedTo($hydrangea)->create(['name' => 'Hydrangea by the shed']);
         $gate = PlantingFactory::new()->linkedTo($hydrangea)->create(['name' => 'Hydrangea by the gate', 'createdAt' => new \DateTimeImmutable('2026-11-02')]);
 
-        $crawler = $this->client->request('GET', '/plants');
+        $crawler = $this->client->request('GET', self::inGarden('/species'));
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextSame('.nav a.active', 'Species');
@@ -299,20 +300,20 @@ final class PlantControllerTest extends WebTestCase
             'The validated species by name, then the drafts.',
         );
         $bigleaf = $crawler->filter('.species-row')->eq(0);
-        self::assertSame('/plants/' . $hydrangea->getId(), $bigleaf->filter('a.species-row-name')->attr('href'));
+        self::assertSame(self::pathOf($hydrangea), $bigleaf->filter('a.species-row-name')->attr('href'));
         self::assertSame('Hydrangea macrophylla', $bigleaf->filter('.latin')->text());
         self::assertCount(1, $bigleaf->filter('img.species-summary-plate[src$=".webp"]'), 'The plate is the species.');
         self::assertSame('Care sheet validated', trim($bigleaf->filter('.status')->text()));
         self::assertSame('2 plants in your garden', $bigleaf->filter('.species-row-plantings .kicker')->text());
         self::assertSame(
-            ['/garden/' . $gate->getId() => 'Hydrangea by the gate', '/garden/' . $shed->getId() => 'Hydrangea by the shed'],
+            [self::pathOf($gate) => 'Hydrangea by the gate', self::pathOf($shed) => 'Hydrangea by the shed'],
             array_merge(...$bigleaf->filter('a.species-planting')->each(static fn ($link): array => [(string) $link->attr('href') => $link->filter('strong')->text()])),
         );
-        self::assertSame(['/spaces/' . $northBed->getId() => 'North bed'], array_merge(...$bigleaf->filter('a.species-planting-space')->each(static fn ($link): array => [(string) $link->attr('href') => trim($link->text())])));
+        self::assertSame([self::pathOf($northBed) => 'North bed'], array_merge(...$bigleaf->filter('a.species-planting-space')->each(static fn ($link): array => [(string) $link->attr('href') => trim($link->text())])));
         self::assertSame('None of your plants follows it.', $crawler->filter('.species-row')->eq(1)->filter('.species-row-plantings .hint')->text());
         self::assertSame('Draft to review', trim($crawler->filter('#species-drafts .species-row[class*="is-draft"] .status')->text()));
-        self::assertSame('/plants/' . $rose->getId(), $crawler->filter('#species-drafts a.species-row-name')->attr('href'));
-        self::assertSelectorExists('a.button[href="/plants/new"]');
+        self::assertSame(self::pathOf($rose), $crawler->filter('#species-drafts a.species-row-name')->attr('href'));
+        self::assertSelectorExists('a.button[href="' . self::inGarden('/species/new') . '"]');
     }
 
     public function testTheIndexTakesAsManyQueriesForOneSpeciesAsForMany(): void
@@ -329,7 +330,7 @@ final class PlantControllerTest extends WebTestCase
 
     public function testTheIndexWithoutSpecies(): void
     {
-        $this->client->request('GET', '/plants');
+        $this->client->request('GET', self::inGarden('/species'));
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('p.callout', 'No species yet.');
@@ -339,7 +340,7 @@ final class PlantControllerTest extends WebTestCase
     public function testCreateASpeciesByHandThenValidateIt(): void
     {
         self::mockTime('2026-11-21 10:00');
-        $crawler = $this->client->request('GET', '/plants');
+        $crawler = $this->client->request('GET', self::inGarden('/species'));
         $crawler = $this->client->click($crawler->selectLink('New species')->link());
         self::assertResponseIsSuccessful();
         self::assertSelectorTextSame('.nav a.active', 'Species');
@@ -353,7 +354,7 @@ final class PlantControllerTest extends WebTestCase
         $this->client->submit($form);
 
         $plant = $this->lastPlant();
-        self::assertResponseRedirects('/plants/' . $plant->getId() . '/edit', 303);
+        self::assertResponseRedirects(self::pathOf($plant) . '/edit', 303);
         self::assertFalse($plant->isValidated());
         self::assertSame('Panicled hydrangea', $plant->getCommonName(), 'The names of Trefle.');
         self::assertSame('Hydrangea paniculata', $plant->getScientificName(), 'From Trefle, not from the browser.');
@@ -368,7 +369,7 @@ final class PlantControllerTest extends WebTestCase
         $crawler = $this->client->followRedirect();
         self::assertSelectorTextContains('.flash-success', 'The draft of Panicled hydrangea is ready: fill in its care sheet, then validate it.');
         $this->client->submit($crawler->selectButton('Save the draft')->form(), ['care_sheet[minTemperatureC]' => '-25']);
-        self::assertResponseRedirects('/plants/' . $plant->getId(), 303);
+        self::assertResponseRedirects(self::pathOf($plant), 303);
         self::assertSame(Confidence::High, $this->reload($plant)->getCareSheet()->getConfidenceOf(CareSheetField::MinTemperatureC));
         self::assertSame(Confidence::Low, $this->reload($plant)->getCareSheet()->getConfidenceOf(CareSheetField::Watering), 'Left as it was: still to verify.');
 
@@ -379,7 +380,7 @@ final class PlantControllerTest extends WebTestCase
         self::assertTrue($this->reload($plant)->isValidated());
         self::assertSame([], $this->plantingsOf($plant), 'Validating adds no plant to the garden.');
         $crawler = $this->client->followRedirect();
-        self::assertSame('/garden/new?plant=' . $plant->getId(), $crawler->filter('.species-plantings-head')->selectLink('Add to my garden')->attr('href'), 'The garden form adds it.');
+        self::assertSame(self::inGarden('/garden/new?plant=' . $plant->getSlug()), $crawler->filter('.species-plantings-head')->selectLink('Add to my garden')->attr('href'), 'The garden form adds it.');
     }
 
     /**
@@ -390,7 +391,7 @@ final class PlantControllerTest extends WebTestCase
     #[TestWith([['new_plant[name]' => ' ', 'new_plant[trefleId]' => '191052'], 'This value should not be blank.'], 'no name')]
     public function testASpeciesIsOneTrefleFindsForItsName(array $values, string $error): void
     {
-        $crawler = $this->client->request('GET', '/plants/new');
+        $crawler = $this->client->request('GET', self::inGarden('/species/new'));
 
         $this->client->submit($crawler->selectButton('Create the draft')->form()->disableValidation(), $values);
 
@@ -404,7 +405,7 @@ final class PlantControllerTest extends WebTestCase
         // The unavailable client stays for both requests
         $this->client->disableReboot();
         UnavailableDataSources::trefle(self::getContainer());
-        $crawler = $this->client->request('GET', '/plants/new');
+        $crawler = $this->client->request('GET', self::inGarden('/species/new'));
 
         $this->client->submit($crawler->selectButton('Create the draft')->form(), ['new_plant[name]' => 'hortensia', 'new_plant[trefleId]' => '191052']);
 
@@ -418,11 +419,11 @@ final class PlantControllerTest extends WebTestCase
     public function testASpeciesWithACareSheetIsNotMadeTwice(?int $trefleId, string $scientificName): void
     {
         $existing = PlantFactory::createOne(['commonName' => 'Hortensia', 'scientificName' => $scientificName, 'trefleId' => $trefleId]);
-        $crawler = $this->client->request('GET', '/plants/new');
+        $crawler = $this->client->request('GET', self::inGarden('/species/new'));
 
         $this->client->submit($crawler->selectButton('Create the draft')->form(), ['new_plant[name]' => 'hortensia', 'new_plant[trefleId]' => '191052']);
 
-        self::assertResponseRedirects('/plants/' . $existing->getId(), 303);
+        self::assertResponseRedirects(self::pathOf($existing), 303);
         self::assertSame($existing->getId(), $this->lastPlant()->getId(), 'No second care sheet.');
         $this->client->followRedirect();
         self::assertSelectorTextContains('.flash-success', $scientificName . ' has its care sheet already: here it is.');
@@ -430,11 +431,11 @@ final class PlantControllerTest extends WebTestCase
 
     public function testTheNewSpeciesOffersTheAssistant(): void
     {
-        $crawler = $this->client->request('GET', '/plants');
-        self::assertSame('/assistant?message=' . rawurlencode('Draft the care sheet of a new species'), $crawler->selectLink('ask the assistant to draft it')->attr('href'));
+        $crawler = $this->client->request('GET', self::inGarden('/species'));
+        self::assertSame(self::inGarden('/assistant?message=' . rawurlencode('Draft the care sheet of a new species')), $crawler->selectLink('ask the assistant to draft it')->attr('href'), 'The assistant of the garden.');
 
-        $crawler = $this->client->request('GET', '/plants/new');
-        self::assertSame('/assistant?message=' . rawurlencode('Draft the care sheet of a new species'), $crawler->selectLink('Ask the assistant to draft it')->attr('href'));
+        $crawler = $this->client->request('GET', self::inGarden('/species/new'));
+        self::assertSame(self::inGarden('/assistant?message=' . rawurlencode('Draft the care sheet of a new species')), $crawler->selectLink('Ask the assistant to draft it')->attr('href'));
     }
 
     public function testAddToMyGardenOnlyFromAValidatedSpecies(): void
@@ -442,11 +443,11 @@ final class PlantControllerTest extends WebTestCase
         $validated = PlantFactory::new()->validated()->create();
         $draft = PlantFactory::createOne(['commonName' => 'Draft hydrangea']);
 
-        $crawler = $this->client->request('GET', '/plants/' . $validated->getId());
-        self::assertSame('/garden/new?plant=' . $validated->getId(), $crawler->filter('#in-your-garden .species-plantings-head')->selectLink('Add to my garden')->attr('href'));
+        $crawler = $this->client->request('GET', self::pathOf($validated));
+        self::assertSame(self::inGarden('/garden/new?plant=' . $validated->getSlug()), $crawler->filter('#in-your-garden .species-plantings-head')->selectLink('Add to my garden')->attr('href'));
 
-        $this->client->request('GET', '/plants/' . $draft->getId());
-        self::assertSelectorNotExists('#in-your-garden a[href^="/garden/new"]', 'A draft is validated first.');
+        $this->client->request('GET', self::pathOf($draft));
+        self::assertSelectorNotExists('#in-your-garden a[href^="' . self::inGarden('/garden/new') . '"]', 'A draft is validated first.');
     }
 
     public function testThePageOfTheSpeciesListsMyPlantsOfIt(): void
@@ -456,28 +457,28 @@ final class PlantControllerTest extends WebTestCase
         $shed = PlantingFactory::new()->inSpace($northBed)->linkedTo($plant)->create(['name' => 'Hydrangea by the shed']);
         $gate = PlantingFactory::new()->linkedTo($plant)->create(['name' => 'Hydrangea by the gate', 'createdAt' => new \DateTimeImmutable('2026-11-02')]);
 
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId());
+        $crawler = $this->client->request('GET', self::pathOf($plant));
 
         self::assertResponseIsSuccessful('The species keeps its page.');
         self::assertSame(
-            ['/garden/' . $gate->getId() => 'Hydrangea by the gate', '/garden/' . $shed->getId() => 'Hydrangea by the shed'],
+            [self::pathOf($gate) => 'Hydrangea by the gate', self::pathOf($shed) => 'Hydrangea by the shed'],
             array_merge(...$crawler->filter('.species-plantings a.species-planting')->each(static fn ($link): array => [(string) $link->attr('href') => $link->filter('strong')->text()])),
         );
         self::assertSame(
-            [[], ['/spaces/' . $northBed->getId() => 'North bed']],
+            [[], [self::pathOf($northBed) => 'North bed']],
             $crawler->filter('.species-planting-list li')->each(static fn ($item): array => array_merge([], ...$item->filter('a.species-planting-space')->each(static fn ($link): array => [(string) $link->attr('href') => trim($link->text())]))),
             'The space of each plant, when it has one.',
         );
         self::assertSelectorTextContains('.species-plantings', 'They share this care sheet, and so its reminders.');
-        self::assertSelectorExists('.plant-card a.button-next[href="/plants/' . $plant->getId() . '#in-your-garden"]', 'Its reminders are about both: my plants, listed here.');
+        self::assertSelectorExists('.plant-card a.button-next[href="' . self::pathOf($plant) . '#in-your-garden"]', 'Its reminders are about both: my plants, listed here.');
     }
 
-    #[TestWith(['/plants/999999'])]
-    #[TestWith(['/plants/999999/card'])]
-    #[TestWith(['/plants/999999/edit'])]
-    public function testAnUnknownPlantIsNotFound(string $url): void
+    #[TestWith(['/species/no-such-species'])]
+    #[TestWith(['/species/no-such-species/card'])]
+    #[TestWith(['/species/no-such-species/edit'])]
+    public function testAnUnknownPlantIsNotFound(string $path): void
     {
-        $this->client->request('GET', $url);
+        $this->client->request('GET', self::inGarden($path));
 
         self::assertResponseStatusCodeSame(404);
     }
@@ -493,7 +494,7 @@ final class PlantControllerTest extends WebTestCase
     public function testAnInvalidCareSheetIsRefused(array $values): void
     {
         $plant = PlantFactory::new()->validated()->create();
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/edit');
+        $crawler = $this->client->request('GET', self::pathOf($plant) . '/edit');
         // As a request crafted by hand: the browser would refuse a blank field
         $form = $crawler->selectButton('Save')->form()->disableValidation();
 
@@ -508,11 +509,11 @@ final class PlantControllerTest extends WebTestCase
     public function testDisableAReminder(): void
     {
         $plant = PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Frost, ReminderType::Pruning)->create();
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId());
+        $crawler = $this->client->request('GET', self::pathOf($plant));
 
         $this->client->submit($crawler->filter('form[action$="/reminders/frost"]')->form());
 
-        self::assertResponseRedirects('/plants/' . $plant->getId(), 303);
+        self::assertResponseRedirects(self::pathOf($plant), 303);
         self::assertSame([ReminderType::Pruning], $this->reload($plant)->getEnabledReminderTypes());
     }
 
@@ -521,9 +522,9 @@ final class PlantControllerTest extends WebTestCase
         $draft = PlantFactory::createOne();
         $token = $this->plantToken();
 
-        $this->client->request('POST', '/plants/' . $draft->getId() . '/reminders/frost', ['_token' => $token, 'enabled' => '1']);
+        $this->client->request('POST', self::pathOf($draft) . '/reminders/frost', ['_token' => $token, 'enabled' => '1']);
 
-        self::assertResponseRedirects('/plants/' . $draft->getId());
+        self::assertResponseRedirects(self::pathOf($draft));
         self::assertSame([], $this->reload($draft)->getEnabledReminderTypes());
         $this->client->followRedirect();
         self::assertSelectorTextContains('.flash-warning', 'Validate its care sheet first: reminders are set on a validated care sheet only.');
@@ -534,7 +535,7 @@ final class PlantControllerTest extends WebTestCase
         $plant = PlantFactory::new()->validated()->create();
         $token = $this->plantToken();
 
-        $this->client->request('POST', '/plants/' . $plant->getId() . '/reminders/watering', ['_token' => $token, 'enabled' => '1']);
+        $this->client->request('POST', self::pathOf($plant) . '/reminders/watering', ['_token' => $token, 'enabled' => '1']);
 
         self::assertResponseStatusCodeSame(404);
     }
@@ -543,7 +544,7 @@ final class PlantControllerTest extends WebTestCase
     {
         $plant = PlantFactory::new()->validated()->create();
 
-        $this->client->request('POST', '/plants/' . $plant->getId() . '/reminders/frost', ['_token' => 'forged', 'enabled' => '1']);
+        $this->client->request('POST', self::pathOf($plant) . '/reminders/frost', ['_token' => 'forged', 'enabled' => '1']);
 
         self::assertResponseRedirects('/login');
         self::assertSame([], $this->reload($plant)->getEnabledReminderTypes());
@@ -553,7 +554,7 @@ final class PlantControllerTest extends WebTestCase
     {
         $token = $this->plantToken();
 
-        $this->client->request('POST', '/plants/999999/validate', ['_token' => $token]);
+        $this->client->request('POST', self::inGarden('/species/no-such-species/validate'), ['_token' => $token]);
 
         self::assertResponseStatusCodeSame(404);
     }
@@ -564,7 +565,7 @@ final class PlantControllerTest extends WebTestCase
     private function plantToken(): string
     {
         $plant = PlantFactory::createOne(['commonName' => 'Token holder']);
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/card');
+        $crawler = $this->client->request('GET', self::pathOf($plant) . '/card');
 
         return (string) $crawler->filter('form[action$="/validate"] input[name="_token"]')->attr('value');
     }
@@ -587,10 +588,10 @@ final class PlantControllerTest extends WebTestCase
     {
         // The next request reboots the kernel, as in production: nothing loaded already to hide a query, and the
         // queries of the fixtures not counted
-        $this->client->request('GET', '/plants');
+        $this->client->request('GET', self::inGarden('/species'));
         $this->client->enableProfiler();
 
-        $this->client->request('GET', '/plants');
+        $this->client->request('GET', self::inGarden('/species'));
 
         self::assertResponseIsSuccessful();
         $profile = $this->client->getProfile();

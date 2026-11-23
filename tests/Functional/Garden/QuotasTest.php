@@ -6,6 +6,7 @@ use App\Factory\GardenFactory;
 use App\Garden\Entity\Garden;
 use App\Garden\PlantingRepository;
 use App\Tests\Utils\Chat\WorkerTrait;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use App\Tests\Utils\Mercure\TurboStream;
 use App\Tests\Utils\Security\LogInTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -19,6 +20,7 @@ use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
  */
 final class QuotasTest extends WebTestCase
 {
+    use GardenPathsTrait;
     use LogInTrait;
     use WorkerTrait;
 
@@ -34,7 +36,7 @@ final class QuotasTest extends WebTestCase
     public function testTheChatSaysTheAssistantIsBackTomorrow(): void
     {
         $this->spendTheAgentRunsOf($this->gardenOfTheTest());
-        $crawler = $this->client->request('GET', '/assistant');
+        $crawler = $this->client->request('GET', self::inGarden('/assistant'));
 
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => 'hortensia'], ['HTTP_ACCEPT' => 'text/vnd.turbo-stream.html, text/html, application/xhtml+xml']);
 
@@ -47,7 +49,7 @@ final class QuotasTest extends WebTestCase
 
         // Without Turbo too
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => 'hortensia']);
-        self::assertResponseRedirects('/assistant', 303);
+        self::assertResponseRedirects(self::inGarden('/assistant'), 303);
         $this->client->followRedirect();
         self::assertSelectorTextContains('.flash-warning', 'It is back tomorrow.');
     }
@@ -55,7 +57,7 @@ final class QuotasTest extends WebTestCase
     public function testAPlantAddedWithoutSpeciesWaitsForItsCareSheet(): void
     {
         $this->spendTheAgentRunsOf($this->gardenOfTheTest());
-        $crawler = $this->client->request('GET', '/garden/new');
+        $crawler = $this->client->request('GET', self::inGarden('/garden/new'));
 
         $this->client->submit($crawler->selectButton('Add to my garden')->form(), ['planting[name]' => 'The mystery shrub']);
 
@@ -63,13 +65,13 @@ final class QuotasTest extends WebTestCase
         self::assertTrue($planting->hasDraftingFailed(), 'Its care sheet to retry.');
         $this->client->followRedirect();
         self::assertSelectorTextContains('.flash-warning', 'Its care sheet waits: the assistant has worked enough for your garden today');
-        self::assertSelectorExists('form[action="/garden/' . $planting->getId() . '/draft"]', 'Retry, tomorrow.');
+        self::assertSelectorExists('form[action="' . self::pathOf($planting) . '/draft"]', 'Retry, tomorrow.');
     }
 
     public function testTheQuotaIsTheOneOfEachGarden(): void
     {
         $this->spendTheAgentRunsOf(GardenFactory::createOne());
-        $crawler = $this->client->request('GET', '/assistant');
+        $crawler = $this->client->request('GET', self::inGarden('/assistant'));
 
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => 'hortensia']);
 

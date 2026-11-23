@@ -15,7 +15,7 @@ final class SpaceTest extends TestCase
     #[DataProvider('provideItsConditionsInAFewWordsCases')]
     public function testItsConditionsInAFewWords(?Exposure $exposure, ?Soil $soil, ?string $expected): void
     {
-        self::assertSame($expected, new Space(GardenFactory::createOne(), 'North bed', $exposure, $soil, new \DateTimeImmutable('2026-11-01'))->describeConditions(Translators::for('en')));
+        self::assertSame($expected, new Space(GardenFactory::createOne(), 'North bed', 'north-bed', $exposure, $soil, new \DateTimeImmutable('2026-11-01'))->describeConditions(Translators::for('en')));
     }
 
     /**
@@ -31,7 +31,7 @@ final class SpaceTest extends TestCase
 
     public function testItIsRevised(): void
     {
-        $space = new Space(GardenFactory::createOne(), 'Balcony', Exposure::Sun, null, new \DateTimeImmutable('2026-11-01'));
+        $space = new Space(GardenFactory::createOne(), 'Balcony', 'balcony', Exposure::Sun, null, new \DateTimeImmutable('2026-11-01'));
 
         $space->revise('South balcony', Exposure::PartShade, Soil::Loamy);
 

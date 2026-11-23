@@ -15,13 +15,15 @@ use Mcp\Schema\Content\TextResourceContents;
 use Mcp\Schema\Tool;
 
 /**
- * Every tool of both MCP servers, called by Carol (the agent of her chat, an external client of hers) with the ids of
- * the resources of the garden of Alice and Bob: the same error as for an id that does not exist, or her garden only. A
- * tool this test does not know makes it fail. The routes of the website: GardenIsolationTest.
+ * Every tool of both MCP servers, called by Carol (the agent of her chat, an external client of hers) with the UUIDs of
+ * the resources of the garden of Alice and Bob: the same error as for a UUID that does not exist, or her garden only; a
+ * malformed id is refused by the schema of the tool. A tool this test does not know makes it fail. The routes of the
+ * website: GardenIsolationTest.
  */
 final class GardenIsolationMcpTest extends McpTestCase
 {
-    private const int GHOST = 999999999;
+    private const string GHOST = '01a205b0-0000-7000-8000-000000000000';
+    private const string MALFORMED = '42';
 
     private TwoGardens $gardens;
 
@@ -69,7 +71,9 @@ final class GardenIsolationMcpTest extends McpTestCase
         self::assertStringContainsString('Lavender of Carol', $collection->text);
         self::assertNoNameOfTheirs($collection->text, 'hopgarden://collection');
 
-        self::assertSame($this->readError('hopgarden://plants/' . self::GHOST), str_replace((string) $this->gardens->rose->getId(), (string) self::GHOST, $this->readError('hopgarden://plants/' . $this->gardens->rose->getId())));
+        $rose = $this->gardens->rose->getId()->toRfc4122();
+        self::assertSame($this->readError('hopgarden://plants/' . self::GHOST), str_replace($rose, self::GHOST, $this->readError('hopgarden://plants/' . $rose)));
+        self::assertSame($this->readError('hopgarden://plants/' . self::GHOST), str_replace(self::MALFORMED, self::GHOST, $this->readError('hopgarden://plants/' . self::MALFORMED)));
     }
 
     /**
@@ -81,7 +85,7 @@ final class GardenIsolationMcpTest extends McpTestCase
         $client = $this->mcp('/_mcp/agent', $this->gardens->bob, $bobsOther);
 
         self::assertSame([], $this->callTool('list_collection', client: $client)['plants']);
-        $this->assertGone($client, 'get_plant', ['id' => $this->gardens->rose->getId()]);
+        $this->assertGone($client, 'get_plant', ['id' => $this->gardens->rose->getId()->toRfc4122()]);
     }
 
     /**
@@ -89,8 +93,8 @@ final class GardenIsolationMcpTest extends McpTestCase
      */
     private function attempts(): array
     {
-        $rose = $this->gardens->rose->getId();
-        $draft = $this->gardens->draft->getId();
+        $rose = $this->gardens->rose->getId()->toRfc4122();
+        $draft = $this->gardens->draft->getId()->toRfc4122();
 
         return [
             'confirm_plant' => [[['id' => $draft], 'gone'], [['id' => $rose], 'gone']],
@@ -102,7 +106,7 @@ final class GardenIsolationMcpTest extends McpTestCase
             'list_spaces' => [[[], 'hers']],
             'offer_choices' => [[['question' => 'Which one?', 'options' => ['This one', 'That one']], 'hers']],
             'propose_plant' => [[PlantToolsTest::proposal(), 'hers']],
-            'propose_planting' => [[['plant_id' => $rose, 'name' => 'Mine now'], 'gone'], [['plant_id' => $this->gardens->lavender->getId(), 'name' => 'Mine now', 'space_id' => $this->gardens->terrace->getId()], 'gone']],
+            'propose_planting' => [[['plant_id' => $rose, 'name' => 'Mine now'], 'gone'], [['plant_id' => $this->gardens->lavender->getId()->toRfc4122(), 'name' => 'Mine now', 'space_id' => $this->gardens->terrace->getId()->toRfc4122()], 'gone']],
             // Their space of this name is not hers: hers may have one
             'propose_space' => [[['name' => 'Terrace of the allotment'], 'hers']],
             'search_plant' => [[['query' => 'hortensia'], 'hers']],
@@ -111,7 +115,7 @@ final class GardenIsolationMcpTest extends McpTestCase
     }
 
     /**
-     * The same error as for an id that does not exist: theirs is not said to exist.
+     * The same error as for a UUID that does not exist, or a malformed id: theirs is not said to exist.
      *
      * @param array<string, mixed> $arguments
      */
@@ -119,12 +123,19 @@ final class GardenIsolationMcpTest extends McpTestCase
     {
         $error = $this->callToolExpectingError($tool, $arguments, $client);
         // Theirs only: hers stays
-        $theirs = [$this->gardens->rose->getId(), $this->gardens->draft->getId(), $this->gardens->terrace->getId()];
+        $theirs = array_map(static fn ($resource): string => $resource->getId()->toRfc4122(), [$this->gardens->rose, $this->gardens->draft, $this->gardens->terrace]);
         $ids = array_filter($arguments, static fn (mixed $value): bool => \in_array($value, $theirs, true));
         $ghostError = $this->callToolExpectingError($tool, array_map(static fn (mixed $value): mixed => \in_array($value, $theirs, true) ? self::GHOST : $value, $arguments), $client);
 
-        self::assertSame($ghostError, str_replace(array_map(strval(...), $ids), (string) self::GHOST, $error), \sprintf('%s(%s)', $tool, json_encode($arguments)));
+        self::assertSame($ghostError, str_replace($ids, self::GHOST, $error), \sprintf('%s(%s)', $tool, json_encode($arguments)));
         self::assertNoNameOfTheirs($error, $tool);
+
+        try {
+            $client->callTool($tool, array_map(static fn (mixed $value): mixed => \in_array($value, $theirs, true) ? self::MALFORMED : $value, $arguments));
+            self::fail(\sprintf('%s takes a malformed id.', $tool));
+        } catch (RequestException $e) {
+            self::assertStringContainsString('Value does not match the required format: `uuid`', $e->getMessage(), $tool);
+        }
     }
 
     /**
@@ -144,7 +155,7 @@ final class GardenIsolationMcpTest extends McpTestCase
             'list_spaces' => self::assertSame(['Window box of Carol'], array_column($result['spaces'], 'name')),
             // At Lille, not at Lyon: rounded to a tenth of a degree
             'get_frost_forecast' => self::assertSame([50.6, 3.1], [$result['latitude'], $result['longitude']]),
-            'propose_plant' => self::assertSame($this->gardens->balcony->getId(), self::getContainer()->get(PlantRepository::class)->find($result['plant_id'])?->getGarden()->getId(), 'A draft of her garden.'),
+            'propose_plant' => self::assertTrue($this->gardens->balcony->getId()->equals(self::getContainer()->get(PlantRepository::class)->find($result['plant_id'])?->getGarden()->getId()), 'A draft of her garden.'),
             'propose_space' => self::assertSame(['name' => 'Terrace of the allotment', 'exposure' => null, 'soil' => null], array_intersect_key($result, ['name' => true, 'exposure' => true, 'soil' => true]), 'A new space of hers: not "exists already", nor the conditions of theirs.'),
             default => null,
         };
@@ -172,8 +183,8 @@ final class GardenIsolationMcpTest extends McpTestCase
         self::getContainer()->get(EntityManagerInterface::class)->clear();
         $plants = self::getContainer()->get(PlantRepository::class);
 
-        self::assertSame([ReminderType::Pruning, ReminderType::Frost], $plants->get($this->gardens->allotment, $this->gardens->rose->getId())->getEnabledReminderTypes());
-        self::assertSame(PlantStatus::Draft, $plants->get($this->gardens->allotment, $this->gardens->draft->getId())->getStatus(), 'Not validated by her external client.');
+        self::assertSame([ReminderType::Pruning, ReminderType::Frost], $plants->get($this->gardens->allotment, $this->gardens->rose->getId()->toRfc4122())->getEnabledReminderTypes());
+        self::assertSame(PlantStatus::Draft, $plants->get($this->gardens->allotment, $this->gardens->draft->getId()->toRfc4122())->getStatus(), 'Not validated by her external client.');
     }
 
     /**

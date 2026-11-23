@@ -10,11 +10,13 @@ use App\Garden\PlantingRepository;
 use App\Garden\SpaceRepository;
 use App\Plant\Entity\Plant;
 use App\Plant\Model\Exposure;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Uid\UuidV7;
 
 /**
@@ -22,6 +24,7 @@ use Symfony\Component\Uid\UuidV7;
  */
 final class ProposalControllerTest extends WebTestCase
 {
+    use GardenPathsTrait;
     use LogInTrait;
 
     private KernelBrowser $client;
@@ -76,7 +79,7 @@ final class ProposalControllerTest extends WebTestCase
         self::assertSame('Hydrangea macrophylla', $plantings[0]->getPlant()?->getScientificName());
         self::assertSame($frame, $added->filter('turbo-frame')->attr('id'));
         self::assertSame('Added', $added->filter('.status')->text());
-        self::assertSame('/garden/' . $plantings[0]->getId(), $added->filter('a.button-next')->attr('href'));
+        self::assertSame(self::pathOf($plantings[0]), $added->filter('a.button-next')->attr('href'));
         self::assertSame('I added Hortensia bleu to my garden, in Terrace.', $added->filter('[data-chat-notice]')->attr('data-chat-notice'));
 
         // A double tap, or the same card in a second tab
@@ -153,10 +156,10 @@ final class ProposalControllerTest extends WebTestCase
 
     public function testACardIsKeyedByAUuid(): void
     {
-        $this->client->request('GET', '/proposals/plantings/not-a-uuid?plant_id=1&name=Hortensia');
+        $this->client->request('GET', self::inGarden('/proposals/plantings/not-a-uuid?plant_id=1&name=Hortensia'));
         self::assertResponseStatusCodeSame(404);
 
-        $this->client->request('GET', '/proposals/spaces/not-a-uuid?name=Balcon');
+        $this->client->request('GET', self::inGarden('/proposals/spaces/not-a-uuid?name=Balcon'));
         self::assertResponseStatusCodeSame(404);
     }
 
@@ -181,7 +184,7 @@ final class ProposalControllerTest extends WebTestCase
         self::assertCount(1, $spaces);
         self::assertSame(['Balcon', Exposure::Sun, Soil::Sandy], [$spaces[0]->getName(), $spaces[0]->getExposure(), $spaces[0]->getSoil()]);
         self::assertSame('Created', $created->filter('.status')->text());
-        self::assertSame('/spaces/' . $spaces[0]->getId(), $created->filter('a.button-next')->attr('href'));
+        self::assertSame(self::pathOf($spaces[0]), $created->filter('a.button-next')->attr('href'));
         self::assertSame('I created the space Balcon.', $created->filter('[data-chat-notice]')->attr('data-chat-notice'));
 
         $this->client->submit($form, $values, ['HTTP_TURBO_FRAME' => $frame]);
@@ -232,11 +235,11 @@ final class ProposalControllerTest extends WebTestCase
     }
 
     /**
-     * @param array<string, int|string> $query
+     * @param array<string, Uuid|string> $query
      */
     private function plantingUrl(array $query): string
     {
-        return '/proposals/plantings/' . (new UuidV7())->toRfc4122() . '?' . http_build_query($query);
+        return self::inGarden('/proposals/plantings/') . (new UuidV7())->toRfc4122() . '?' . http_build_query(array_map(static fn (Uuid|string $value): string => (string) $value, $query));
     }
 
     /**
@@ -244,7 +247,7 @@ final class ProposalControllerTest extends WebTestCase
      */
     private function spaceUrl(array $query): string
     {
-        return '/proposals/spaces/' . (new UuidV7())->toRfc4122() . '?' . http_build_query($query);
+        return self::inGarden('/proposals/spaces/') . (new UuidV7())->toRfc4122() . '?' . http_build_query($query);
     }
 
     /**

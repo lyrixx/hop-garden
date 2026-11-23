@@ -45,7 +45,7 @@ abstract class McpTestCase extends KernelTestCase
     {
         $garden ??= self::gardenOfTheTest();
         $member ??= $garden->getOwner();
-        $key = \sprintf('%s %d %d', $path, $member->getId(), $garden->getId());
+        $key = \sprintf('%s %s %s', $path, $member->getId(), $garden->getId());
         if (isset($this->clients[$key])) {
             return $this->clients[$key];
         }

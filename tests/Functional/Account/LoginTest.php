@@ -4,6 +4,7 @@ namespace App\Tests\Functional\Account;
 
 use App\Account\Entity\User;
 use App\Factory\UserFactory;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use App\Tests\Utils\Security\LogInTrait;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -12,6 +13,7 @@ use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 final class LoginTest extends WebTestCase
 {
+    use GardenPathsTrait;
     use LogInTrait;
 
     private KernelBrowser $client;
@@ -29,6 +31,8 @@ final class LoginTest extends WebTestCase
         $this->logInWithTheForm($this->client, 'Alice@Example.com');
 
         self::assertResponseRedirects('/assistant', 302, 'The chat, whatever the case of the email.');
+        $this->client->followRedirect();
+        self::assertResponseRedirects(self::inGarden('/assistant'), 302, 'Of the last garden.');
         $crawler = $this->client->followRedirect();
         self::assertSelectorTextSame('h1', 'Your gardening assistant');
         self::assertSame('Alice', $crawler->filter('.account-menu a[href="/account"]')->text());
@@ -36,7 +40,7 @@ final class LoginTest extends WebTestCase
         $this->client->submit($crawler->filter('.account-menu form')->form());
 
         self::assertResponseRedirects('/');
-        $this->client->request('GET', '/garden');
+        $this->client->request('GET', self::inGarden('/garden'));
         self::assertResponseRedirects('/login', 302, 'Logged out.');
     }
 
@@ -70,7 +74,7 @@ final class LoginTest extends WebTestCase
         self::assertResponseRedirects('/login');
         $this->client->followRedirect();
         self::assertSelectorTextSame('main .warning', $message);
-        $this->client->request('GET', '/garden');
+        $this->client->request('GET', self::inGarden('/garden'));
         self::assertResponseRedirects('/login', 302, 'Not logged in.');
     }
 
@@ -95,7 +99,7 @@ final class LoginTest extends WebTestCase
 
         $this->client->followRedirect();
         self::assertSelectorTextContains('main .warning', 'Too many failed login attempts, please try again in');
-        $this->client->request('GET', '/garden');
+        $this->client->request('GET', self::inGarden('/garden'));
         self::assertResponseRedirects('/login', 302, 'Even the right password waits.');
     }
 
@@ -108,7 +112,7 @@ final class LoginTest extends WebTestCase
         $cookieJar = $this->client->getCookieJar();
         self::assertNotNull($cookieJar->get('REMEMBERME'));
         $cookieJar->expire('MOCKSESSID');
-        $this->client->request('GET', '/garden');
+        $this->client->request('GET', self::inGarden('/garden'));
         self::assertResponseIsSuccessful('Logged in again by the cookie.');
     }
 

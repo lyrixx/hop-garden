@@ -6,6 +6,8 @@ use App\Account\Entity\User;
 use App\Account\Model\AccessStatus;
 use App\Locale\Model\SupportedLocale;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Uid\NilUuid;
+use Symfony\Component\Uid\UuidV7;
 
 final class UserTest extends TestCase
 {
@@ -136,6 +138,26 @@ final class UserTest extends TestCase
 
         self::assertStringNotContainsString('a-bcrypt-hash', $serialized);
         self::assertStringContainsString(hash('crc32c', 'a-bcrypt-hash'), $serialized);
+    }
+
+    public function testASessionOfBeforeTheUuidsFindsNobody(): void
+    {
+        $data = self::register()->__serialize();
+        $data["\0" . User::class . "\0id"] = 12;
+        $user = new \ReflectionClass(User::class)->newInstanceWithoutConstructor();
+
+        $user->__unserialize($data);
+
+        self::assertInstanceOf(NilUuid::class, $user->getId(), 'Its refresh finds nobody: logged out.');
+        self::assertSame('alice@example.com', $user->getEmail());
+    }
+
+    public function testItsIdIsAUuidV7OfItsRegistration(): void
+    {
+        $user = self::register();
+
+        self::assertInstanceOf(UuidV7::class, $user->getId());
+        self::assertTrue($user->getId()->equals(unserialize(serialize($user))->getId()), 'Kept by the session.');
     }
 
     private static function register(string $email = 'alice@example.com'): User

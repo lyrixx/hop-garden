@@ -26,8 +26,8 @@ final class GardenToolsTest extends McpTestCase
         $result = $this->callTool('list_spaces');
 
         self::assertSame([
-            ['id' => $result['spaces'][0]['id'], 'name' => 'Balcony', 'exposure' => null, 'soil' => null, 'plantings' => []],
-            ['id' => $terrace->getId(), 'name' => 'Terrace', 'exposure' => 'part_shade', 'soil' => 'loamy', 'plantings' => ['Bigleaf hydrangea']],
+            ['id' => $result['spaces'][0]['id'], 'name' => 'Balcony', 'exposure' => null, 'soil' => null, 'plantings' => [], 'url' => 'https://hop-garden.test/g/the-garden-of-the-tests/spaces/balcony'],
+            ['id' => $terrace->getId()->toRfc4122(), 'name' => 'Terrace', 'exposure' => 'part_shade', 'soil' => 'loamy', 'plantings' => ['Bigleaf hydrangea'], 'url' => 'https://hop-garden.test/g/the-garden-of-the-tests/spaces/terrace'],
         ], $result['spaces']);
     }
 
@@ -36,12 +36,12 @@ final class GardenToolsTest extends McpTestCase
         $plant = PlantFactory::new()->validated()->create();
         $terrace = SpaceFactory::createOne(['name' => 'Terrace']);
 
-        $result = $this->callTool('propose_planting', ['plant_id' => $plant->getId(), 'name' => ' Hortensia ', 'space_id' => $terrace->getId()]);
+        $result = $this->callTool('propose_planting', ['plant_id' => $plant->getId()->toRfc4122(), 'name' => ' Hortensia ', 'space_id' => $terrace->getId()->toRfc4122()]);
 
         self::assertTrue(Uuid::isValid($result['proposal_id']));
-        self::assertSame([$plant->getId(), $terrace->getId(), 'Hortensia'], [$result['plant_id'], $result['space_id'], $result['name']]);
+        self::assertSame([$plant->getId()->toRfc4122(), $terrace->getId()->toRfc4122(), 'Hortensia'], [$result['plant_id'], $result['space_id'], $result['name']]);
         self::assertSame(
-            \sprintf('https://hop-garden.test/proposals/plantings/%s?plant_id=%d&space_id=%d&name=Hortensia', $result['proposal_id'], $plant->getId(), $terrace->getId()),
+            \sprintf('https://hop-garden.test/g/the-garden-of-the-tests/proposals/plantings/%s?plant_id=%s&space_id=%s&name=Hortensia', $result['proposal_id'], $plant->getId()->toRfc4122(), $terrace->getId()->toRfc4122()),
             $result['validation_url'],
         );
         self::assertStringContainsString('Until they tap it', $result['next_step']);
@@ -52,7 +52,7 @@ final class GardenToolsTest extends McpTestCase
     {
         $plant = PlantFactory::new()->validated()->create();
 
-        $result = $this->callTool('propose_planting', ['plant_id' => $plant->getId(), 'name' => 'Hortensia']);
+        $result = $this->callTool('propose_planting', ['plant_id' => $plant->getId()->toRfc4122(), 'name' => 'Hortensia']);
 
         self::assertNull($result['space_id']);
         self::assertStringNotContainsString('space_id', $result['validation_url']);
@@ -63,9 +63,9 @@ final class GardenToolsTest extends McpTestCase
         $draft = PlantFactory::createOne();
         $validated = PlantFactory::new()->validated()->create();
 
-        self::assertStringContainsString('is a draft: the user validates its card first', $this->callToolExpectingError('propose_planting', ['plant_id' => $draft->getId(), 'name' => 'Hortensia']));
-        self::assertStringContainsString('No plant with id 999999', $this->callToolExpectingError('propose_planting', ['plant_id' => 999999, 'name' => 'Hortensia']));
-        self::assertStringContainsString('No space with id 999999: call list_spaces.', $this->callToolExpectingError('propose_planting', ['plant_id' => $validated->getId(), 'name' => 'Hortensia', 'space_id' => 999999]));
+        self::assertStringContainsString('is a draft: the user validates its card first', $this->callToolExpectingError('propose_planting', ['plant_id' => $draft->getId()->toRfc4122(), 'name' => 'Hortensia']));
+        self::assertStringContainsString('No plant with id 01a205b0-0000-7000-8000-000000000000', $this->callToolExpectingError('propose_planting', ['plant_id' => '01a205b0-0000-7000-8000-000000000000', 'name' => 'Hortensia']));
+        self::assertStringContainsString('No space with id 01a205b0-0000-7000-8000-000000000000: call list_spaces.', $this->callToolExpectingError('propose_planting', ['plant_id' => $validated->getId()->toRfc4122(), 'name' => 'Hortensia', 'space_id' => '01a205b0-0000-7000-8000-000000000000']));
     }
 
     public function testProposeSpaceWritesNothing(): void
@@ -74,7 +74,7 @@ final class GardenToolsTest extends McpTestCase
 
         self::assertTrue(Uuid::isValid($result['proposal_id']));
         self::assertSame(['Balcon', 'sun', null], [$result['name'], $result['exposure'], $result['soil']]);
-        self::assertSame(\sprintf('https://hop-garden.test/proposals/spaces/%s?name=Balcon&exposure=sun', $result['proposal_id']), $result['validation_url']);
+        self::assertSame(\sprintf('https://hop-garden.test/g/the-garden-of-the-tests/proposals/spaces/%s?name=Balcon&exposure=sun', $result['proposal_id']), $result['validation_url']);
         self::assertSame([], self::getContainer()->get(SpaceRepository::class)->findAll());
     }
 
@@ -83,7 +83,7 @@ final class GardenToolsTest extends McpTestCase
         $terrace = SpaceFactory::createOne(['name' => 'Terrace']);
 
         self::assertStringContainsString(
-            \sprintf('The space "Terrace" exists already (id %d): propose the plant in it with propose_planting.', $terrace->getId()),
+            \sprintf('The space "Terrace" exists already (id %s): propose the plant in it with propose_planting.', $terrace->getId()->toRfc4122()),
             $this->callToolExpectingError('propose_space', ['name' => 'terrace']),
         );
     }

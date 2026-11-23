@@ -85,7 +85,7 @@ final class VotersTest extends KernelTestCase
     private function decisions(User $user, Garden $garden, array $attributes, object $subject, bool $agentRun = false): array
     {
         $token = new PostAuthenticationToken($user, 'mcp', $user->getRoles());
-        $token->setAttribute(CurrentGarden::TOKEN_ATTRIBUTE, $garden->getId());
+        $token->setAttribute(CurrentGarden::TOKEN_ATTRIBUTE, $garden->getId()->toRfc4122());
         if ($agentRun) {
             $token->setAttribute(AgentRunAuthenticator::TOKEN_ATTRIBUTE, '0196a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b');
         }

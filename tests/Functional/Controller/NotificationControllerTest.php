@@ -11,6 +11,7 @@ use App\Factory\PlantingFactory;
 use App\Factory\ReminderFactory;
 use App\Reminder\Model\ReminderType;
 use App\Reminder\NotificationRepository;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use App\Tests\Utils\Http\UnavailableDataSources;
 use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
@@ -27,6 +28,7 @@ use Symfony\Component\HttpClient\Response\JsonMockResponse;
 final class NotificationControllerTest extends WebTestCase
 {
     use ClockSensitiveTrait;
+    use GardenPathsTrait;
     use LogInTrait;
 
     private KernelBrowser $client;
@@ -41,7 +43,7 @@ final class NotificationControllerTest extends WebTestCase
     {
         self::mockTime('2026-11-22 09:30');
 
-        $crawler = $this->client->request('GET', '/notifications');
+        $crawler = $this->client->request('GET', self::inGarden('/notifications'));
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('.coming-up .reminder-empty', 'No reminder coming up.');
@@ -75,14 +77,14 @@ final class NotificationControllerTest extends WebTestCase
         $roseByTheGate = PlantingFactory::new()->of($rose)->create();
         PlantingFactory::new()->of($lemonTree)->many(2)->create();
 
-        $crawler = $this->client->request('GET', '/notifications');
+        $crawler = $this->client->request('GET', self::inGarden('/notifications'));
 
         self::assertResponseIsSuccessful();
         self::assertSame(
             [
-                ['Frost alert', 'Lemon tree', '/plants/' . $lemonTree->getId() . '#in-your-garden', 'Sunday 22 November, down to -12.4 °C'],
-                ['Cuttings', 'Rose', '/garden/' . $roseByTheGate->getId(), 'Tuesday 1 December'],
-                ['Pruning', 'Rose', '/garden/' . $roseByTheGate->getId(), 'Monday 1 February'],
+                ['Frost alert', 'Lemon tree', self::pathOf($lemonTree) . '#in-your-garden', 'Sunday 22 November, down to -12.4 °C'],
+                ['Cuttings', 'Rose', self::pathOf($roseByTheGate), 'Tuesday 1 December'],
+                ['Pruning', 'Rose', self::pathOf($roseByTheGate), 'Monday 1 February'],
             ],
             $crawler->filter('.coming-up .upcoming')->each(static fn (Crawler $upcoming): array => [
                 $upcoming->filter('.tag')->text(),
@@ -100,7 +102,7 @@ final class NotificationControllerTest extends WebTestCase
         self::mockTime('2026-11-22 09:30');
         PlantingFactory::new()->of(PlantFactory::new()->validated()->create(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['pruningMonths' => [12]])]))->create();
 
-        $this->client->request('GET', '/notifications');
+        $this->client->request('GET', self::inGarden('/notifications'));
 
         self::assertResponseIsSuccessful();
         self::assertSelectorCount(0, '.coming-up .upcoming');
@@ -116,7 +118,7 @@ final class NotificationControllerTest extends WebTestCase
         PlantingFactory::new()->of(PlantFactory::new()->validated()->create(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -20])]))->create();
         PlantFactory::createOne(['commonName' => 'Olive tree', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -8])]);
 
-        $crawler = $this->client->request('GET', '/notifications');
+        $crawler = $this->client->request('GET', self::inGarden('/notifications'));
 
         self::assertResponseIsSuccessful();
         self::assertSame(
@@ -131,7 +133,7 @@ final class NotificationControllerTest extends WebTestCase
         );
         self::assertSelectorCount(3, '.forecast-day.is-at-risk');
         self::assertSame(
-            ['/plants/' . $lemonTree->getId(), '/garden/' . $hydrangeaInTheShade->getId()],
+            [self::pathOf($lemonTree), self::pathOf($hydrangeaInTheShade)],
             array_values(array_unique($crawler->filter('.forecast-plants a')->each(static fn (Crawler $link): string => (string) $link->attr('href')))),
             'My plant, or the species when no plant of the garden follows its care sheet.',
         );
@@ -145,7 +147,7 @@ final class NotificationControllerTest extends WebTestCase
         $lemonTree = PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Frost)->create(['commonName' => 'Lemon tree', 'careSheet' => CareSheetFactory::new(['minTemperatureC' => -3, 'frostSensitive' => true])]);
         PlantingFactory::new()->of($lemonTree)->create();
 
-        $crawler = $this->client->request('GET', '/notifications');
+        $crawler = $this->client->request('GET', self::inGarden('/notifications'));
 
         self::assertResponseIsSuccessful();
         self::assertSame(
@@ -168,7 +170,7 @@ final class NotificationControllerTest extends WebTestCase
         $rose = PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning, ReminderType::Frost)->create(['commonName' => 'Rose', 'careSheet' => CareSheetFactory::new(['pruningMonths' => [12]])]);
         PlantingFactory::new()->of($rose)->create();
 
-        $crawler = $this->client->request('GET', '/notifications');
+        $crawler = $this->client->request('GET', self::inGarden('/notifications'));
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextSame('.frost-forecast .forecast-unavailable', 'The frost forecast is unavailable: Open-Meteo did not answer. Try again in a few minutes.');
@@ -193,10 +195,10 @@ final class NotificationControllerTest extends WebTestCase
             'createdAt' => new \DateTimeImmutable('2026-12-01 07:00'),
         ]);
 
-        $this->client->request('GET', '/garden');
+        $this->client->request('GET', self::inGarden('/garden'));
         self::assertSelectorTextSame('.nav .badge', '1');
 
-        $crawler = $this->client->request('GET', '/notifications');
+        $crawler = $this->client->request('GET', self::inGarden('/notifications'));
 
         self::assertResponseIsSuccessful();
         self::assertSame(
@@ -205,7 +207,7 @@ final class NotificationControllerTest extends WebTestCase
             'Newest first; the unread one stands out on this visit.',
         );
         self::assertSelectorTextContains('.notification-frost .meta', 'Rose · Tuesday 1 December, 07:00');
-        self::assertSelectorExists('.notification-frost .meta a[href="/garden/' . $gate->getId() . '"]', 'My rose, in the garden.');
+        self::assertSelectorExists('.notification-frost .meta a[href="' . self::pathOf($gate) . '"]', 'My rose, in the garden.');
 
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
         $entityManager->clear();
@@ -213,7 +215,7 @@ final class NotificationControllerTest extends WebTestCase
         self::assertSame('2026-12-01 09:30', $notifications[0]->getReadAt()?->format('Y-m-d H:i'), 'Read now.');
         self::assertSame('2026-11-01 08:00', $notifications[1]->getReadAt()?->format('Y-m-d H:i'), 'Read before.');
 
-        $crawler = $this->client->request('GET', '/notifications');
+        $crawler = $this->client->request('GET', self::inGarden('/notifications'));
         self::assertCount(0, $crawler->filter('.notification.is-unread'));
         self::assertSelectorExists('.nav .badge[hidden]');
     }

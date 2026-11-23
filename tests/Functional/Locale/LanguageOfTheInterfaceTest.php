@@ -14,6 +14,7 @@ use App\Locale\Model\SupportedLocale;
 use App\Locale\UserPreferredLocale;
 use App\Plant\Model\Exposure;
 use App\Reminder\Model\ReminderType;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -29,6 +30,7 @@ use Symfony\Component\DomCrawler\Crawler;
 final class LanguageOfTheInterfaceTest extends WebTestCase
 {
     use ClockSensitiveTrait;
+    use GardenPathsTrait;
     use LogInTrait;
 
     private KernelBrowser $client;
@@ -43,7 +45,7 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
 
     public function testABrowserInFrenchIsOfferedFrenchInFrench(): void
     {
-        $crawler = $this->client->request('GET', '/garden', server: ['HTTP_ACCEPT_LANGUAGE' => 'fr-FR,fr;q=0.9,en;q=0.8']);
+        $crawler = $this->client->request('GET', self::inGarden('/garden'), server: ['HTTP_ACCEPT_LANGUAGE' => 'fr-FR,fr;q=0.9,en;q=0.8']);
 
         self::assertResponseIsSuccessful();
         $banner = $crawler->filter('.locale-banner');
@@ -53,7 +55,7 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
             [['Passer en français', 'fr'], ['Rester en anglais', 'en']],
             $banner->filter('button')->each(static fn (Crawler $button): array => [$button->text(), $button->attr('value')]),
         );
-        self::assertSame('/garden', $banner->filter('input[name="returnTo"]')->attr('value'));
+        self::assertSame(self::inGarden('/garden'), $banner->filter('input[name="returnTo"]')->attr('value'));
         self::assertSame('en', $crawler->filter('html')->attr('lang'), 'Nothing changes without a tap.');
         self::assertSelectorTextContains('.nav', 'My garden');
         self::assertNull($this->member()->getPreferredLocale());
@@ -64,7 +66,7 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
     #[TestWith([''])]
     public function testNoBannerForAnotherBrowser(string $acceptLanguage): void
     {
-        $this->client->request('GET', '/garden', server: '' !== $acceptLanguage ? ['HTTP_ACCEPT_LANGUAGE' => $acceptLanguage] : []);
+        $this->client->request('GET', self::inGarden('/garden'), server: '' !== $acceptLanguage ? ['HTTP_ACCEPT_LANGUAGE' => $acceptLanguage] : []);
 
         self::assertResponseIsSuccessful();
         self::assertSelectorNotExists('.locale-banner');
@@ -72,14 +74,14 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
 
     public function testSwitchingToFrench(): void
     {
-        $crawler = $this->client->request('GET', '/plants', server: ['HTTP_ACCEPT_LANGUAGE' => 'fr-FR']);
+        $crawler = $this->client->request('GET', self::inGarden('/species'), server: ['HTTP_ACCEPT_LANGUAGE' => 'fr-FR']);
 
         $this->client->submit($crawler->selectButton('Passer en français')->form());
 
-        self::assertResponseRedirects('/plants', 303, 'The same page, in French.');
+        self::assertResponseRedirects(self::inGarden('/species'), 303, 'The same page, in French.');
         $crawler = $this->client->followRedirect();
         self::assertSame('fr', $crawler->filter('html')->attr('lang'));
-        self::assertSelectorTextSame('.nav a[href="/garden"]', 'Mon jardin');
+        self::assertSelectorTextSame('.nav a[href="' . self::inGarden('/garden') . '"]', 'Mon jardin');
         self::assertSelectorTextSame('h1', 'Espèces');
         self::assertSelectorNotExists('.locale-banner', 'Chosen: it does not come back.');
         self::assertSame(SupportedLocale::French, $this->member()->getPreferredLocale(), 'In their account.');
@@ -100,7 +102,7 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
 
     public function testTheFooterSwitchesTheLanguage(): void
     {
-        $crawler = $this->client->request('GET', '/spaces');
+        $crawler = $this->client->request('GET', self::inGarden('/spaces'));
         self::assertSame(
             [['English', 'en', 'true'], ['Français', 'fr', 'false']],
             $crawler->filter('.locale-switch button')->each(static fn (Crawler $button): array => [$button->text(), $button->attr('lang'), $button->attr('aria-pressed')]),
@@ -151,19 +153,19 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
 
         $pages = [
             '/' => 'Ce que Hop Garden règle',
-            '/assistant' => 'Votre assistant de jardinage',
-            '/garden' => 'Mon jardin',
-            '/garden/new' => 'Ajouter une plante à votre jardin',
-            '/garden/' . $planting->getId() => 'Recommandations',
-            '/garden/' . $planting->getId() . '/edit' => 'Modifier les infos de jardin de ' . $planting->getName(),
-            '/plants' => 'Espèces',
-            '/plants/new' => 'Nouvelle espèce',
-            '/plants/' . $rose->getId() => 'Dans votre jardin',
-            '/plants/' . $draft->getId() . '/edit' => 'Relire le brouillon de Hydrangea macrophylla',
-            '/spaces' => 'Vos espaces',
-            '/spaces/new' => 'Ajouter un espace',
-            '/spaces/' . $space->getId() => 'Ce qui y pousse',
-            '/notifications' => 'Prévisions de gel',
+            self::inGarden('/assistant') => 'Votre assistant de jardinage',
+            self::inGarden('/garden') => 'Mon jardin',
+            self::inGarden('/garden/new') => 'Ajouter une plante à votre jardin',
+            self::pathOf($planting) => 'Recommandations',
+            self::pathOf($planting) . '/edit' => 'Modifier les infos de jardin de ' . $planting->getName(),
+            self::inGarden('/species') => 'Espèces',
+            self::inGarden('/species/new') => 'Nouvelle espèce',
+            self::pathOf($rose) => 'Dans votre jardin',
+            self::pathOf($draft) . '/edit' => 'Relire le brouillon de Hydrangea macrophylla',
+            self::inGarden('/spaces') => 'Vos espaces',
+            self::inGarden('/spaces/new') => 'Ajouter un espace',
+            self::pathOf($space) => 'Ce qui y pousse',
+            self::inGarden('/notifications') => 'Prévisions de gel',
         ];
         foreach ($pages as $url => $text) {
             $crawler = $this->client->request('GET', $url);
@@ -172,7 +174,7 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
             self::assertSame('fr', $crawler->filter('html')->attr('lang'), $url);
         }
 
-        $crawler = $this->client->request('GET', '/garden/' . $planting->getId());
+        $crawler = $this->client->request('GET', self::pathOf($planting));
         self::assertSame(
             [['Exposition', 'Conseil'], ['Arrosage', 'Conseil'], ['Taille', 'Conseil'], ['Gel', 'Tout va bien']],
             $crawler->filter('.recommendation-heading')->each(static fn (Crawler $heading): array => [$heading->filter('strong')->text(), $heading->filter('.tag')->text()]),
@@ -182,12 +184,12 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
         self::assertStringContainsString('Taillez-la en février et mars.', $crawler->filter('.recommendations')->text(), 'The months with Intl.');
         self::assertSelectorTextContains('.planting-place', 'Mi-ombre', 'The exposure of its space.');
 
-        $crawler = $this->client->request('GET', '/plants/' . $rose->getId());
+        $crawler = $this->client->request('GET', self::pathOf($rose));
         self::assertSame('Rusticité', $crawler->filter('.plant-card .row-min_temperature_c th')->text());
         self::assertSame("-15\u{a0}°C", $crawler->filter('.plant-card .row-min_temperature_c td')->text());
         self::assertSame('Rosier grimpant', $crawler->filter('.plant-card h3')->text(), 'What the user or the agent wrote stays as is.');
 
-        $crawler = $this->client->request('GET', '/notifications');
+        $crawler = $this->client->request('GET', self::inGarden('/notifications'));
         self::assertSame('dimanche 22 novembre', $crawler->filter('.forecast-date')->first()->text(), 'Dates with Intl, in the timezone of the garden.');
         self::assertSame("-3,2\u{a0}°C", $crawler->filter('.forecast-min')->first()->text());
     }
@@ -195,7 +197,7 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
     public function testAFrenchNameFindsItsSpeciesThroughItsLatinName(): void
     {
         $this->logIn($this->client, UserFactory::new()->approved()->create(['preferredLocale' => SupportedLocale::French]));
-        $crawler = $this->client->request('GET', '/plants/new');
+        $crawler = $this->client->request('GET', self::inGarden('/species/new'));
 
         // Trefle does not know "rosier": the recorded answer of the LLM gives Rosa, which it knows
         $this->client->submit($crawler->selectButton('Créer le brouillon')->form(), ['new_plant[name]' => 'rosier', 'new_plant[trefleId]' => '263311']);
@@ -209,7 +211,7 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
     public function testTheValidationMessagesInFrench(): void
     {
         $this->logIn($this->client, UserFactory::new()->approved()->create(['preferredLocale' => SupportedLocale::French]));
-        $crawler = $this->client->request('GET', '/spaces/new');
+        $crawler = $this->client->request('GET', self::inGarden('/spaces/new'));
 
         $this->client->submit($crawler->selectButton('Ajouter l’espace')->form(), ['space[name]' => '  ']);
 
@@ -217,7 +219,7 @@ final class LanguageOfTheInterfaceTest extends WebTestCase
         self::assertSelectorTextContains('main form', 'Cette valeur ne doit pas être vide.', 'The messages of Symfony.');
         self::assertSelectorTextContains('form label[for="space_name"]', 'Nom');
 
-        $crawler = $this->client->request('GET', '/plants/new');
+        $crawler = $this->client->request('GET', self::inGarden('/species/new'));
         $this->client->submit($crawler->selectButton('Créer le brouillon')->form()->disableValidation(), ['new_plant[name]' => 'hortensia']);
 
         self::assertSelectorTextContains('main form', 'Choisissez son espèce parmi celles que Trefle trouve.', 'And ours.');

@@ -3,6 +3,7 @@
 namespace App\Tests\Functional\Account;
 
 use App\Factory\UserFactory;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use App\Tests\Utils\Security\LogInTrait;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -15,6 +16,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  */
 final class AccessTest extends WebTestCase
 {
+    use GardenPathsTrait;
     use LogInTrait;
 
     private KernelBrowser $client;
@@ -37,28 +39,31 @@ final class AccessTest extends WebTestCase
      */
     public static function provideTheInternalPagesSendAVisitorToTheLoginCases(): iterable
     {
-        yield 'the chat' => ['GET', '/assistant'];
-        yield 'a message' => ['POST', '/chat'];
-        yield 'a new conversation' => ['POST', '/chat/new'];
-        yield 'the garden' => ['GET', '/garden'];
-        yield 'the species' => ['GET', '/plants'];
-        yield 'the spaces' => ['GET', '/spaces'];
-        yield 'the notifications' => ['GET', '/notifications'];
+        // Whatever the garden, before it is looked for: a visitor learns nothing of the gardens there are
+        yield 'the chat' => ['GET', '/g/a-garden/assistant'];
+        yield 'a message' => ['POST', '/g/a-garden/chat'];
+        yield 'a new conversation' => ['POST', '/g/a-garden/chat/new'];
+        yield 'the garden' => ['GET', '/g/a-garden/garden'];
+        yield 'the species' => ['GET', '/g/a-garden/species'];
+        yield 'the spaces' => ['GET', '/g/a-garden/spaces'];
+        yield 'the notifications' => ['GET', '/g/a-garden/notifications'];
+        yield 'a live component' => ['POST', '/g/a-garden/_components/SpeciesPicker'];
+        yield 'the assistant of the last garden' => ['GET', '/assistant'];
+        yield 'a path of before the gardens' => ['GET', '/plants'];
         yield 'the account' => ['GET', '/account'];
-        yield 'a live component' => ['POST', '/_components/SpeciesPicker'];
         yield 'the back-office' => ['GET', '/admin'];
     }
 
     public function testAVisitorFindsTheInternalPageAfterTheLogin(): void
     {
-        $member = UserFactory::new()->approved()->create();
-        $this->client->request('GET', '/spaces');
+        $member = $this->gardenOfTheTest()->getOwner();
+        $this->client->request('GET', self::inGarden('/spaces'));
         self::assertResponseRedirects('/login');
 
         $this->forgetTheFailedLogins();
         $this->logInWithTheForm($this->client, $member->getEmail());
 
-        self::assertResponseRedirects('/spaces', 302, 'Where it was going.');
+        self::assertResponseRedirects(self::inGarden('/spaces'), 302, 'Where it was going.');
     }
 
     /**
@@ -86,7 +91,7 @@ final class AccessTest extends WebTestCase
         $crawler = $this->client->request('GET', $url);
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorNotExists('.nav a[href="/garden"]', 'Nor the tabs of the garden.');
+        self::assertSelectorNotExists('.nav a[href="' . self::inGarden('/garden') . '"]', 'Nor the tabs of the garden.');
         self::assertSelectorNotExists('#notifications-stream', 'Nor its notifications.');
         self::assertSame(['/login', '/register'], $crawler->filter('.nav-visitor a')->each(static fn ($link): ?string => $link->attr('href')));
         self::assertSame('/', $crawler->filter('.topbar .brand')->attr('href'), 'The public page: the chat would send back here.');
@@ -96,7 +101,7 @@ final class AccessTest extends WebTestCase
     {
         $this->logIn($this->client, UserFactory::new()->verified()->create());
 
-        $this->client->request('GET', '/garden');
+        $this->client->request('GET', self::inGarden('/garden'));
 
         self::assertResponseStatusCodeSame(403, 'No ROLE_USER before the approval.');
     }
@@ -105,7 +110,7 @@ final class AccessTest extends WebTestCase
     {
         $this->logIn($this->client, UserFactory::new()->approved()->create(['displayName' => 'Alice']));
 
-        $crawler = $this->client->request('GET', '/garden');
+        $crawler = $this->client->request('GET', self::inGarden('/garden'));
 
         self::assertResponseIsSuccessful();
         self::assertSame('/assistant', $crawler->filter('.topbar .brand')->attr('href'));

@@ -18,6 +18,7 @@ use App\Reminder\Model\ReminderType;
 use App\Tests\Utils\Chat\AgentRunsTrait;
 use App\Tests\Utils\Chat\ScriptedGardener;
 use App\Tests\Utils\Env\EnvVarsTrait;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use App\Tests\Utils\Http\UnavailableDataSources;
 use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
@@ -33,6 +34,7 @@ final class GardenControllerTest extends WebTestCase
     use AgentRunsTrait;
     use ClockSensitiveTrait;
     use EnvVarsTrait;
+    use GardenPathsTrait;
     use LogInTrait;
 
     private const string PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
@@ -67,7 +69,7 @@ final class GardenControllerTest extends WebTestCase
         self::mockTime('2026-11-21 10:00');
         $northBed = SpaceFactory::createOne(['name' => 'North bed', 'exposure' => Exposure::PartShade, 'soil' => Soil::Clay]);
         $rose = PlantingFactory::new()->inSpace($northBed)->create(['name' => 'Rose by the gate']);
-        $crawler = $this->client->request('GET', '/garden/new');
+        $crawler = $this->client->request('GET', self::inGarden('/garden/new'));
         self::assertResponseIsSuccessful();
 
         $form = $crawler->selectButton('Add to my garden')->form();
@@ -82,7 +84,7 @@ final class GardenControllerTest extends WebTestCase
         $this->client->submit($form);
 
         $planting = $this->lastPlanting();
-        self::assertResponseRedirects('/garden/' . $planting->getId(), 303);
+        self::assertResponseRedirects(self::pathOf($planting), 303);
         self::assertSame('Hortensia du portail', $planting->getName());
         self::assertSame(191052, $planting->getTrefleId());
         self::assertSame('Hydrangea paniculata', $planting->getScientificName());
@@ -101,10 +103,10 @@ final class GardenControllerTest extends WebTestCase
 
         // No validated plant of this species: the agent drafts its care sheet, in the worker
         self::assertTrue($planting->isDrafting());
-        self::assertSame([[$planting->getId(), $planting->getConversationId()]], $this->draftMessages());
+        self::assertSame([[$planting->getId()->toRfc4122(), $planting->getConversationId()?->toRfc4122()]], $this->draftMessages());
 
         $crawler = $this->client->followRedirect();
-        $photoUrl = '/garden/' . $planting->getId() . '/photos/' . $photoFilename;
+        $photoUrl = self::pathOf($planting) . '/photos/' . $photoFilename;
         self::assertSelectorExists('.garden-photo img[src="' . $photoUrl . '"]');
         self::assertSelectorTextContains('.garden-pending', 'The assistant is drafting the care sheet of Hortensia du portail');
         self::assertStringEndsWith('=' . rawurlencode($this->draftingTopic($planting)), (string) $crawler->filter('[data-controller="drafting"] turbo-mercure-stream-source')->attr('src'), 'The page listens to the agent drafting, in its garden.');
@@ -116,7 +118,7 @@ final class GardenControllerTest extends WebTestCase
         self::assertResponseHeaderSame('Content-Type', 'image/png');
         self::assertStringContainsString('private', (string) $this->client->getResponse()->headers->get('Cache-Control'));
         self::assertStringContainsString('immutable', (string) $this->client->getResponse()->headers->get('Cache-Control'), 'Its name changes with the photo.');
-        $this->client->request('GET', '/garden/' . $planting->getId() . '/photos/' . str_repeat('0', 32) . '.png');
+        $this->client->request('GET', self::pathOf($planting) . '/photos/' . str_repeat('0', 32) . '.png');
         self::assertResponseStatusCodeSame(404, 'Not its photo.');
     }
 
@@ -124,7 +126,7 @@ final class GardenControllerTest extends WebTestCase
     {
         self::mockTime('2026-03-15 10:00');
         $hydrangea = PlantFactory::new()->validated()->create(['commonName' => 'Bigleaf hydrangea', 'careSheet' => CareSheetFactory::new(['pruningMonths' => [3]])]);
-        $crawler = $this->client->request('GET', '/garden/new');
+        $crawler = $this->client->request('GET', self::inGarden('/garden/new'));
 
         $this->client->submit($crawler->selectButton('Add to my garden')->form(), [
             'planting[name]' => 'Hydrangea by the shed',
@@ -146,19 +148,19 @@ final class GardenControllerTest extends WebTestCase
         $planting = PlantingFactory::new()->draftingFailed()->create(['name' => 'The mystery shrub', 'createdAt' => new \DateTimeImmutable('2026-03-01')]);
         $failedConversationId = $planting->getConversationId();
 
-        $crawler = $this->client->request('GET', '/garden/' . $planting->getId());
+        $crawler = $this->client->request('GET', self::pathOf($planting));
         self::assertSelectorTextContains('.garden-failure', 'The assistant ended without drafting a care sheet. What you entered is kept.');
         self::assertCount(0, $crawler->filter('[data-controller="drafting"][data-drafting-drafting-value="false"] turbo-mercure-stream-source'), 'Nothing to listen to.');
 
         $this->client->submit($crawler->selectButton('Retry')->form());
 
-        self::assertResponseRedirects('/garden/' . $planting->getId());
+        self::assertResponseRedirects(self::pathOf($planting));
         $planting = $this->reload($planting);
         self::assertTrue($planting->isDrafting());
         self::assertNotSame($failedConversationId, $planting->getConversationId(), 'A new conversation for a new attempt.');
-        self::assertSame([[$planting->getId(), $planting->getConversationId()]], $this->draftMessages());
+        self::assertSame([[$planting->getId()->toRfc4122(), $planting->getConversationId()?->toRfc4122()]], $this->draftMessages());
 
-        $this->client->request('GET', '/garden/' . $planting->getId() . '/drafting');
+        $this->client->request('GET', self::pathOf($planting) . '/drafting');
         self::assertSame('{"drafting":true}', $this->client->getResponse()->getContent());
     }
 
@@ -166,7 +168,7 @@ final class GardenControllerTest extends WebTestCase
     {
         $planting = $this->draftWithoutResult();
 
-        $crawler = $this->client->request('GET', '/garden/' . $planting->getId());
+        $crawler = $this->client->request('GET', self::pathOf($planting));
 
         self::assertSame(['list_collection()'], $crawler->filter('.garden-tool-calls .tool-call code')->each(static fn ($code): string => $code->text()));
     }
@@ -179,7 +181,7 @@ final class GardenControllerTest extends WebTestCase
         $this->logIn($this->client);
         $planting = $this->draftWithoutResult();
 
-        $crawler = $this->client->request('GET', '/garden/' . $planting->getId());
+        $crawler = $this->client->request('GET', self::pathOf($planting));
 
         self::assertSelectorTextContains('.garden-failure', 'The assistant ended without drafting a care sheet.');
         self::assertSame('', $crawler->filter('.garden-tool-calls')->html(), 'Empty, so that the CSS hides it.');
@@ -187,12 +189,12 @@ final class GardenControllerTest extends WebTestCase
 
     public function testANameTrefleDoesNotKnowIsEnough(): void
     {
-        $crawler = $this->client->request('GET', '/garden/new');
+        $crawler = $this->client->request('GET', self::inGarden('/garden/new'));
 
         $this->client->submit($crawler->selectButton('Add to my garden')->form(), ['planting[name]' => '  The mystery shrub  ']);
 
         $planting = $this->lastPlanting();
-        self::assertResponseRedirects('/garden/' . $planting->getId());
+        self::assertResponseRedirects(self::pathOf($planting));
         self::assertSame('The mystery shrub', $planting->getName());
         self::assertNull($planting->getScientificName());
         self::assertNull($planting->getTrefleId());
@@ -206,7 +208,7 @@ final class GardenControllerTest extends WebTestCase
     #[DataProvider('provideOnlyJpegPngAndWebpPhotosAreAcceptedCases')]
     public function testOnlyJpegPngAndWebpPhotosAreAccepted(string $clientName, string $base64Content): void
     {
-        $crawler = $this->client->request('GET', '/garden/new');
+        $crawler = $this->client->request('GET', self::inGarden('/garden/new'));
         $form = $crawler->selectButton('Add to my garden')->form();
         $form['planting[name]'] = 'Rose';
         $form['planting[photo]']->upload($this->file($clientName, $base64Content));
@@ -229,7 +231,7 @@ final class GardenControllerTest extends WebTestCase
 
     public function testTheSpeciesSurvivesAFormSentBack(): void
     {
-        $crawler = $this->client->request('GET', '/garden/new');
+        $crawler = $this->client->request('GET', self::inGarden('/garden/new'));
         $form = $crawler->selectButton('Add to my garden')->form();
         $form['planting[name]'] = 'Hortensia du portail';
         // Set by the species picker
@@ -250,7 +252,7 @@ final class GardenControllerTest extends WebTestCase
         $this->client->submit($form);
 
         $planting = $this->lastPlanting();
-        self::assertResponseRedirects('/garden/' . $planting->getId(), 303);
+        self::assertResponseRedirects(self::pathOf($planting), 303);
         self::assertSame(191052, $planting->getTrefleId());
         self::assertSame('Hydrangea paniculata', $planting->getScientificName());
     }
@@ -258,7 +260,7 @@ final class GardenControllerTest extends WebTestCase
     public function testCareDatesFollowTheClock(): void
     {
         self::mockTime('2027-06-01 10:00');
-        $crawler = $this->client->request('GET', '/garden/new');
+        $crawler = $this->client->request('GET', self::inGarden('/garden/new'));
         $form = $crawler->selectButton('Add to my garden')->form();
 
         $this->client->submit($form, ['planting[name]' => 'Rose', 'planting[careRecords][watering]' => '2027-06-02']);
@@ -277,13 +279,13 @@ final class GardenControllerTest extends WebTestCase
         $shed = SpaceFactory::createOne(['name' => 'By the shed', 'exposure' => Exposure::Shade, 'soil' => Soil::Loamy, 'createdAt' => new \DateTimeImmutable('2026-03-01')]);
         $planting = PlantingFactory::new()->inSpace($shed)->create(['name' => 'Hydrangea by the shed', 'createdAt' => new \DateTimeImmutable('2026-03-01'), 'trefleId' => 191047, 'scientificName' => 'hydrangea MACROPHYLLA']);
 
-        $crawler = $this->client->request('GET', '/garden/' . $planting->getId());
+        $crawler = $this->client->request('GET', self::pathOf($planting));
         self::assertSelectorTextContains('.garden-failure', 'No care sheet yet.');
         self::assertSame(['Use the sheet of Bigleaf hydrangea'], $crawler->filter('form[action$="/plant"] button')->each(static fn ($button): string => $button->text()), 'Only the validated plants of the same species.');
 
         $this->client->submit($crawler->selectButton('Use the sheet of Bigleaf hydrangea')->form());
 
-        self::assertResponseRedirects('/garden/' . $planting->getId());
+        self::assertResponseRedirects(self::pathOf($planting));
         self::assertSame($hydrangea->getId(), $this->reload($planting)->getPlant()?->getId());
 
         $crawler = $this->client->followRedirect();
@@ -298,13 +300,13 @@ final class GardenControllerTest extends WebTestCase
     {
         $planting = PlantingFactory::new()->linkedTo(PlantFactory::new())->create(['name' => 'Hydrangea by the shed', 'createdAt' => new \DateTimeImmutable('2026-03-01')]);
 
-        $this->client->request('GET', '/garden/' . $planting->getId());
+        $this->client->request('GET', self::pathOf($planting));
 
         self::assertSelectorTextContains('#recommendations', 'is waiting for your review');
         self::assertSelectorNotExists('.recommendation');
         // The species in short: reviewed and validated on its own page
         $plant = $planting->getPlant() ?? throw new \LogicException('Linked above.');
-        self::assertSelectorExists('.species-summary.is-draft a.button[href="/plants/' . $plant->getId() . '"]');
+        self::assertSelectorExists('.species-summary.is-draft a.button[href="' . self::pathOf($plant) . '"]');
         self::assertSelectorTextContains('.species-summary', 'Validate its care sheet to set reminders.');
         self::assertSelectorNotExists('.plant-card, form[action$="/validate"]', 'Not the card: it belongs to the page of the species.');
         // The parts the worker streams once the draft is proposed, see App\Garden\DraftCareSheetHandler
@@ -317,12 +319,12 @@ final class GardenControllerTest extends WebTestCase
         $otherSpecies = PlantFactory::new()->validated()->create(['commonName' => 'Rose', 'scientificName' => 'Rosa canina']);
         PlantFactory::new()->validated()->create();
         $planting = PlantingFactory::createOne(['name' => 'Hydrangea by the shed', 'createdAt' => new \DateTimeImmutable('2026-03-01'), 'scientificName' => 'Hydrangea macrophylla']);
-        $crawler = $this->client->request('GET', '/garden/' . $planting->getId());
+        $crawler = $this->client->request('GET', self::pathOf($planting));
 
         // A forged plant id in the form of the hydrangea sheet
         $this->client->submit($crawler->filter('form[action$="/plant"]')->form(), ['plant' => (string) $otherSpecies->getId()]);
 
-        self::assertResponseRedirects('/garden/' . $planting->getId());
+        self::assertResponseRedirects(self::pathOf($planting));
         self::assertNull($this->reload($planting)->getPlant());
         $this->client->followRedirect();
         self::assertSelectorTextContains('.flash-warning', 'This care sheet is not a validated one of the same species.');
@@ -336,12 +338,12 @@ final class GardenControllerTest extends WebTestCase
         PlantingFactory::new()->linkedTo($shedDraft)->create(['name' => 'Hydrangea by the shed', 'trefleId' => 191047, 'scientificName' => 'Hydrangea macrophylla']);
         PlantingFactory::new()->of(PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning)->create(['commonName' => 'Climbing rose']))->create();
 
-        $crawler = $this->client->request('GET', '/garden');
+        $crawler = $this->client->request('GET', self::inGarden('/garden'));
 
         self::assertResponseIsSuccessful();
         self::assertSame(['drafts', 'plant-grid'], $crawler->filter('.drafts, .plant-grid')->each(static fn ($node): string => (string) $node->attr('class')), 'The drafts on top.');
         self::assertSame(['Panicled hydrangea'], $crawler->filter('.drafts li a')->each(static fn ($link): string => $link->text()), 'Only the draft of the chat.');
-        self::assertSelectorNotExists('.drafts a[href="/plants/' . $shedDraft->getId() . '"]', 'The draft of a planting waits in its tile.');
+        self::assertSelectorNotExists('.drafts a[href="' . self::pathOf($shedDraft) . '"]', 'The draft of a planting waits in its tile.');
         self::assertSame(
             [
                 'Climbing rose' => ['Care sheet', 'Pruning'],
@@ -359,7 +361,7 @@ final class GardenControllerTest extends WebTestCase
     {
         PlantingFactory::new()->linkedTo(PlantFactory::new())->create(['name' => 'Hydrangea by the shed']);
 
-        $this->client->request('GET', '/garden');
+        $this->client->request('GET', self::inGarden('/garden'));
 
         self::assertResponseIsSuccessful();
         self::assertSelectorNotExists('.drafts');
@@ -371,15 +373,15 @@ final class GardenControllerTest extends WebTestCase
         self::mockTime('2026-07-01 10:00');
         $planting = PlantingFactory::new()->of(PlantFactory::new()->validated()->create(['careSheet' => CareSheetFactory::new(['exposure' => Exposure::Sun])]))->create();
 
-        $crawler = $this->client->request('GET', '/garden/' . $planting->getId());
+        $crawler = $this->client->request('GET', self::pathOf($planting));
 
         self::assertResponseIsSuccessful();
         self::assertSame(['Not in a space yet: choose one, for its exposure, its soil and its neighbours.'], $crawler->filter('.planting-place td')->each(static fn ($cell): string => $cell->text()));
-        self::assertSame('/garden/' . $planting->getId() . '/edit', $crawler->filter('.planting-place td a')->attr('href'));
+        self::assertSame(self::pathOf($planting) . '/edit', $crawler->filter('.planting-place td a')->attr('href'));
         self::assertSame(['None recorded', 'None recorded'], $crawler->filter('.planting-care td')->each(static fn ($cell): string => $cell->text()));
         self::assertSelectorTextContains('.recommendation-info', 'Tell us where it grows, with "Edit garden info": its care sheet asks for full sun.');
         self::assertSelectorNotExists('.recommendation-warning');
-        self::assertSelectorExists('a[href="/garden/' . $planting->getId() . '/edit"]');
+        self::assertSelectorExists('a[href="' . self::pathOf($planting) . '/edit"]');
     }
 
     public function testThePageOfMyPlantLinksToItsSpecies(): void
@@ -387,26 +389,26 @@ final class GardenControllerTest extends WebTestCase
         $plant = PlantFactory::new()->validated()->withEnabledReminders(ReminderType::Pruning)->create(['careSheet' => CareSheetFactory::new(['minTemperatureC' => -15, 'exposure' => Exposure::PartShade])]);
         $planting = PlantingFactory::new()->of($plant)->create();
 
-        $crawler = $this->client->request('GET', '/garden/' . $planting->getId());
+        $crawler = $this->client->request('GET', self::pathOf($planting));
 
         self::assertSelectorTextSame('.breadcrumb .page-label', 'My plant');
-        self::assertSelectorTextSame('.breadcrumb a[href="/garden"]', 'My garden');
+        self::assertSelectorTextSame('.breadcrumb a[href="' . self::inGarden('/garden') . '"]', 'My garden');
         self::assertSelectorTextSame('.species-summary .page-label', 'Species');
         self::assertSelectorTextContains('.species-summary-name', 'Bigleaf hydrangea');
         self::assertSelectorTextContains('.species-summary-name .latin', 'Hydrangea macrophylla');
         self::assertSame(['Hardy down to -15 °C', 'Part shade', 'High watering'], $crawler->filter('.species-facts li')->each(static fn ($fact): string => trim($fact->text())));
         self::assertSame(['Pruning'], $crawler->filter('.species-reminders .tag')->each(static fn ($tag): string => trim($tag->text())), 'Read only.');
-        self::assertSelectorExists('.species-summary a.button[href="/plants/' . $plant->getId() . '"]');
+        self::assertSelectorExists('.species-summary a.button[href="' . self::pathOf($plant) . '"]');
         self::assertSelectorNotExists('.plant-card, form[action*="/reminders/"]', 'The card and its switches belong to the page of the species.');
     }
 
     public function testTheNavigation(): void
     {
-        $crawler = $this->client->request('GET', '/garden');
+        $crawler = $this->client->request('GET', self::inGarden('/garden'));
 
         // The badge of the notifications aside
         self::assertSame(['Assistant', 'My garden', 'Species', 'My spaces', 'Notifications'], $crawler->filter('.nav a')->each(static fn ($link): string => trim(substr($link->text(), 0, \strlen($link->text()) - \strlen($link->filter('.badge')->count() > 0 ? $link->filter('.badge')->text() : '')))));
-        self::assertSame('/plants', $crawler->filter('.nav a')->eq(2)->attr('href'));
+        self::assertSame(self::inGarden('/species'), $crawler->filter('.nav a')->eq(2)->attr('href'), 'In the garden of the page.');
     }
 
     public function testTheSpeciesHaveTheirTabAndMyPlantsTheirs(): void
@@ -414,11 +416,11 @@ final class GardenControllerTest extends WebTestCase
         $plant = PlantFactory::new()->validated()->create();
         $planting = PlantingFactory::new()->of($plant)->create();
 
-        foreach (['/plants', '/plants/new', '/plants/' . $plant->getId(), '/plants/' . $plant->getId() . '/edit'] as $url) {
+        foreach ([self::inGarden('/species'), self::inGarden('/species/new'), self::pathOf($plant), self::pathOf($plant) . '/edit'] as $url) {
             $this->client->request('GET', $url);
             self::assertSelectorTextSame('.nav a.active', 'Species', $url);
         }
-        foreach (['/garden', '/garden/new', '/garden/new?plant=' . $plant->getId(), '/garden/' . $planting->getId(), '/garden/' . $planting->getId() . '/edit'] as $url) {
+        foreach ([self::inGarden('/garden'), self::inGarden('/garden/new'), self::inGarden('/garden/new?plant=' . $plant->getSlug()), self::pathOf($planting), self::pathOf($planting) . '/edit'] as $url) {
             $this->client->request('GET', $url);
             self::assertSelectorTextSame('.nav a.active', 'My garden', $url);
         }
@@ -429,7 +431,7 @@ final class GardenControllerTest extends WebTestCase
         self::mockTime('2026-11-21 10:00');
         $plant = PlantFactory::new()->validated()->create(['commonName' => 'Panicled hydrangea', 'scientificName' => 'Hydrangea paniculata', 'trefleId' => 191052]);
         $northBed = SpaceFactory::createOne(['name' => 'North bed', 'exposure' => Exposure::PartShade, 'soil' => Soil::Clay]);
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId());
+        $crawler = $this->client->request('GET', self::pathOf($plant));
 
         $crawler = $this->client->click($crawler->filter('#in-your-garden')->selectLink('Add to my garden')->link());
 
@@ -444,7 +446,7 @@ final class GardenControllerTest extends WebTestCase
         $this->client->submit($form);
 
         $planting = $this->lastPlanting();
-        self::assertResponseRedirects('/garden/' . $planting->getId(), 303);
+        self::assertResponseRedirects(self::pathOf($planting), 303);
         self::assertSame('Hydrangea by the shed', $planting->getName());
         self::assertSame('North bed', $planting->getSpace()?->getName());
         self::assertSame($plant->getId(), $planting->getPlant()?->getId(), 'It follows the care sheet of the species.');
@@ -458,7 +460,7 @@ final class GardenControllerTest extends WebTestCase
     public function testTheSpeciesOfANewPlantCannotBeChangedOnceFixed(): void
     {
         $plant = PlantFactory::new()->validated()->create();
-        $crawler = $this->client->request('GET', '/garden/new?plant=' . $plant->getId());
+        $crawler = $this->client->request('GET', self::inGarden('/garden/new?plant=' . $plant->getSlug()));
         $form = $crawler->selectButton('Add to my garden')->form();
 
         // As a request crafted by hand, with the fields of the picker
@@ -472,13 +474,13 @@ final class GardenControllerTest extends WebTestCase
     }
 
     #[TestWith(['draft'])]
-    #[TestWith(['999999'])]
-    #[TestWith(['abc'])]
+    #[TestWith(['no-such-species'])]
+    #[TestWith(['../../etc'])]
     public function testOnlyAValidatedSpeciesIsFixed(string $plant): void
     {
         $draft = PlantFactory::createOne();
 
-        $this->client->request('GET', '/garden/new?plant=' . ('draft' === $plant ? $draft->getId() : $plant));
+        $this->client->request('GET', self::inGarden('/garden/new?plant=' . ('draft' === $plant ? $draft->getSlug() : $plant)));
 
         self::assertResponseStatusCodeSame(404);
     }
@@ -489,15 +491,15 @@ final class GardenControllerTest extends WebTestCase
         $hosta = PlantingFactory::new()->inSpace($northBed)->create(['name' => 'Hosta']);
         $fern = PlantingFactory::new()->inSpace($northBed)->create(['name' => 'Fern']);
 
-        $crawler = $this->client->request('GET', '/garden/' . $hosta->getId());
+        $crawler = $this->client->request('GET', self::pathOf($hosta));
 
         self::assertResponseIsSuccessful();
         self::assertSame(
             ['Space' => 'North bed', 'Exposure' => 'Shade', 'Soil' => 'Clay', 'Neighbours' => 'Fern'],
             array_merge(...$crawler->filter('.planting-place tr')->each(static fn ($row): array => [$row->filter('th')->text() => $row->filter('td')->text()])),
         );
-        self::assertSame('/spaces/' . $northBed->getId(), $crawler->filter('.planting-place td a')->eq(0)->attr('href'));
-        self::assertSame('/garden/' . $fern->getId(), $crawler->filter('.planting-place td a')->eq(1)->attr('href'));
+        self::assertSame(self::pathOf($northBed), $crawler->filter('.planting-place td a')->eq(0)->attr('href'));
+        self::assertSame(self::pathOf($fern), $crawler->filter('.planting-place td a')->eq(1)->attr('href'));
     }
 
     public function testTheSpeciesOfMyPlantFacesTheExposureOfItsSpace(): void
@@ -505,7 +507,7 @@ final class GardenControllerTest extends WebTestCase
         $northBed = SpaceFactory::createOne(['name' => 'North bed', 'exposure' => Exposure::Shade]);
         $planting = PlantingFactory::new()->of(PlantFactory::new()->validated()->create(['careSheet' => CareSheetFactory::new(['exposure' => Exposure::PartShade])]))->inSpace($northBed)->create();
 
-        $crawler = $this->client->request('GET', '/garden/' . $planting->getId());
+        $crawler = $this->client->request('GET', self::pathOf($planting));
 
         self::assertResponseIsSuccessful();
         self::assertSame('Shade', $crawler->filter('.planting-place tr')->eq(1)->filter('td')->text(), 'The exposure of its space.');
@@ -527,7 +529,7 @@ final class GardenControllerTest extends WebTestCase
             ->create()
         ;
 
-        $crawler = $this->client->request('GET', '/garden/' . $hydrangea->getId());
+        $crawler = $this->client->request('GET', self::pathOf($hydrangea));
         $crawler = $this->client->click($crawler->selectLink('Edit garden info')->link());
 
         self::assertResponseIsSuccessful();
@@ -535,7 +537,7 @@ final class GardenControllerTest extends WebTestCase
         self::assertSelectorNotExists('[name="planting[trefleId]"], [name="planting[scientificName]"]', 'The species stays.');
         self::assertSame(['Not in a space yet', 'Balcony · Full sun', 'North bed · Part shade, clay'], $crawler->filter('[name="planting[space]"] option')->each(static fn ($option): string => $option->text()));
         self::assertSame('Balcony · Full sun', $crawler->filter('[name="planting[space]"] option[selected]')->text());
-        self::assertSelectorExists('a[href="/spaces/new"]');
+        self::assertSelectorExists('a[href="' . self::inGarden('/spaces/new') . '"]');
         self::assertSame('2026-11-10', $crawler->filter('[name="planting[careRecords][watering]"]')->attr('value'));
 
         $form = $crawler->selectButton('Save')->form();
@@ -546,9 +548,10 @@ final class GardenControllerTest extends WebTestCase
         $form['planting[careRecords][pruning]'] = '2026-11-15';
         $this->client->submit($form);
 
-        self::assertResponseRedirects('/garden/' . $hydrangea->getId());
+        self::assertResponseRedirects(self::pathOf($hydrangea));
         $hydrangea = $this->reload($hydrangea);
         self::assertSame('Hydrangea by the shed', $hydrangea->getName());
+        self::assertSame('bigleaf-hydrangea', $hydrangea->getSlug(), 'Renamed, its URL stays.');
         self::assertSame('Hydrangea macrophylla', $hydrangea->getScientificName());
         self::assertSame('North bed', $hydrangea->getSpace()?->getName());
         self::assertSame('Powdery mildew.', $hydrangea->getDiseases());
@@ -565,14 +568,14 @@ final class GardenControllerTest extends WebTestCase
         self::assertSelectorTextContains('.flash-success', 'The garden info of Hydrangea by the shed is saved.');
 
         // A second photo replaces the first one; without one, the photo stays
-        $crawler = $this->client->request('GET', '/garden/' . $hydrangea->getId() . '/edit');
+        $crawler = $this->client->request('GET', self::pathOf($hydrangea) . '/edit');
         $form = $crawler->selectButton('Save')->form();
         $form['planting[photo]']->upload($this->file('shed-again.png', self::PNG));
         $this->client->submit($form);
         $secondPhoto = $this->storedPhoto($this->reload($hydrangea));
         self::assertFileDoesNotExist($firstPhoto);
 
-        $crawler = $this->client->request('GET', '/garden/' . $hydrangea->getId() . '/edit');
+        $crawler = $this->client->request('GET', self::pathOf($hydrangea) . '/edit');
         $this->client->submit($crawler->selectButton('Save')->form());
         self::assertSame($secondPhoto, $this->storedPhoto($this->reload($hydrangea)));
         self::assertFileExists($secondPhoto);
@@ -581,7 +584,7 @@ final class GardenControllerTest extends WebTestCase
     public function testTheEditOfAPlantingIsValidated(): void
     {
         $planting = PlantingFactory::createOne(['name' => 'Rose']);
-        $crawler = $this->client->request('GET', '/garden/' . $planting->getId() . '/edit');
+        $crawler = $this->client->request('GET', self::pathOf($planting) . '/edit');
 
         $this->client->submit($crawler->selectButton('Save')->form(), ['planting[name]' => ' ']);
 
@@ -589,12 +592,12 @@ final class GardenControllerTest extends WebTestCase
         self::assertSame('Rose', $this->reload($planting)->getName());
     }
 
-    #[TestWith(['/garden/999999'])]
-    #[TestWith(['/garden/999999/edit'])]
-    #[TestWith(['/garden/999999/drafting'])]
-    public function testAnUnknownPlantingIsNotFound(string $url): void
+    #[TestWith(['/garden/no-such-plant'])]
+    #[TestWith(['/garden/no-such-plant/edit'])]
+    #[TestWith(['/garden/no-such-plant/drafting'])]
+    public function testAnUnknownPlantingIsNotFound(string $path): void
     {
-        $this->client->request('GET', $url);
+        $this->client->request('GET', self::inGarden($path));
 
         self::assertResponseStatusCodeSame(404);
     }
@@ -605,7 +608,7 @@ final class GardenControllerTest extends WebTestCase
         self::mockTime('2026-12-01 10:00');
         $planting = PlantingFactory::new()->of(PlantFactory::new()->validated()->create(['careSheet' => CareSheetFactory::new(['minTemperatureC' => -15])]))->create();
 
-        $this->client->request('GET', '/garden/' . $planting->getId());
+        $this->client->request('GET', self::pathOf($planting));
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('.recommendation-ok', 'Hardy down to -15 °C.');
@@ -615,7 +618,7 @@ final class GardenControllerTest extends WebTestCase
     {
         $planting = PlantingFactory::createOne(['name' => 'Rose']);
 
-        $this->client->request('GET', '/garden/' . $planting->getId() . '/drafting');
+        $this->client->request('GET', self::pathOf($planting) . '/drafting');
 
         self::assertResponseIsSuccessful();
         self::assertSame('{"drafting":false}', $this->client->getResponse()->getContent());
@@ -624,7 +627,7 @@ final class GardenControllerTest extends WebTestCase
     public function testARetryOfAPlantingLinkedMeanwhileDraftsNothing(): void
     {
         $planting = PlantingFactory::new()->draftingFailed()->create(['name' => 'The mystery shrub', 'createdAt' => new \DateTimeImmutable('2026-03-01')]);
-        $crawler = $this->client->request('GET', '/garden/' . $planting->getId());
+        $crawler = $this->client->request('GET', self::pathOf($planting));
         $form = $crawler->selectButton('Retry')->form();
         // Linked in another tab
         $plant = PlantFactory::new()->validated()->create();
@@ -634,7 +637,7 @@ final class GardenControllerTest extends WebTestCase
 
         $this->client->submit($form);
 
-        self::assertResponseRedirects('/garden/' . $planting->getId());
+        self::assertResponseRedirects(self::pathOf($planting));
         self::assertSame([], $this->draftMessages());
         self::assertSame($plant->getId(), $this->reload($planting)->getPlant()?->getId());
     }
@@ -644,10 +647,10 @@ final class GardenControllerTest extends WebTestCase
         $planting = PlantingFactory::new()->draftingFailed()->create(['name' => 'Hydrangea by the shed', 'createdAt' => new \DateTimeImmutable('2026-03-01'), 'scientificName' => 'Hydrangea macrophylla']);
         $plant = PlantFactory::new()->validated()->create();
 
-        $this->client->request('POST', '/garden/' . $planting->getId() . '/draft', ['_token' => 'forged']);
+        $this->client->request('POST', self::pathOf($planting) . '/draft', ['_token' => 'forged']);
         self::assertResponseRedirects('/login');
 
-        $this->client->request('POST', '/garden/' . $planting->getId() . '/plant', ['_token' => 'forged', 'plant' => (string) $plant->getId()]);
+        $this->client->request('POST', self::pathOf($planting) . '/plant', ['_token' => 'forged', 'plant' => (string) $plant->getId()]);
         self::assertResponseRedirects('/login');
 
         self::assertSame([], $this->draftMessages());

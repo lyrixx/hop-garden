@@ -10,6 +10,7 @@ use App\Plant\Entity\Plant;
 use App\Plant\Model\CareSheetField;
 use App\Plant\Model\Source;
 use App\Reminder\Model\ReminderType;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,6 +21,7 @@ use Symfony\UX\TwigComponent\Test\InteractsWithTwigComponents;
 
 final class PlantCardTest extends KernelTestCase
 {
+    use GardenPathsTrait;
     use InteractsWithTwigComponents;
 
     /**
@@ -103,7 +105,7 @@ final class PlantCardTest extends KernelTestCase
         self::assertSame('Validated', trim($crawler->filter('.card-head .status.status-validated')->text()), 'No plant of the garden follows it yet.');
         self::assertSame('I validated the care sheet of Bigleaf hydrangea.', $crawler->filter('article.plant-card')->attr('data-chat-notice'), 'In the chat, it tells the agent.');
         self::assertCount(1, $crawler->filter('.card-head .status svg.icon-check'));
-        self::assertSame('/plants/' . $plant->getId() . '/edit', $crawler->filter('a.button.button-secondary')->attr('href'));
+        self::assertSame(self::pathOf($plant) . '/edit', $crawler->filter('a.button.button-secondary')->attr('href'));
         self::assertNull($crawler->filter('a.button.button-secondary')->attr('data-turbo-frame'), 'Edited in its frame.');
         self::assertCount(0, $crawler->filter('form[action$="/validate"], a:contains("Set reminders")'));
         self::assertSame(['frost', 'pruning', 'deadheading', 'cutting'], $crawler->filter('turbo-frame[id^="plant-' . $plant->getId() . '-reminder-"]')->each(static fn (Crawler $frame): string => substr((string) $frame->attr('id'), \strlen('plant-' . $plant->getId() . '-reminder-'))));
@@ -124,7 +126,7 @@ final class PlantCardTest extends KernelTestCase
         self::assertSame('In your garden', trim($crawler->filter('.card-head .status.status-validated')->text()));
         $link = $crawler->filter('a.button-next');
         self::assertSame('See my plant', trim($link->text()));
-        self::assertSame('/garden/' . $planting->getId(), $link->attr('href'));
+        self::assertSame(self::pathOf($planting), $link->attr('href'));
         self::assertSame('_top', $link->attr('data-turbo-frame'));
     }
 

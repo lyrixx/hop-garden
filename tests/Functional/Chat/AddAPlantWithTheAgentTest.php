@@ -17,6 +17,7 @@ use App\Plant\PlantRepository;
 use App\Tests\Utils\Chat\ScriptedGardener;
 use App\Tests\Utils\Chat\WorkerTrait;
 use App\Tests\Utils\Env\EnvVarsTrait;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use App\Tests\Utils\Security\LogInTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -32,6 +33,7 @@ use Symfony\Component\DomCrawler\Crawler;
 final class AddAPlantWithTheAgentTest extends WebTestCase
 {
     use EnvVarsTrait;
+    use GardenPathsTrait;
     use LogInTrait;
     use WorkerTrait;
 
@@ -73,7 +75,7 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
         self::assertSame('Hortensia', $planting->getName());
         self::assertSame($terrace->getId(), $planting->getSpace()?->getId());
         self::assertSame('Added', $added->filter('.status')->text());
-        self::assertSame('/garden/' . $planting->getId(), $added->filter('a.button-next')->attr('href'));
+        self::assertSame(self::pathOf($planting), $added->filter('a.button-next')->attr('href'));
 
         $page = $this->say($this->noticeOf($added));
         self::assertSame('I added Hortensia to my garden, in Terrace.', $page->filter('#chat-log .bubble-user')->last()->text());
@@ -138,7 +140,7 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
         $this->tap($this->card($page, 'planting'), 'Add to my garden');
 
         self::assertSame($balcony->getId(), $this->plantingOf($hydrangea)->getSpace()?->getId());
-        self::assertSame('Created', $this->card($this->client->request('GET', '/assistant'), 'space')->filter('.status')->text(), 'Created, after a reload too.');
+        self::assertSame('Created', $this->card($this->client->request('GET', self::inGarden('/assistant')), 'space')->filter('.status')->text(), 'Created, after a reload too.');
     }
 
     /**
@@ -208,11 +210,11 @@ final class AddAPlantWithTheAgentTest extends WebTestCase
      */
     private function say(string $text): Crawler
     {
-        $crawler = $this->client->request('GET', '/assistant');
+        $crawler = $this->client->request('GET', self::inGarden('/assistant'));
         $this->client->submit($crawler->filter('form.chat-form')->form(), ['text' => $text]);
         $this->runTheWorker();
 
-        return $this->client->request('GET', '/assistant');
+        return $this->client->request('GET', self::inGarden('/assistant'));
     }
 
     /**

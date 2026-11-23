@@ -38,7 +38,7 @@ final class ChatStreams
             'append' === $stream->action && '#chat-log, #drafting-tool-calls' === $stream->targets => ['type' => 'tool_call', 'summary' => $element?->filter('code')->text()],
             'append' !== $stream->action || 'chat-log' !== $stream->target => throw new \LogicException(\sprintf('Unexpected stream "%s".', $stream->action)),
             str_contains((string) $element?->attr('class'), 'bubble-assistant') => ['type' => 'answer', 'bubble' => 'new', 'html' => $element?->html()],
-            str_contains((string) $element?->attr('class'), 'chat-card') => ['type' => 'draft_card', 'plant_id' => (int) preg_replace('/\D/', '', (string) $element?->filter('turbo-frame')->attr('id'))],
+            str_contains((string) $element?->attr('class'), 'chat-card') => ['type' => 'draft_card', 'plant_id' => (string) preg_replace('/^plant-card-(.+)-frame$/', '$1', (string) $element?->filter('turbo-frame')->attr('id'))],
             str_contains((string) $element?->attr('class'), 'bubble-error') => ['type' => 'error', 'message' => $element?->text()],
             default => throw new \LogicException('Unexpected stream in the chat log.'),
         };

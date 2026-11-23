@@ -21,8 +21,8 @@ use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Uid\UuidV7;
 
 /**
- * The data of before the gardens, between the migration that adds them and the one that makes them required: the test
- * puts the schema back between both (a transaction of PostgreSQL rolls it back), with rows of before.
+ * The data of before the gardens, before the migration that makes them required (Version20261123120000): the test puts
+ * the schema back before it (a transaction of PostgreSQL rolls it back), with rows of before.
  */
 final class AdoptOrphansCommandTest extends KernelTestCase
 {
@@ -51,8 +51,9 @@ final class AdoptOrphansCommandTest extends KernelTestCase
                 self::assertSame(0, (int) $connection->fetchOne(\sprintf('SELECT COUNT(*) FROM %s WHERE %s IS NULL', $table, $column)), $table . '.' . $column);
             }
         }
-        self::assertSame(['space' => 1, 'plant' => 1, 'planting' => 1, 'notification' => 1], array_map(intval(...), array_combine(array_keys(self::COLUMNS), array_map(static fn (string $table): mixed => $connection->fetchOne(\sprintf('SELECT COUNT(*) FROM %s WHERE garden_id = ?', $table), [$garden->getId()]), array_keys(self::COLUMNS)))));
-        self::assertSame($alice->getId(), (int) $connection->fetchOne('SELECT recipient_id FROM notification'));
+        self::assertSame(['space' => 1, 'plant' => 1, 'planting' => 1, 'notification' => 1], array_map(intval(...), array_combine(array_keys(self::COLUMNS), array_map(static fn (string $table): mixed => $connection->fetchOne(\sprintf('SELECT COUNT(*) FROM %s WHERE garden_id = ?', $table), [$garden->getId()->toRfc4122()]), array_keys(self::COLUMNS)))));
+        self::assertSame($alice->getId()->toRfc4122(), $connection->fetchOne('SELECT recipient_id FROM notification'));
+        self::assertSame('my-garden', $garden->getSlug());
         self::assertTrue(self::getContainer()->get(ConversationRepository::class)->findOneById($orphanConversation)?->isOf($alice, $garden), 'Her conversation of before.');
 
         $tester->execute(['--email' => 'alice@example.com', '--name' => 'Again', '--city' => 'Lyon']);
@@ -110,7 +111,7 @@ final class AdoptOrphansCommandTest extends KernelTestCase
         foreach (self::COLUMNS as $table => $columns) {
             $connection->executeStatement(\sprintf('UPDATE %s SET %s', $table, implode(', ', array_map(static fn (string $column): string => $column . ' = NULL', $columns))));
         }
-        $connection->executeStatement('DELETE FROM garden WHERE id = ?', [$before->getId()]);
+        $connection->executeStatement('DELETE FROM garden WHERE id = ?', [$before->getId()->toRfc4122()]);
         self::getContainer()->get(EntityManagerInterface::class)->clear();
 
         return $conversation;

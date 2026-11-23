@@ -7,6 +7,7 @@ use App\Factory\PlantingFactory;
 use App\Plant\Entity\Plant;
 use App\Plate\Model\PlatePart;
 use App\Reminder\Model\ReminderType;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use App\Tests\Utils\Security\LogInTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -16,6 +17,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  */
 final class PlantCardTest extends WebTestCase
 {
+    use GardenPathsTrait;
     use LogInTrait;
 
     private KernelBrowser $client;
@@ -30,12 +32,12 @@ final class PlantCardTest extends WebTestCase
     {
         $plant = PlantFactory::createOne();
 
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId() . '/card');
+        $crawler = $this->client->request('GET', self::pathOf($plant) . '/card');
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('turbo-frame#plant-card-' . $plant->getId() . '-frame > article.card.crowned.plant-card.is-draft#plant-card-' . $plant->getId());
-        self::assertSelectorTextContains('.card-head .kicker', 'Tab. ' . $plant->getId());
-        self::assertSelectorTextContains('.card-head h3 a[href="/plants/' . $plant->getId() . '"]', 'Bigleaf hydrangea');
+        self::assertSelectorTextContains('.card-head .kicker', 'Tab. ' . strtoupper(substr($plant->getId()->toRfc4122(), -4)));
+        self::assertSelectorTextContains('.card-head h3 a[href="' . self::pathOf($plant) . '"]', 'Bigleaf hydrangea');
         self::assertSelectorTextContains('.card-head .latin', 'Hydrangea macrophylla');
         self::assertSelectorTextSame('.card-head .status-draft', 'Draft');
         self::assertSelectorExists('.plant-card-plate img[src$=".webp"][alt="Hydrangea hortensia"]');
@@ -55,7 +57,7 @@ final class PlantCardTest extends WebTestCase
     {
         $plant = PlantFactory::new()->validated()->create();
 
-        $crawler = $this->client->request('GET', '/plants/' . $plant->getId());
+        $crawler = $this->client->request('GET', self::pathOf($plant));
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextSame('.breadcrumb .page-label', 'Species');
@@ -72,10 +74,10 @@ final class PlantCardTest extends WebTestCase
         PlantFactory::createOne(['commonName' => 'Panicled hydrangea']);
         $planting = PlantingFactory::new()->of(PlantFactory::new()->validated()->create())->create();
 
-        $this->client->request('GET', '/garden');
+        $this->client->request('GET', self::inGarden('/garden'));
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('.drafts', 'Panicled hydrangea');
-        self::assertSelectorTextContains('a.plant-tile[href="/garden/' . $planting->getId() . '"]', 'Bigleaf hydrangea');
+        self::assertSelectorTextContains('a.plant-tile[href="' . self::pathOf($planting) . '"]', 'Bigleaf hydrangea');
     }
 }

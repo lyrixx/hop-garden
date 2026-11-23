@@ -208,16 +208,16 @@ final class ScriptedGardener
      *
      * @param list<mixed> $messages
      */
-    private static function hydrangeaId(array $messages): ?int
+    private static function hydrangeaId(array $messages): ?string
     {
         foreach (self::resultsOf($messages, 'flow-propose') as $proposed) {
-            if (\is_int($proposed['plant_id'] ?? null)) {
+            if (\is_string($proposed['plant_id'] ?? null)) {
                 return $proposed['plant_id'];
             }
         }
 
         foreach (self::resultsOf($messages, 'flow-collection')[0]['plants'] ?? [] as $plant) {
-            if (\is_array($plant) && str_starts_with((string) $plant['scientific_name'], 'Hydrangea')) {
+            if (\is_array($plant) && str_starts_with((string) $plant['scientific_name'], 'Hydrangea') && \is_string($plant['id'])) {
                 return $plant['id'];
             }
         }

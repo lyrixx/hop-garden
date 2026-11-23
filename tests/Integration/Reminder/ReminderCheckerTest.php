@@ -18,6 +18,7 @@ use App\Reminder\Model\ReminderType;
 use App\Reminder\NotificationRepository;
 use App\Reminder\ReminderChecker;
 use App\Story\DefaultGardenStory;
+use App\Tests\Utils\Garden\GardenPathsTrait;
 use App\Tests\Utils\Http\UnavailableDataSources;
 use App\Tests\Utils\Mercure\RecordingHub;
 use App\Tests\Utils\Mercure\TurboStream;
@@ -36,6 +37,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 final class ReminderCheckerTest extends KernelTestCase
 {
     use ClockSensitiveTrait;
+    use GardenPathsTrait;
 
     protected function setUp(): void
     {
@@ -136,7 +138,7 @@ final class ReminderCheckerTest extends KernelTestCase
         self::assertSame('card toast toast-frost', $toast->attr('class'));
         self::assertSame('Frost alert', $toast->filter('strong')->text());
         self::assertSame('See Lemon tree', $toast->filter('a')->text());
-        self::assertSame('/garden/' . $terrace->getId(), $toast->filter('a')->attr('href'), 'My lemon tree, in the garden.');
+        self::assertSame(self::pathOf($terrace), $toast->filter('a')->attr('href'), 'My lemon tree, in the garden.');
         self::assertSame(['replace', 'notification-badge'], [$badgeStream->action, $badgeStream->target]);
         self::assertSame('2', $badgeStream->element()->text(), 'With the pruning reminder, still unread.');
 
@@ -266,15 +268,15 @@ final class ReminderCheckerTest extends KernelTestCase
         self::mockTime('2026-03-02 18:45');
 
         $tester = new CommandTester((new Application(self::$kernel ?? throw new \LogicException()))->find('app:reminders:run'));
-        $tester->execute(['--garden' => (string) $elsewhere->getId()]);
+        $tester->execute(['--garden' => $elsewhere->getSlug()]);
 
         $tester->assertCommandIsSuccessful();
         self::assertStringContainsString('1 reminder(s) due in 1 garden(s)', $tester->getDisplay());
         self::assertSame([], $this->messages(), 'Not the garden of the test.');
 
-        $tester->execute(['--garden' => '999999']);
+        $tester->execute(['--garden' => 'no-such-garden']);
         self::assertSame(2, $tester->getStatusCode());
-        self::assertStringContainsString('No garden with id 999999.', $tester->getDisplay());
+        self::assertStringContainsString('No garden "no-such-garden".', $tester->getDisplay());
     }
 
     private function check(string $now, ?Garden $garden = null): int
